@@ -1,0 +1,11 @@
+.overlay-toolbar {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 20px;
+    margin: 10px;
+}
+
+.close-app-button {
+    color: red;
+}
