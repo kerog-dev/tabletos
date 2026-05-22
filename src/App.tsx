@@ -1,28 +1,24 @@
 import type React from "react";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import OverlayToolbar from "./components/OverlayToolbar.tsx";
 
 interface AppComponentParams {}
 
 export interface App {
   name: string;
-  component: React.FunctionComponent<AppComponentParams>;
+  component: React.LazyExoticComponent<React.FC<AppComponentParams>>;
   manifest: {};
 }
 
-async function loadApps(names: string[]): Promise<App[]> {
-  const apps = [];
-  for (const name of names) {
-    apps.push({
-      name,
-      manifest: {},
-      component: (await import(`./apps/${name}.tsx`)).default,
-    });
-  }
-  return apps;
+function loadApps(names: string[]): App[] {
+  return names.map((name) => ({
+    name,
+    manifest: {},
+    component: lazy(() => import(`./apps/${name}.tsx`)),
+  }));
 }
 
-const apps: App[] = await loadApps(["Test"]);
+const apps: App[] = loadApps(["Numbat"]);
 
 function Main() {
   const [activeApp, setActiveApp] = useState<App | null>(null);
@@ -46,7 +42,9 @@ function Main() {
   return (
     <>
       <OverlayToolbar {...{ setActiveApp }} />
-      <ActiveAppComponent />
+      <Suspense fallback={<div>Loading...</div>}>
+        <ActiveAppComponent />
+      </Suspense>
     </>
   );
 }
