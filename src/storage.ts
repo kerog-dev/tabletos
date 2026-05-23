@@ -12,6 +12,20 @@ function makeProxy(target: any, flush: () => void): any {
         return makeProxy(t[key], flush);
       return t[key];
     },
+    deleteProperty(t, key: string) {
+      delete t[key];
+      flush();
+      return true;
+    },
+    has(t, key: string) {
+      return key in t;
+    },
+    ownKeys(t) {
+      return Reflect.ownKeys(t);
+    },
+    getOwnPropertyDescriptor(t, key: string) {
+      return Object.getOwnPropertyDescriptor(t, key);
+    },
   });
 }
 
