@@ -1,0 +1,22 @@
+diff --git a/dist/esm/index.js b/dist/esm/index.js
+index ec9d7de7062d3be2f7509dcd0309183f58654769..779e5de8d12735a41960f40c70b7da44ff26fb27 100644
+--- a/dist/esm/index.js
++++ b/dist/esm/index.js
+@@ -91,7 +91,7 @@ export function viteSingleFile({ useRecommendedBuildConfig = true, removeViteMod
+             const bundlesToDelete = [];
+             for (const name of files.html) {
+                 const htmlChunk = bundle[name];
+-                let replacedHtml = htmlChunk.source;
++                let replacedHtml = typeof htmlChunk.source === "string" ? htmlChunk.source : new TextDecoder().decode(htmlChunk.source);
+                 for (const filename of files.js) {
+                     if (inlinePattern.length && !micromatch.isMatch(filename, inlinePattern)) {
+                         warnNotInlined(filename);
+@@ -112,7 +112,7 @@ export function viteSingleFile({ useRecommendedBuildConfig = true, removeViteMod
+                     const cssChunk = bundle[filename];
+                     this.info(`Inlining: ${filename}`);
+                     bundlesToDelete.push(filename);
+-                    replacedHtml = replaceCss(replacedHtml, cssChunk.fileName, cssChunk.source);
++                    replacedHtml = replaceCss(replacedHtml, cssChunk.fileName, typeof cssChunk.source === "string" ? cssChunk.source : new TextDecoder().decode(cssChunk.source));
+                 }
+                 htmlChunk.source = replacedHtml;
+             }

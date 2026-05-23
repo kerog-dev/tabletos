@@ -1,0 +1,2 @@
+patchedDependencies:
+  vite-plugin-singlefile: patches/vite-plugin-singlefile.patch
