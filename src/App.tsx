@@ -31,7 +31,7 @@ async function getManifestKey<T extends keyof AppManifest>(
   return (await app.manifest)[key] ?? defaultManifest[key];
 }
 
-const apps: App[] = loadApps(["Numbat", "Snap", "Counter"]);
+const apps: App[] = loadApps(["Numbat", "Snap", "Counter", "MediaClient"]);
 
 function Main() {
   const [activeApp, setActiveApp] = useState<App | null>(null);
