@@ -9,3 +9,8 @@
 .close-app-button {
     color: red;
 }
+
+.overlay-toolbar.alternate-toolbar-position {
+    top: unset;
+    bottom: 0;
+}

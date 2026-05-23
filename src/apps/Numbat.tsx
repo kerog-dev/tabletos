@@ -4,7 +4,7 @@ import init, { Numbat, FormatType } from "../assets/numbat/numbat_wasm.js";
 await init();
 const numbat = Numbat.new(true, true, FormatType.Html);
 
-export default function Numbat() {
+export default function NumbatApp() {
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
   const [isError, setIsError] = useState(false);
