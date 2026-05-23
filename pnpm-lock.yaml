@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  vite-plugin-singlefile:
+    hash: e1f62342f67cfa5aacc77c3691e078d940765b4047c5a308286cd0a02b856968
+    path: patches/vite-plugin-singlefile.patch
+
 importers:
 
   .:
@@ -41,7 +46,7 @@ importers:
         version: 8.0.14(@types/node@24.12.4)(esbuild@0.27.7)
       vite-plugin-singlefile:
         specifier: ^2.3.3
-        version: 2.3.3(rollup@4.60.4)(vite@8.0.14(@types/node@24.12.4)(esbuild@0.27.7))
+        version: 2.3.3(patch_hash=e1f62342f67cfa5aacc77c3691e078d940765b4047c5a308286cd0a02b856968)(rollup@4.60.4)(vite@8.0.14(@types/node@24.12.4)(esbuild@0.27.7))
 
 packages:
 
@@ -3258,7 +3263,7 @@ snapshots:
 
   uuid@14.0.0: {}
 
-  vite-plugin-singlefile@2.3.3(rollup@4.60.4)(vite@8.0.14(@types/node@24.12.4)(esbuild@0.27.7)):
+  vite-plugin-singlefile@2.3.3(patch_hash=e1f62342f67cfa5aacc77c3691e078d940765b4047c5a308286cd0a02b856968)(rollup@4.60.4)(vite@8.0.14(@types/node@24.12.4)(esbuild@0.27.7)):
     dependencies:
       micromatch: 4.0.8
       vite: 8.0.14(@types/node@24.12.4)(esbuild@0.27.7)
