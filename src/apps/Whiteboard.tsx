@@ -1,12 +1,21 @@
-import { Excalidraw } from "@excalidraw/excalidraw";
+import { Excalidraw, serializeAsJSON, restore } from "@excalidraw/excalidraw";
 import "@excalidraw/excalidraw/index.css";
-import { useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import storage from "../storage.ts";
 
 storage.whiteboards ??= {};
 
 export default function Whiteboard() {
   const [active, setActive] = useState<string | null>(null);
+  const initialized = useRef(false);
+
+  const initialData = useMemo(() => {
+    if (!active) return { elements: [], appState: {} };
+    const saved = storage.whiteboards[active];
+    return saved
+      ? restore(JSON.parse(saved), null, null)
+      : { elements: [], appState: {} };
+  }, [active]);
 
   if (!active)
     return (
@@ -32,7 +41,7 @@ export default function Whiteboard() {
             if (e.key !== "Enter") return;
             const name = (e.target as HTMLInputElement).value.trim();
             if (!name) return;
-            storage.whiteboards[name] ??= { elements: [], appState: {} };
+            storage.whiteboards[name] ??= null;
             setActive(name);
           }}
         />
@@ -42,15 +51,28 @@ export default function Whiteboard() {
   return (
     <div style={{ position: "relative", height: "100vh" }}>
       <button
-        onClick={() => setActive(null)}
+        onClick={() => {
+          initialized.current = false;
+          setActive(null);
+        }}
         style={{ position: "absolute", top: 8, left: 8, zIndex: 10 }}
       >
         ← boards
       </button>
       <Excalidraw
-        initialData={storage.whiteboards[active]}
-        onChange={(elements, appState) => {
-          storage.whiteboards[active] = { elements, appState };
+        key={active}
+        initialData={initialData}
+        onChange={(elements, appState, files) => {
+          if (!initialized.current) {
+            initialized.current = true;
+            return;
+          }
+          storage.whiteboards[active] = serializeAsJSON(
+            elements,
+            appState,
+            files,
+            "local",
+          );
         }}
       />
     </div>

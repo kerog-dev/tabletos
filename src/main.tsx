@@ -4,6 +4,10 @@ import "./index.css";
 import favicon from "./assets/favicon.svg";
 import Main from "./App.tsx";
 
+window.addEventListener("error", (e) => {
+  alert(e.error);
+});
+
 const faviconEl = document.createElement("link");
 faviconEl.rel = "icon";
 faviconEl.type = "image/svg+xml";

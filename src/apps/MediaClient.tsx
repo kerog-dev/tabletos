@@ -5,7 +5,9 @@ import "./MediaClient.css";
 const ip = await getServerIp();
 
 async function getAvailableVideos(): Promise<{ id: number; name: string }[]> {
-  return await (await fetch(`http://${ip}:8484/videos`)).json();
+  const res = await fetch(`http://${ip}:8484/videos`);
+  if (!res.ok) throw new Error(await res.text());
+  return await res.json();
 }
 
 const videos = await getAvailableVideos();
@@ -14,6 +16,7 @@ export default function MediaClient({}) {
   const [selectedVideo, setSelectedVideo] = useState<number | undefined>(
     undefined,
   );
+
   if (!selectedVideo)
     return (
       <div>
