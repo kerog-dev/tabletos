@@ -16,15 +16,13 @@ export default function OverlayToolbar({
         "overlay-toolbar" + (altPos ? " alternate-toolbar-position" : "")
       }
     >
-      <button
-        style={{ display: activeApp === null ? "none" : "unset" }}
-        className="close-app-button"
-        onClick={() => setActiveApp(null)}
-      >
-        X
-      </button>
+      {activeApp !== null && (
+        <button className="close-app-button" onClick={() => setActiveApp(null)}>
+          X
+        </button>
+      )}
       <span>{__COMMIT_HASH__}</span>
-      <span>{activeApp?.name}</span>
+      {activeApp !== null && <span>{activeApp?.name}</span>}
     </div>
   );
 }

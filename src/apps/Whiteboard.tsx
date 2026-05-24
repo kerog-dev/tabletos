@@ -49,13 +49,21 @@ export default function Whiteboard() {
     );
 
   return (
-    <div style={{ position: "relative", height: "100vh" }}>
+    <div
+      style={{
+        position: "absolute",
+        width: "100vw",
+        height: "100vh",
+        top: 0,
+        left: 0,
+      }}
+    >
       <button
         onClick={() => {
           initialized.current = false;
           setActive(null);
         }}
-        style={{ position: "absolute", top: 8, left: 8, zIndex: 10 }}
+        style={{ position: "absolute", top: 22, left: 64, zIndex: 10 }}
       >
         ← boards
       </button>
