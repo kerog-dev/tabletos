@@ -2,8 +2,14 @@
     position: absolute;
     top: 0;
     right: 0;
-    height: 20px;
+    height: 40px;
     margin: 10px;
+    background-color: black;
+    color: white;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .close-app-button {
@@ -13,4 +19,10 @@
 .overlay-toolbar.alternate-toolbar-position {
     top: unset;
     bottom: 0;
+}
+
+.overlay-toolbar * {
+    display: inline;
+    margin-left: 10px;
+    margin-right: 10px;
 }

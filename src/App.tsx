@@ -31,13 +31,7 @@ async function getManifestKey<T extends keyof AppManifest>(
   return (await app.manifest)[key] ?? defaultManifest[key];
 }
 
-const apps: App[] = loadApps([
-  "Numbat",
-  "Snap",
-  "Counter",
-  "MediaClient",
-  "Whiteboard",
-]);
+const apps: App[] = loadApps(["Numbat", "Snap", "MediaClient", "Whiteboard"]);
 
 function Main() {
   const [activeApp, setActiveApp] = useState<App | null>(null);
@@ -50,9 +44,14 @@ function Main() {
     });
   }, [activeApp]);
 
+  const toolbar = (
+    <OverlayToolbar {...{ setActiveApp, altPos: altToolbarPos, activeApp }} />
+  );
+
   if (activeApp === null)
     return (
       <>
+        {toolbar}
         no app selected
         <ul>
           {apps.map((app, i) => (
@@ -68,7 +67,7 @@ function Main() {
 
   return (
     <>
-      <OverlayToolbar {...{ setActiveApp, altPos: altToolbarPos }} />
+      {toolbar}
       <Suspense fallback={<div>Loading...</div>}>
         <ActiveAppComponent />
       </Suspense>
