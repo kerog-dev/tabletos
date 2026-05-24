@@ -37,6 +37,7 @@ const apps: App[] = loadApps([
   "MediaClient",
   "Whiteboard",
   "Storage",
+  "TicTacToe",
 ]);
 
 function Main() {
