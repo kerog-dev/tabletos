@@ -35,6 +35,17 @@ const storage = makeProxy(root, flush);
 
 export default storage;
 
+export function exportJSON() {
+  const data = JSON.stringify(root);
+  return data;
+}
+
+export function importJSON(data: string) {
+  const parsed = JSON.parse(data);
+  Object.assign(root, parsed);
+  flush();
+}
+
 export function useStorage<T>(
   path: string,
   defaultValue: T,

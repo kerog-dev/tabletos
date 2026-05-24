@@ -1,2 +1,4 @@
+allowBuilds:
+  esbuild: true
 patchedDependencies:
   vite-plugin-singlefile: patches/vite-plugin-singlefile.patch
