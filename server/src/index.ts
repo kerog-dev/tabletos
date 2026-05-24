@@ -20,7 +20,7 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.static(`${import.meta.dirname}/../public`));
+app.use(express.static(`${__dirname}/../public`));
 
 const upload = multer({ dest: "assets/videoUpload" });
 
@@ -70,7 +70,7 @@ app.get("/video/:id", (req, res) => {
     name: string;
     assetFilename: string;
   };
-  res.sendFile(join(import.meta.dirname, "..", row.assetFilename));
+  res.sendFile(join(__dirname, "..", row.assetFilename));
 });
 
 app.listen(8484, () => {
