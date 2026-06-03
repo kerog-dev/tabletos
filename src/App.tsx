@@ -41,15 +41,29 @@ const apps: App[] = loadApps([
 ]);
 
 function Main() {
-  const [activeApp, setActiveApp] = useState<App | null>(null);
+  const [activeApp, setActiveApp] = useState<App | null>(() => {
+    const hash = window.location.hash.slice(1);
+    return apps.find(app => app.name === hash) ?? null;
+  });
   const [altToolbarPos, setAltToolbarPos] = useState(false);
 
   useEffect(() => {
-    if (!activeApp) return;
+    if (!activeApp) {
+      window.location.hash = "";
+      return;
+    }
+    window.location.hash = activeApp.name;
     getManifestKey(activeApp, "alternateToolbarPosition").then((x) => {
       setAltToolbarPos(x);
     });
   }, [activeApp]);
+
+  useEffect(() => {
+    window.addEventListener("hashchange", () => {
+      const hash = window.location.hash.slice(1)
+      setActiveApp(apps.find(app => app.name === hash) ?? null)
+    })
+  }, [])
 
   const toolbar = (
     <OverlayToolbar {...{ setActiveApp, altPos: altToolbarPos, activeApp }} />
