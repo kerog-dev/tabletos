@@ -1,11 +1,35 @@
-import snapHtml from "../assets/snap.html?raw";
+import { useEffect, useState } from "react";
+import compressedUri from "../assets/snap.html.gz?url";
 
 export default function Snap() {
-  const blob = new Blob([snapHtml], { type: "text/html" });
-  const url = URL.createObjectURL(blob);
+  const [outputUrl, setOutputUrl] = useState<string | null>(null)
+  const [srcDoc, setSrcDoc] = useState("");
+  
+  useEffect(() => void (async () => {
+    const checkBlob = await (await fetch(compressedUri)).blob()
+    const checkText = await checkBlob.text()
+    if (checkText.startsWith("<!")) {
+      setOutputUrl(compressedUri)
+      return;
+    }
+    const stream = (await (await fetch(compressedUri)).blob()).stream().pipeThrough(new DecompressionStream("gzip"))
+    const reader = stream.getReader();
+    const chunks = [];
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+    }
+
+    const outputBlob = new Blob(chunks);
+    setSrcDoc(await outputBlob.text());
+  })(), [])
+
   return (
     <iframe
-      src={url}
+      src={srcDoc ? undefined : outputUrl ?? "about:blank"}
+      srcDoc={outputUrl ? undefined : srcDoc}
       title="Snap!"
       width={window.innerWidth}
       height={window.innerHeight}
