@@ -1,21 +1,61 @@
-import { Excalidraw, serializeAsJSON, restore } from "@excalidraw/excalidraw";
-import "@excalidraw/excalidraw/index.css";
-import { useMemo, useRef, useState } from "react";
+const { default: Atrament } = await import("atrament" as any);
+
+import { useEffect, useRef, useState } from "react";
 import storage from "../storage.ts";
 
 storage.whiteboards ??= {};
 
+type Tool = "draw" | "erase";
+
 export default function Whiteboard() {
   const [active, setActive] = useState<string | null>(null);
-  const initialized = useRef(false);
+  const [, rerender] = useState(0);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const atramentRef = useRef<typeof Atrament | null>(null);
+  const [tool, setTool] = useState<Tool>("draw");
+  const [color, setColor] = useState("#1a1a1a");
+  const [weight, setWeight] = useState(4);
 
-  const initialData = useMemo(() => {
-    if (!active) return { elements: [], appState: {} };
+  useEffect(() => {
+    if (!active) return;
+    const canvas = canvasRef.current!;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const ctx = canvas.getContext("2d")!;
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
     const saved = storage.whiteboards[active];
-    return saved
-      ? restore(JSON.parse(saved), null, null)
-      : { elements: [], appState: {} };
+    if (saved) {
+      const img = new Image();
+      img.onload = () => ctx.drawImage(img, 0, 0);
+      img.src = saved;
+    }
+
+    const at = new Atrament(canvas, { color, weight });
+    at.smoothing = 0.85;
+    atramentRef.current = at;
+
+    const save = () => {
+      storage.whiteboards[active] = canvas.toDataURL("image/webp", 0.92);
+    };
+    at.addEventListener("strokeend", save);
+    return () => {
+      at.removeEventListener("strokeend", save);
+      at.destroy();
+      atramentRef.current = null;
+    };
   }, [active]);
+
+  useEffect(() => {
+    const at = atramentRef.current;
+    if (!at) return;
+    at.mode = tool === "erase" ? "erase" : "draw";
+  }, [tool]);
+
+  useEffect(() => { if (atramentRef.current) atramentRef.current.color = color; }, [color]);
+  useEffect(() => { if (atramentRef.current) atramentRef.current.weight = weight; }, [weight]);
 
   if (!active)
     return (
@@ -25,13 +65,7 @@ export default function Whiteboard() {
           {Object.keys(storage.whiteboards).map((name) => (
             <li key={name}>
               <button onClick={() => setActive(name)}>{name}</button>
-              <button
-                onClick={() => {
-                  delete storage.whiteboards[name];
-                }}
-              >
-                ×
-              </button>
+              <button onClick={() => { delete storage.whiteboards[name]; rerender((n) => n + 1); }}>×</button>
             </li>
           ))}
         </ul>
@@ -48,41 +82,41 @@ export default function Whiteboard() {
       </div>
     );
 
+  const toolbar: React.CSSProperties = {
+    position: "absolute", top: 12, left: 12, zIndex: 10,
+    display: "flex", alignItems: "center", gap: 6,
+    background: "#fff", padding: "6px 10px",
+    borderRadius: 8, boxShadow: "0 2px 8px rgba(0,0,0,.15)",
+  };
+
   return (
-    <div
-      style={{
-        position: "absolute",
-        width: "100vw",
-        height: "100vh",
-        top: 0,
-        left: 0,
-      }}
-    >
-      <button
-        onClick={() => {
-          initialized.current = false;
-          setActive(null);
-        }}
-        style={{ position: "absolute", top: 22, left: 64, zIndex: 10 }}
-      >
-        ← boards
-      </button>
-      <Excalidraw
-        key={active}
-        initialData={initialData}
-        onChange={(elements, appState, files) => {
-          if (!initialized.current) {
-            initialized.current = true;
-            return;
-          }
-          storage.whiteboards[active] = serializeAsJSON(
-            elements,
-            appState,
-            files,
-            "local",
-          );
-        }}
-      />
+    <div style={{ position: "absolute", inset: 0 }}>
+      <div style={toolbar}>
+        <button onClick={() => setActive(null)}>← boards</button>
+        {(["draw", "erase"] as Tool[]).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTool(t)}
+            style={{ outline: tool === t ? "2px solid #3b82f6" : "none", borderRadius: 4, padding: "2px 6px" }}
+          >
+            {t === "draw" ? "✏️draw" : "🧹erase"}
+          </button>
+        ))}
+        <input
+          type="color"
+          value={color}
+          onChange={(e) => setColor(e.target.value)}
+          style={{ width: 32, height: 32, border: "none", padding: 0, cursor: "pointer" }}
+        />
+        <input
+          type="range" min={1} max={60} value={weight}
+          onChange={(e) => setWeight(Number(e.target.value))}
+          style={{ width: 80 }}
+        />
+        <span style={{ fontSize: 12, minWidth: 28 }}>{weight}px</span>
+      </div>
+
+      <canvas ref={canvasRef} style={{ display: "block" }} />
     </div>
   );
 }
