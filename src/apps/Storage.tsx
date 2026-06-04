@@ -18,13 +18,16 @@ function StorageExplorerNode({
   nodeValue: any;
   nodePath: string;
 }) {
-  if (typeof nodeValue !== "object")
+  if (typeof nodeValue !== "object") {
+    let nodeValueStr = nodeValue.toString()
+    if (nodeValueStr.length > 50) nodeValueStr = nodeValueStr.slice(0, 50) + '...'
     return (
       <li>
-        {nodeKey} ({nodePath}): {nodeValue} (
+        {nodeKey} ({nodePath}): {nodeValueStr} (
         <button onClick={() => deleteNode(nodePath)}>Delete</button>)
       </li>
     );
+  }
   return (
     <li>
       <span>

@@ -1,5 +1,4 @@
 dist/
 node_modules/
-/reference/
 /server/server.db
 /server/assets/
