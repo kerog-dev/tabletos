@@ -1,16 +1,14 @@
-import { useState } from "react";
-import init, { Numbat, FormatType } from "../assets/numbat/numbat_wasm.js";
+import { useRef, useState } from "react";
+import { parser } from 'mathjs'
 
-await init();
-const numbat = Numbat.new(true, true, FormatType.Html);
-
-export default function NumbatApp() {
+export default function Calculator() {
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
   const [isError, setIsError] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [draft, setDraft] = useState("");
+  const curParser = useRef(parser())
 
   function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === "Enter") {
@@ -42,9 +40,13 @@ export default function NumbatApp() {
   }
 
   function evaluate() {
-    const result = numbat.interpret(input);
-    setOutput(result.output);
-    setIsError(result.is_error);
+    try {
+      const result = curParser.current.evaluate(input);
+      setOutput(result)
+    } catch (e) {
+      setOutput((e as any).message)
+      setIsError(true)
+    }
   }
 
   return (
@@ -53,7 +55,7 @@ export default function NumbatApp() {
         value={input}
         onChange={(e) => setInput(e.target.value)}
         onKeyDown={onKeyDown}
-        placeholder="e.g. ℏ * omega -> eV"
+        placeholder="e.g. 18 months to year"
       />
       <button onClick={evaluate}>Run</button>
       <div

@@ -32,7 +32,7 @@ async function getManifestKey<T extends keyof AppManifest>(
 }
 
 const apps: App[] = loadApps([
-  "Numbat",
+  "Calculator",
   "Snap",
   "MediaClient",
   "Whiteboard",
