@@ -2,7 +2,7 @@ import type React from "react";
 import { lazy, Suspense, useEffect, useState } from "react";
 import OverlayToolbar from "./components/OverlayToolbar.tsx";
 
-interface AppComponentParams {}
+interface AppComponentParams { }
 
 interface AppManifest {
   alternateToolbarPosition: boolean;
