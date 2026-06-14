@@ -93,6 +93,7 @@ function Window(
 
   function startResize() {
     window.addEventListener("mouseup", (e) => {
+      e.preventDefault();
       resize([e.clientX - pos[1], e.clientY - pos[0]]);
     }, { once: true });
     toast({
