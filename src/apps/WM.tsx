@@ -22,7 +22,32 @@ function Window(
   useEffect(() => {
     if (!windowEl.current || !windowBarEl.current) return;
 
-    const downListener = () => {
+    let lastTouch: Touch | null = null;
+
+    const touchStartListener = () => {
+      dragged.current = true;
+    };
+    const touchEndListener = () => {
+      if (!dragged.current || !windowEl.current) return;
+      dragged.current = false;
+      lastTouch = null;
+      move([windowEl.current.offsetTop, windowEl.current.offsetLeft]);
+    };
+    const touchMoveListener = (e: TouchEvent) => {
+      if (!windowEl.current || !dragged.current) return;
+      e.preventDefault();
+      const touch = e.touches[0];
+      if (lastTouch) {
+        const movementX = touch.clientX - lastTouch.clientX;
+        const movementY = touch.clientY - lastTouch.clientY;
+        windowEl.current.style.left = (windowEl.current.offsetLeft + movementX) + "px";
+        windowEl.current.style.top = (windowEl.current.offsetTop + movementY) + "px";
+      }
+      lastTouch = touch;
+    };
+
+    const downListener = (e: MouseEvent) => {
+      e.preventDefault();
       dragged.current = true;
     };
     const upListener = () => {
@@ -36,19 +61,26 @@ function Window(
       windowEl.current.style.top = (windowEl.current.offsetTop + e.movementY) + "px";
     };
 
-    const pairs: [HTMLElement, "mousedown" | "mouseup" | "mousemove", (e: MouseEvent) => any][] = [[
-      windowBarEl.current,
-      "mousedown",
-      downListener,
-    ], [
-      document.body,
-      "mouseup",
-      upListener,
-    ], [
-      document.body,
-      "mousemove",
-      moveListener,
-    ]];
+    const pairs: [HTMLElement, string, (e: any) => any][] = [
+      [
+        windowBarEl.current,
+        "mousedown",
+        downListener,
+      ],
+      [
+        document.body,
+        "mouseup",
+        upListener,
+      ],
+      [
+        document.body,
+        "mousemove",
+        moveListener,
+      ],
+      [windowBarEl.current, "touchstart", touchStartListener],
+      [document.body, "touchend", touchEndListener],
+      [document.body, "touchmove", touchMoveListener],
+    ];
     pairs.forEach(([target, evName, listener]) => {
       target.addEventListener(evName, listener);
     });
@@ -76,6 +108,9 @@ function Window(
         width: size[0] + "px",
         height: minimized ? "30px" : size[1] + "px",
         zIndex: z,
+        display: "flex",
+        flexDirection: "column",
+        overflow: "scroll",
       }}
       ref={windowEl}
     >
