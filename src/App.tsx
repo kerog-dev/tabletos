@@ -1,80 +1,29 @@
-import type React from "react";
-import { lazy, Suspense, useEffect, useState } from "react";
-import OverlayToolbar from "./components/OverlayToolbar.tsx";
-
-interface AppComponentParams { }
-
-interface AppManifest {
-  alternateToolbarPosition: boolean;
-}
-
-const defaultManifest: AppManifest = { alternateToolbarPosition: false };
-
-export interface App {
-  name: string;
-  component: React.LazyExoticComponent<React.FC<AppComponentParams>>;
-  manifest: Promise<Partial<AppManifest>>;
-}
-
-function loadApps(names: string[]): App[] {
-  return names.map((name) => ({
-    name,
-    manifest: import(`./apps/${name}.json`).catch(() => defaultManifest),
-    component: lazy(() => import(`./apps/${name}.tsx`)),
-  }));
-}
-
-async function getManifestKey<T extends keyof AppManifest>(
-  app: App,
-  key: T,
-): Promise<AppManifest[T]> {
-  return (await app.manifest)[key] ?? defaultManifest[key];
-}
-
-const apps: App[] = loadApps([
-  "Calculator",
-  "Snap",
-  "MediaClient",
-  "Whiteboard",
-  "Storage",
-  "TicTacToe",
-  "Chess"
-]);
+import { useEffect, useState } from "react";
+import { type App, apps } from "./apps.ts";
+import AppWindow from "./components/AppWindow.tsx";
 
 function Main() {
   const [activeApp, setActiveApp] = useState<App | null>(() => {
     const hash = window.location.hash.slice(1);
     return apps.find(app => app.name === hash) ?? null;
   });
-  const [altToolbarPos, setAltToolbarPos] = useState(false);
 
   useEffect(() => {
-    document.title = `${activeApp?.name ?? "Home"} - tabletos`
-    if (!activeApp) {
-      window.location.hash = "";
-      return;
-    }
-    window.location.hash = activeApp.name;
-    getManifestKey(activeApp, "alternateToolbarPosition").then((x) => {
-      setAltToolbarPos(x);
-    });
+    document.title = `${activeApp?.name ?? "Home"} - tabletos`;
+    window.location.hash = activeApp?.name ?? "";
   }, [activeApp]);
 
   useEffect(() => {
     window.addEventListener("hashchange", () => {
-      const hash = window.location.hash.slice(1)
-      setActiveApp(apps.find(app => app.name === hash) ?? null)
-    })
-  }, [])
+      const hash = window.location.hash.slice(1);
+      setActiveApp(apps.find(app => app.name === hash) ?? null);
+    });
+  }, []);
 
-  const toolbar = (
-    <OverlayToolbar {...{ setActiveApp, altPos: altToolbarPos, activeApp }} />
-  );
-
-  if (activeApp === null)
+  if (activeApp === null) {
+    // todo: show toolbar?
     return (
       <>
-        {toolbar}
         no app selected
         <ul>
           {apps.map((app, i) => (
@@ -85,15 +34,11 @@ function Main() {
         </ul>
       </>
     );
-
-  const ActiveAppComponent = activeApp?.component;
+  }
 
   return (
     <>
-      {toolbar}
-      <Suspense fallback={<div>Loading...</div>}>
-        <ActiveAppComponent />
-      </Suspense>
+      <AppWindow app={activeApp} isEmbedded={false} setActiveApp={setActiveApp} />
     </>
   );
 }
