@@ -1,14 +1,14 @@
+import { parser } from "mathjs";
 import { useRef, useState } from "react";
-import { parser } from 'mathjs'
+import { toast, Urgency } from "../toast.tsx";
 
 export default function Calculator() {
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
-  const [isError, setIsError] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [draft, setDraft] = useState("");
-  const curParser = useRef(parser())
+  const curParser = useRef(parser());
 
   function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === "Enter") {
@@ -19,10 +19,9 @@ export default function Calculator() {
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       if (historyIndex === -1) setDraft(input);
-      const next =
-        historyIndex === -1
-          ? history.length - 1
-          : Math.max(0, historyIndex - 1);
+      const next = historyIndex === -1
+        ? history.length - 1
+        : Math.max(0, historyIndex - 1);
       setHistoryIndex(next);
       setInput(history[next] ?? input);
     } else if (e.key === "ArrowDown") {
@@ -42,10 +41,14 @@ export default function Calculator() {
   function evaluate() {
     try {
       const result = curParser.current.evaluate(input);
-      setOutput(result)
+      setOutput(result);
     } catch (e) {
-      setOutput((e as any).message)
-      setIsError(true)
+      toast({
+        title: "Calculator Error",
+        desc: (e as any).message,
+        urgency: Urgency.Error,
+      });
+      setOutput("");
     }
   }
 
@@ -59,7 +62,6 @@ export default function Calculator() {
       />
       <button onClick={evaluate}>Run</button>
       <div
-        style={{ color: isError ? "red" : "inherit" }}
         dangerouslySetInnerHTML={{ __html: output }}
       />
     </div>

@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { type App, apps } from "./apps.ts";
 import AppWindow from "./components/AppWindow.tsx";
+import { Toasts } from "./toast.tsx";
 
+// TODO: consider forcing WM?
 function Main() {
   const [activeApp, setActiveApp] = useState<App | null>(() => {
     const hash = window.location.hash.slice(1);
@@ -38,6 +40,7 @@ function Main() {
 
   return (
     <>
+      <Toasts />
       <AppWindow app={activeApp} isEmbedded={false} setActiveApp={setActiveApp} />
     </>
   );

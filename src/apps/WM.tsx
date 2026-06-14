@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { type App, apps } from "../apps.ts";
 import AppWindow from "../components/AppWindow.tsx";
+import { toast } from "../toast.tsx";
 
 function Window(
   { app, pos, size, z, onClick = () => {}, move, resize, kill }: {
@@ -94,6 +95,9 @@ function Window(
     window.addEventListener("mouseup", (e) => {
       resize([e.clientX - pos[1], e.clientY - pos[0]]);
     }, { once: true });
+    toast({
+      title: "Entered resizing mode! Press where you want the bottom-right corner to be.",
+    });
   }
 
   return (

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "../toast.tsx";
 
 enum TileState {
   Empty = " ",
@@ -41,7 +42,10 @@ export default function TicTacToe() {
     setBoard(newBoard);
     setCurrentPlayer(currentPlayer === TileState.X ? TileState.O : TileState.X);
     const newWinner = checkWinner(newBoard);
-    if (newWinner) setWinner(newWinner);
+    if (newWinner) {
+      setWinner(newWinner);
+      toast({ title: `${newWinner === TileState.X ? "X" : newWinner === TileState.O ? "O" : ""} won!` });
+    }
   };
 
   return (
