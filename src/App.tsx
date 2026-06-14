@@ -38,6 +38,7 @@ const apps: App[] = loadApps([
   "Whiteboard",
   "Storage",
   "TicTacToe",
+  "Chess"
 ]);
 
 function Main() {
@@ -48,6 +49,7 @@ function Main() {
   const [altToolbarPos, setAltToolbarPos] = useState(false);
 
   useEffect(() => {
+    document.title = `${activeApp?.name ?? "Home"} - tabletos`
     if (!activeApp) {
       window.location.hash = "";
       return;

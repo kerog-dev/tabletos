@@ -10,8 +10,10 @@
   },
   "dependencies": {
     "atrament": "^5.1.0",
+    "chess.js": "^1.4.0",
     "mathjs": "^15.2.0",
     "react": "^19.2.6",
+    "react-chessboard": "^5.10.0",
     "react-dom": "^19.2.6"
   },
   "devDependencies": {
