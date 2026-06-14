@@ -21,6 +21,8 @@ export default function Whiteboard() {
     const canvas = canvasRef.current!;
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
+    canvas.style.width = "100%";
+    canvas.style.height = "100%";
 
     const ctx = canvas.getContext("2d")!;
     ctx.fillStyle = "#ffffff";
@@ -54,10 +56,14 @@ export default function Whiteboard() {
     at.mode = tool === "erase" ? "erase" : "draw";
   }, [tool]);
 
-  useEffect(() => { if (atramentRef.current) atramentRef.current.color = color; }, [color]);
-  useEffect(() => { if (atramentRef.current) atramentRef.current.weight = weight; }, [weight]);
+  useEffect(() => {
+    if (atramentRef.current) atramentRef.current.color = color;
+  }, [color]);
+  useEffect(() => {
+    if (atramentRef.current) atramentRef.current.weight = weight;
+  }, [weight]);
 
-  if (!active)
+  if (!active) {
     return (
       <div>
         <h2>Whiteboards</h2>
@@ -65,7 +71,14 @@ export default function Whiteboard() {
           {Object.keys(storage.whiteboards).map((name) => (
             <li key={name}>
               <button onClick={() => setActive(name)}>{name}</button>
-              <button onClick={() => { delete storage.whiteboards[name]; rerender((n) => n + 1); }}>×</button>
+              <button
+                onClick={() => {
+                  delete storage.whiteboards[name];
+                  rerender((n) => n + 1);
+                }}
+              >
+                ×
+              </button>
             </li>
           ))}
         </ul>
@@ -81,12 +94,20 @@ export default function Whiteboard() {
         />
       </div>
     );
+  }
 
   const toolbar: React.CSSProperties = {
-    position: "absolute", top: 12, left: 12, zIndex: 10,
-    display: "flex", alignItems: "center", gap: 6,
-    background: "#fff", padding: "6px 10px",
-    borderRadius: 8, boxShadow: "0 2px 8px rgba(0,0,0,.15)",
+    position: "absolute",
+    top: 12,
+    left: 12,
+    zIndex: 10,
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    background: "#fff",
+    padding: "6px 10px",
+    borderRadius: 8,
+    boxShadow: "0 2px 8px rgba(0,0,0,.15)",
   };
 
   return (
@@ -109,7 +130,10 @@ export default function Whiteboard() {
           style={{ width: 32, height: 32, border: "none", padding: 0, cursor: "pointer" }}
         />
         <input
-          type="range" min={1} max={60} value={weight}
+          type="range"
+          min={1}
+          max={60}
+          value={weight}
           onChange={(e) => setWeight(Number(e.target.value))}
           style={{ width: 80 }}
         />
