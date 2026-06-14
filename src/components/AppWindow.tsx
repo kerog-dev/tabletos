@@ -26,7 +26,15 @@ export default function AppWindow(
   const toolbar = <OverlayToolbar {...{ isEmbedded, setActiveApp, altPos: altToolbarPos, activeApp: app }} />;
 
   return (
-    <div style={{ display: hidden ? "none" : "unset", margin: 0, padding: 0, width: "100%", height: "100%" }}>
+    <div
+      style={{
+        display: hidden ? "none" : "unset",
+        margin: 0,
+        padding: 0,
+        width: "100%",
+        height: "100%",
+      }}
+    >
       {toolbar}
       <Suspense fallback={<p>Loading app...</p>}>
         <AppComponent />

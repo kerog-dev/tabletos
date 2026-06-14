@@ -21,6 +21,9 @@ export default function OverlayToolbar({
           X
         </button>
       )}
+      {document.fullscreenElement === null
+        ? <button onClick={() => document.body.requestFullscreen()}>Fullscreen</button>
+        : ""}
       <span>{__COMMIT_HASH__}</span>
       {activeApp !== null && <span>{activeApp?.name}</span>}
     </div>
