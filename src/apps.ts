@@ -8,18 +8,10 @@ interface AppManifest {
 
 const defaultManifest: AppManifest = { alternateToolbarPosition: false };
 
-export interface App {
+interface App {
   name: string;
   component: React.LazyExoticComponent<React.FC<AppComponentParams>>;
   manifest: Promise<Partial<AppManifest>>;
-}
-
-function loadApps(names: string[]): App[] {
-  return names.map((name) => ({
-    name,
-    manifest: import(`./apps/${name}.json`).catch(() => defaultManifest),
-    component: lazy(() => import(`./apps/${name}.tsx`)),
-  }));
 }
 
 async function getManifestKey<T extends keyof AppManifest>(
@@ -29,15 +21,23 @@ async function getManifestKey<T extends keyof AppManifest>(
   return (await app.manifest)[key] ?? defaultManifest[key];
 }
 
-const apps: App[] = loadApps([
-  "Calculator",
-  "Snap",
-  "MediaClient",
-  "Whiteboard",
-  "Storage",
-  "TicTacToe",
-  "Chess",
-  "WM",
-]);
+const appModules = import.meta.glob("./apps/*.tsx");
+const appManifests = import.meta.glob("./apps/*.json");
 
-export { apps, getManifestKey };
+const apps: App[] = Object.entries(appModules).map(([path, importFn]) => {
+  const name = path.replace("./apps/", "").replace(".tsx", "");
+  const manifestPath = `./apps/${name}.json`;
+  const manifestImport = appManifests[manifestPath];
+
+  return {
+    name,
+    component: lazy(importFn as () => Promise<{ default: React.FC<AppComponentParams> }>),
+    manifest: manifestImport
+      ? (manifestImport() as Promise<{ default: Partial<AppManifest> }>)
+        .then(m => m.default)
+        .catch(() => defaultManifest)
+      : Promise.resolve(defaultManifest),
+  };
+});
+
+export { type App, apps, getManifestKey };
