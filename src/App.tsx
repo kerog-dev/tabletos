@@ -41,7 +41,7 @@ function Main() {
   return (
     <>
       <Toasts />
-      <AppWindow app={activeApp} isEmbedded={false} setActiveApp={setActiveApp} />
+      <AppWindow app={activeApp} showToolbar={true} setActiveApp={setActiveApp} />
     </>
   );
 }

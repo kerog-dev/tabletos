@@ -2,12 +2,10 @@ import type { App } from "../apps.ts";
 import "./OverlayToolbar.css";
 
 export default function OverlayToolbar({
-  isEmbedded = false,
   activeApp,
   setActiveApp,
   altPos,
 }: {
-  isEmbedded?: boolean;
   activeApp: App | null;
   setActiveApp: (app: App | null) => any;
   altPos: boolean;
@@ -16,7 +14,7 @@ export default function OverlayToolbar({
     <div
       className={"overlay-toolbar" + (altPos ? " alternate-toolbar-position" : "")}
     >
-      {activeApp !== null && !isEmbedded && (
+      {activeApp !== null && (
         <button className="close-app-button" onClick={() => setActiveApp(null)}>
           X
         </button>

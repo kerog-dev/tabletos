@@ -3,11 +3,11 @@ import { type App, getManifestKey } from "../apps.ts";
 import OverlayToolbar from "./OverlayToolbar.tsx";
 
 export default function AppWindow(
-  { app, isEmbedded = true, setActiveApp = () => {}, hidden = false }: {
+  { app, setActiveApp = () => {}, hidden = false, showToolbar = false }: {
     app: App;
-    isEmbedded?: boolean;
     setActiveApp?: (app: App | null) => any;
     hidden?: boolean;
+    showToolbar?: boolean;
   },
 ) {
   const [AppComponent, setComponent] = useState(() => app.component);
@@ -23,7 +23,9 @@ export default function AppWindow(
     setComponent(() => app.component);
   }, [app]);
 
-  const toolbar = <OverlayToolbar {...{ isEmbedded, setActiveApp, altPos: altToolbarPos, activeApp: app }} />;
+  const toolbar = showToolbar
+    ? <OverlayToolbar {...{ setActiveApp, altPos: altToolbarPos, activeApp: app }} />
+    : null;
 
   return (
     <div
@@ -35,7 +37,7 @@ export default function AppWindow(
         height: "100%",
       }}
     >
-      {toolbar}
+      {showToolbar && toolbar}
       <Suspense fallback={<p>Loading app...</p>}>
         <AppComponent />
       </Suspense>
