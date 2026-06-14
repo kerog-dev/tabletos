@@ -6,7 +6,7 @@ export default function AppWindow(
   { app, isEmbedded = true, setActiveApp = () => {}, hidden = false }: {
     app: App;
     isEmbedded?: boolean;
-    setActiveApp?: (app: App) => any;
+    setActiveApp?: (app: App | null) => any;
     hidden?: boolean;
   },
 ) {
