@@ -1,17 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { type App, apps } from "../apps.ts";
 import AppWindow from "../components/AppWindow.tsx";
-import { toast } from "../toast.tsx";
 
 function Window(
-  { app, pos, size, z, onClick = () => {}, move, resize, kill }: {
+  { app, pos, initialSize, z, onClick = () => {}, move, kill }: {
     app: App;
     pos: [number, number];
-    size: [number, number];
+    initialSize: [number, number];
     z: number;
     onClick?: () => any;
     move: (newPos: [number, number]) => void;
-    resize: (newSize: [number, number]) => void;
     kill: () => void;
   },
 ) {
@@ -23,6 +21,20 @@ function Window(
   useEffect(() => {
     if (!windowEl.current || !windowBarEl.current) return;
 
+    windowEl.current.style.width = initialSize[0] + "px";
+    windowEl.current.style.height = initialSize[1] + "px";
+
+    const finishMove = () => {
+      if (!windowEl.current) return;
+      if (windowEl.current.offsetTop + windowEl.current.clientHeight > window.innerHeight) {
+        windowEl.current.style.top = (window.innerHeight - windowEl.current.clientHeight - 20) + "px";
+      }
+      if (windowEl.current.offsetLeft + windowEl.current.clientWidth > window.innerWidth) {
+        windowEl.current.style.left = (window.innerWidth - windowEl.current.clientWidth - 20) + "px";
+      }
+      move([windowEl.current.offsetTop, windowEl.current.offsetLeft]);
+    };
+
     let lastTouch: Touch | null = null;
 
     const touchStartListener = () => {
@@ -32,7 +44,7 @@ function Window(
       if (!dragged.current || !windowEl.current) return;
       dragged.current = false;
       lastTouch = null;
-      move([windowEl.current.offsetTop, windowEl.current.offsetLeft]);
+      finishMove();
     };
     const touchMoveListener = (e: TouchEvent) => {
       if (!windowEl.current || !dragged.current) return;
@@ -54,7 +66,7 @@ function Window(
     const upListener = () => {
       if (!dragged.current || !windowEl.current) return;
       dragged.current = false;
-      move([windowEl.current.offsetTop, windowEl.current.offsetLeft]);
+      finishMove();
     };
     const moveListener = (e: MouseEvent) => {
       if (!windowEl.current || !dragged.current) return;
@@ -91,16 +103,6 @@ function Window(
       });
   }, []);
 
-  function startResize() {
-    window.addEventListener("mouseup", (e) => {
-      e.preventDefault();
-      resize([e.clientX - pos[1], e.clientY - pos[0]]);
-    }, { once: true });
-    toast({
-      title: "Entered resizing mode! Press where you want the bottom-right corner to be.",
-    });
-  }
-
   return (
     <div
       onClick={onClick}
@@ -108,14 +110,13 @@ function Window(
         backgroundColor: "white",
         border: "5px solid black",
         position: "absolute",
-        top: dragged.current ? undefined : Math.min(window.innerHeight - size[1], pos[0]) + "px",
-        left: dragged.current ? undefined : Math.min(window.innerWidth - size[0], pos[1]) + "px",
-        width: size[0] + "px",
-        height: minimized ? "30px" : size[1] + "px",
+        top: dragged.current ? undefined : Math.min(window.innerHeight, pos[0]) + "px",
+        left: dragged.current ? undefined : Math.min(window.innerWidth, pos[1]) + "px",
         zIndex: z,
         display: "flex",
         flexDirection: "column",
         overflow: "scroll",
+        resize: "both",
       }}
       ref={windowEl}
     >
@@ -133,7 +134,6 @@ function Window(
         <div>
           <button onClick={() => kill()}>X</button>
           <button onClick={() => setMinimized(minimized => !minimized)}>_</button>
-          <button onClick={() => startResize()}>!</button>
         </div>
       </div>
       <AppWindow app={app} hidden={minimized} />
@@ -161,7 +161,7 @@ interface WindowDesc {
   id: number;
   app: App;
   pos: [number, number];
-  size: [number, number];
+  initialSize: [number, number];
   z: number;
 }
 
@@ -175,7 +175,7 @@ export default function WM() {
       id: ++curId.current,
       app,
       pos: [Math.random() * window.innerWidth, Math.random() * window.innerHeight],
-      size: [800, 600],
+      initialSize: [window.innerWidth / 3, window.innerHeight / 3],
       z: ++curZ.current,
     };
     setWindows(windows => [...windows, newWindow]);
@@ -197,13 +197,12 @@ export default function WM() {
           key={w.id}
           app={w.app}
           pos={w.pos}
-          size={w.size}
+          initialSize={w.initialSize}
           z={w.z}
           onClick={() => {
             setWindows(windows => windows.map(w2 => w.id === w2.id ? { ...w2, z: ++curZ.current } : w2));
           }}
           move={([x, y]) => modifyWindow(w => ({ ...w, pos: [x, y] }), w.id)}
-          resize={([x, y]) => modifyWindow(w => ({ ...w, size: [x, y] }), w.id)}
           kill={() => killWindow(w.id)}
         />
       ))}

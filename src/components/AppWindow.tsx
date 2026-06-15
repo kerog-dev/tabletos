@@ -1,5 +1,6 @@
 import { Suspense, useEffect, useState } from "react";
 import { type App, getManifestKey } from "../apps.ts";
+import ErrorBoundary from "./ErrorBoundary.tsx";
 import OverlayToolbar from "./OverlayToolbar.tsx";
 
 export default function AppWindow(
@@ -11,6 +12,7 @@ export default function AppWindow(
   },
 ) {
   const [AppComponent, setComponent] = useState(() => app.component);
+  const [errKey, setErrKey] = useState(0);
 
   const [altToolbarPos, setAltToolbarPos] = useState(false);
   useEffect(() => {
@@ -35,11 +37,29 @@ export default function AppWindow(
         padding: 0,
         width: "100%",
         height: "100%",
+        overflow: "scroll",
       }}
     >
       {showToolbar && toolbar}
       <Suspense fallback={<p>Loading app...</p>}>
-        <AppComponent />
+        <ErrorBoundary
+          key={errKey}
+          renderer={e => (
+            <p>
+              Error occured in app {app.name}: {String(e)}.{" "}
+              <button
+                onClick={() => {
+                  setComponent(() => app.component);
+                  setErrKey(n => n + 1);
+                }}
+              >
+                Refresh?
+              </button>
+            </p>
+          )}
+        >
+          <AppComponent />
+        </ErrorBoundary>
       </Suspense>
     </div>
   );
