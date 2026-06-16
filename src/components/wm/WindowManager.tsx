@@ -3,6 +3,18 @@ import { type App } from "../../apps.ts";
 import { Launchpad } from "./Launchpad.tsx";
 import { Window } from "./Window.tsx";
 import "./WindowManager.css";
+import * as fs from "../../fs.ts";
+import storage from "../../storage.ts";
+
+let wallpaper: string | null = null;
+try {
+  const content = await fs.readFile("/wallpaper.img");
+  if (!(content instanceof Blob)) throw "Wallpaper file is not a blob";
+  const uri = URL.createObjectURL(content);
+  wallpaper = uri;
+} catch (e) {}
+
+export const windowTransparency = storage.windowTransparency ?? 0;
 
 interface WindowDesc {
   id: number;
@@ -37,7 +49,19 @@ export default function WindowManager() {
   }
 
   return (
-    <div style={{ margin: "0", padding: "0", width: "100vw", height: "100vh", position: "relative" }}>
+    <div
+      style={{
+        margin: "0",
+        padding: "0",
+        width: "100vw",
+        height: "100vh",
+        position: "relative",
+        backgroundImage: wallpaper == null ? undefined : `url(${wallpaper})`,
+        backgroundSize: "cover",
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "50%, 50%",
+      }}
+    >
       <Launchpad spawnWindow={spawnWindow} killAll={() => setWindows([])} />
       {windows.map((w) => (
         <Window

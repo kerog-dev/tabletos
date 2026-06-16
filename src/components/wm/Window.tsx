@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { type App } from "../../apps.ts";
 import { toast } from "../../toast.tsx";
 import AppWindow from "../AppWindow.tsx";
+import { windowTransparency } from "./WindowManager.tsx";
 
 export function Window(
   { app, initialPos, initialSize, z, kill, bringToTop }: {
@@ -160,11 +161,14 @@ export function Window(
       });
   }, []);
 
+  const hexTransparency = (((100 - windowTransparency) / 100) * 255).toString(16).padStart(2, "0");
+
   return (
     <div
       className="window-container"
       style={{
         zIndex: fullscreen ? "10000" : z,
+        backgroundColor: `#ffffff${hexTransparency}`,
       }}
       ref={windowEl}
     >
@@ -175,7 +179,7 @@ export function Window(
           justifyContent: "space-between",
           alignItems: "center",
           height: "30px",
-          borderBottom: "3px solid grey",
+          borderBottom: "1px solid blue",
           padding: "5px",
         }}
       >

@@ -1,6 +1,6 @@
 .window-container {
-  background-color: white;
-  border: 5px solid black;
+  border: 5px solid blue;
+  border-radius: 8px;
   position: absolute;
   display: flex;
   flex-direction: column;

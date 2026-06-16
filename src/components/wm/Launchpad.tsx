@@ -5,7 +5,9 @@ export function Launchpad({ spawnWindow, killAll }: { spawnWindow: (app: App) =>
   const [open, setOpen] = useState(false);
 
   return (
-    <div style={{ position: "fixed", bottom: "0", left: "0", margin: "10px", zIndex: "9999" }}>
+    <div
+      style={{ position: "fixed", bottom: "0", left: "0", margin: "10px", zIndex: "9999" }}
+    >
       <button style={{ width: "60px", height: "60px", fontSize: "200%" }} onClick={() => setOpen(open => !open)}>
         {"<!>"}
       </button>
