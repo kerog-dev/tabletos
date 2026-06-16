@@ -22,10 +22,10 @@ function StorageExplorerNode({
     let nodeValueStr = nodeValue.toString();
     if (nodeValueStr.length > 50) nodeValueStr = nodeValueStr.slice(0, 50) + "...";
     return (
-      <li>
+      <span>
         {nodeKey} ({nodePath}): {nodeValueStr} (
         <button onClick={() => deleteNode(nodePath)}>Delete</button>)
-      </li>
+      </span>
     );
   }
   return (

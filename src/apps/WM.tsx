@@ -141,18 +141,35 @@ function Window(
   );
 }
 
-function Taskbar(
-  { windows, spawnWindow, killWindow }: {
-    windows: WindowDesc[];
-    spawnWindow: (app: App) => any;
-    killWindow: (id: number) => void;
-  },
-) {
+function Launchpad({ spawnWindow }: { spawnWindow: (app: App) => void }) {
+  const [open, setOpen] = useState(false);
+
   return (
-    <div>
-      {apps.map(app => <button key={app.name} onClick={() => spawnWindow(app)}>{app.name}</button>)}
-      <br />
-      {windows.map(w => <button key={w.id} onClick={() => killWindow(w.id)}>{w.id}: {w.app.name}</button>)}
+    <div style={{ position: "fixed", bottom: "0", left: "0", margin: "10px" }}>
+      <button onClick={() => setOpen(open => !open)}>{"<!>"}</button>
+      <div
+        style={{
+          display: open ? "unset" : "none",
+          position: "fixed",
+          bottom: "50px",
+          left: "10px",
+          backgroundColor: "#aeaeae",
+          padding: "10px",
+          borderRadius: "8px",
+          width: "10%",
+        }}
+      >
+        <div>
+          Apps:
+          <ul style={{ margin: 0 }}>
+            {apps.map(app => (
+              <li key={app.name}>
+                <button onClick={() => spawnWindow(app)}>{app.name}</button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
     </div>
   );
 }
@@ -191,7 +208,7 @@ export default function WM() {
 
   return (
     <div>
-      <Taskbar windows={windows} spawnWindow={spawnWindow} killWindow={killWindow} />
+      <Launchpad spawnWindow={spawnWindow} />
       {windows.map((w) => (
         <Window
           key={w.id}
