@@ -1,6 +1,13 @@
+import { useRef } from "react";
+import * as fs from "../fs.ts";
 import { exportJSON, importJSON } from "../storage.ts";
+import storage from "../storage.ts";
 
 export default function System() {
+  const wallpaperInputRef = useRef<HTMLInputElement | null>(null);
+  const wallpaperUrlInputRef = useRef<HTMLInputElement | null>(null);
+  const windowTransparencyInputRef = useRef<HTMLInputElement | null>(null);
+
   function clearStorage() {
     localStorage.setItem("tabletos", "{}");
   }
@@ -54,6 +61,45 @@ export default function System() {
           onClick={doImport}
         >
           Import JSON
+        </button>
+      </div>
+      <div>
+        Set wallpaper <input type="file" accept="image/*" ref={wallpaperInputRef} />
+        <button
+          onClick={() => {
+            if (!wallpaperInputRef.current || wallpaperInputRef.current.files?.length !== 1) return;
+            fs.writeFile("/wallpaper.img", wallpaperInputRef.current.files[0]);
+          }}
+        >
+          Set wallpaper
+        </button>
+        Or set from URL:
+        <input type="text" ref={wallpaperUrlInputRef} />
+        <button
+          onClick={async () => {
+            const url = wallpaperUrlInputRef.current?.value ?? "";
+            const res = await fetch(url);
+            const blob = await res.blob();
+            fs.writeFile("/wallpaper.img", blob);
+          }}
+        >
+          Set wallpaper
+        </button>
+        You might need to refresh to apply wallpaper change.
+        <br />
+        Set window transparency (%):
+        <input type="number" ref={windowTransparencyInputRef} />
+        <button
+          onClick={() => {
+            if (!windowTransparencyInputRef.current) return;
+            const value = Math.max(
+              0,
+              Math.min(100, Math.round(windowTransparencyInputRef.current.value as unknown as number)),
+            );
+            storage.windowTransparency = value;
+          }}
+        >
+          Set
         </button>
       </div>
     </div>
