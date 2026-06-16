@@ -1,4 +1,4 @@
-import WindowManager from "./components/WindowManager.tsx";
+import WindowManager from "./components/wm/WindowManager.tsx";
 import { Toasts } from "./toast.tsx";
 
 function Main() {

@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { type App, apps } from "../apps.ts";
-import AppWindow from "./AppWindow.tsx";
-import "./WindowManager.css";
-import { toast } from "../toast.tsx";
+import { type App } from "../../apps.ts";
+import { toast } from "../../toast.tsx";
+import AppWindow from "../AppWindow.tsx";
 
-function Window(
+export function Window(
   { app, initialPos, initialSize, z, kill, bringToTop }: {
     app: App;
     initialPos: [number, number];
@@ -183,110 +182,16 @@ function Window(
         {app.name}
         <div>
           <button onClick={() => setFullscreen(f => !f)}>F</button>
-          <button onClick={() => startResize()}>!</button>
-          <button onClick={() => toggleMinimize()}>_</button>
+          {!fullscreen && (
+            <>
+              <button onClick={() => startResize()}>!</button>
+              <button onClick={() => toggleMinimize()}>_</button>
+            </>
+          )}
           <button onClick={() => kill()}>X</button>
         </div>
       </div>
       <AppWindow app={app} hidden={minimized} />
-    </div>
-  );
-}
-
-function Launchpad({ spawnWindow, killAll }: { spawnWindow: (app: App) => void; killAll: () => void }) {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <div style={{ position: "fixed", bottom: "0", left: "0", margin: "10px", zIndex: "9999" }}>
-      <button style={{ width: "60px", height: "60px", fontSize: "200%" }} onClick={() => setOpen(open => !open)}>
-        {"<!>"}
-      </button>
-      <div
-        style={{
-          display: open ? "unset" : "none",
-          position: "fixed",
-          bottom: "80px",
-          left: "10px",
-          backgroundColor: "#aeaeae",
-          padding: "10px",
-          borderRadius: "8px",
-          width: "10%",
-        }}
-      >
-        <div>
-          Apps:
-          <ul style={{ margin: 0 }}>
-            {apps.map(app => (
-              <li key={app.name}>
-                <button
-                  onClick={() => {
-                    spawnWindow(app);
-                    setOpen(false);
-                  }}
-                >
-                  {app.name}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div>
-          <button onClick={() => document.body.requestFullscreen()}>Fullscreen</button>
-          <br />
-          <button onClick={() => killAll()}>Close all</button>
-          <br />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-interface WindowDesc {
-  id: number;
-  app: App;
-  initialPos: [number, number];
-  initialSize: [number, number];
-  z: number;
-}
-
-export default function WindowManager() {
-  const [windows, setWindows] = useState<WindowDesc[]>([]);
-  const curZ = useRef(0);
-  const curId = useRef(0);
-
-  function spawnWindow(app: App) {
-    const newWindow: WindowDesc = {
-      id: ++curId.current,
-      app,
-      initialPos: [Math.random() * window.innerWidth, Math.random() * window.innerHeight],
-      initialSize: [window.innerWidth / 3, window.innerHeight / 3],
-      z: ++curZ.current,
-    };
-    setWindows(windows => [...windows, newWindow]);
-  }
-
-  function killWindow(id: number) {
-    setWindows(windows => windows.filter(w => w.id !== id));
-  }
-
-  function modifyWindow(updater: (w: WindowDesc) => WindowDesc, id: number) {
-    setWindows(windows => windows.map(w => w.id === id ? updater(w) : w));
-  }
-
-  return (
-    <div style={{ margin: "0", padding: "0", width: "100vw", height: "100vh", position: "relative" }}>
-      <Launchpad spawnWindow={spawnWindow} killAll={() => setWindows([])} />
-      {windows.map((w) => (
-        <Window
-          key={w.id}
-          app={w.app}
-          initialPos={w.initialPos}
-          initialSize={w.initialSize}
-          z={w.z}
-          kill={() => killWindow(w.id)}
-          bringToTop={() => modifyWindow(w => ({ ...w, z: ++curZ.current }), w.id)}
-        />
-      ))}
     </div>
   );
 }
