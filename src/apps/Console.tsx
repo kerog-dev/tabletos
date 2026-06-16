@@ -1,4 +1,9 @@
 import { useRef, useState } from "react";
+import * as fs from "../fs.ts";
+
+Object.assign(window as any, {
+  $fs: fs,
+});
 
 function run(script: string): string {
   try {
