@@ -14,7 +14,8 @@
     "mathjs": "^15.2.0",
     "react": "^19.2.6",
     "react-chessboard": "^5.10.0",
-    "react-dom": "^19.2.6"
+    "react-dom": "^19.2.6",
+    "react-simple-keyboard": "^3.8.221"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
