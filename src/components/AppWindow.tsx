@@ -6,7 +6,7 @@ import OverlayToolbar from "./OverlayToolbar.tsx";
 export default function AppWindow(
   { app, setActiveApp = () => {}, hidden = false, showToolbar = false }: {
     app: App;
-    setActiveApp?: (app: App | null) => any;
+    setActiveApp?: (app: App | null) => void;
     hidden?: boolean;
     showToolbar?: boolean;
   },

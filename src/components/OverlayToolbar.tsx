@@ -8,7 +8,7 @@ export default function OverlayToolbar({
   altPos,
 }: {
   activeApp: App | null;
-  setActiveApp: (app: App | null) => any;
+  setActiveApp: (app: App | null) => void;
   altPos: boolean;
 }) {
   const [isFullscreen, setIsFullscreen] = useState(document.fullscreenElement !== null);

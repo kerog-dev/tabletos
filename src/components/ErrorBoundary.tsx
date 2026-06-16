@@ -1,19 +1,26 @@
 import * as React from "react";
 
-export default class ErrorBoundary extends React.Component {
-  declare state: Readonly<{ hasError: boolean; error: unknown | undefined }>;
-  declare props: { renderer: (error: unknown) => React.ReactNode; children: any };
+type Props = {
+  renderer: (error: unknown) => React.ReactNode;
+  children: React.ReactNode;
+};
 
-  constructor(props: any) {
+type State = {
+  hasError: boolean;
+  error?: unknown;
+};
+
+export default class ErrorBoundary extends React.Component<Props, State> {
+  constructor(props: Props) {
     super(props);
     this.state = { hasError: false, error: undefined };
   }
 
-  static getDerivedStateFromError(error: unknown) {
+  static getDerivedStateFromError(error: unknown): State {
     return { hasError: true, error };
   }
 
-  render() {
+  render(): React.ReactNode {
     if (this.state.hasError) {
       return this.props.renderer(this.state.error);
     }

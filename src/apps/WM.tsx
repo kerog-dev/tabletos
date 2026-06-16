@@ -3,20 +3,20 @@ import { type App, apps } from "../apps.ts";
 import AppWindow from "../components/AppWindow.tsx";
 
 function Window(
-  { app, initialPos, initialSize, z, move, kill, bringToTop }: {
+  { app, initialPos, initialSize, z, kill, bringToTop }: {
     app: App;
     initialPos: [number, number];
     initialSize: [number, number];
     z: number;
-    move: (newPos: [number, number]) => void;
     kill: () => void;
     bringToTop: () => void;
   },
 ) {
   const windowEl = useRef<HTMLDivElement | null>(null);
   const windowBarEl = useRef<HTMLDivElement | null>(null);
-  const [minimized, setMinimized] = useState(false);
   const lastHeightRef = useRef<number>(0);
+  const draggedRef = useRef<boolean>(false);
+  const [minimized, setMinimized] = useState(false);
 
   function toggleMinimize() {
     if (!windowEl.current) return;
@@ -38,7 +38,7 @@ function Window(
     windowEl.current.style.top = initialPos[1] + "px";
     windowEl.current.style.left = initialPos[0] + "px";
 
-    const updateReactPos = () => {
+    const clampPos = () => {
       if (!windowEl.current) return;
       if (windowEl.current.offsetTop + windowEl.current.clientHeight > window.innerHeight) {
         windowEl.current.style.top = (window.innerHeight - windowEl.current.clientHeight - 20) + "px";
@@ -46,22 +46,22 @@ function Window(
       if (windowEl.current.offsetLeft + windowEl.current.clientWidth > window.innerWidth) {
         windowEl.current.style.left = (window.innerWidth - windowEl.current.clientWidth - 20) + "px";
       }
-      move([windowEl.current.offsetTop, windowEl.current.offsetTop]);
     };
 
     let lastTouch: Touch | null = null;
 
     const touchStartListener = () => {
-      updateReactPos();
+      draggedRef.current = true;
+      clampPos();
       bringToTop();
     };
     const touchEndListener = () => {
-      if (!windowEl.current) return;
       lastTouch = null;
-      updateReactPos();
+      draggedRef.current = false;
+      clampPos();
     };
     const touchMoveListener = (e: TouchEvent) => {
-      if (!windowEl.current) return;
+      if (!windowEl.current || !draggedRef.current) return;
       e.preventDefault();
       const touch = e.touches[0];
       if (lastTouch) {
@@ -74,21 +74,23 @@ function Window(
     };
 
     const downListener = (e: MouseEvent) => {
+      if (draggedRef.current) return;
       e.preventDefault();
-      updateReactPos();
+      draggedRef.current = true;
       bringToTop();
     };
     const upListener = () => {
-      if (!windowEl.current) return;
-      updateReactPos();
+      draggedRef.current = false;
+      clampPos();
     };
     const moveListener = (e: MouseEvent) => {
-      if (!windowEl.current) return;
+      if (!windowEl.current || !draggedRef.current) return;
       windowEl.current.style.left = (windowEl.current.offsetLeft + e.movementX) + "px";
       windowEl.current.style.top = (windowEl.current.offsetTop + e.movementY) + "px";
+      clampPos();
     };
 
-    const pairs: [HTMLElement, string, (e: any) => any][] = [
+    const pairs = [
       [
         windowBarEl.current,
         "mousedown",
@@ -107,13 +109,13 @@ function Window(
       [windowBarEl.current, "touchstart", touchStartListener],
       [document.body, "touchend", touchEndListener],
       [document.body, "touchmove", touchMoveListener],
-    ];
+    ] as const;
     pairs.forEach(([target, evName, listener]) => {
-      target.addEventListener(evName, listener);
+      target.addEventListener(evName, listener as EventListener);
     });
     return () =>
       pairs.forEach(([target, evName, listener]) => {
-        target.removeEventListener(evName, listener);
+        target.removeEventListener(evName, listener as EventListener);
       });
   }, []);
 
@@ -195,8 +197,8 @@ interface WindowDesc {
 
 export default function WM() {
   const [windows, setWindows] = useState<WindowDesc[]>([]);
-  let curZ = useRef(0);
-  let curId = useRef(0);
+  const curZ = useRef(0);
+  const curId = useRef(0);
 
   function spawnWindow(app: App) {
     const newWindow: WindowDesc = {
@@ -227,7 +229,6 @@ export default function WM() {
           initialPos={w.initialPos}
           initialSize={w.initialSize}
           z={w.z}
-          move={([x, y]) => modifyWindow(w => ({ ...w, initialPos: [x, y] }), w.id)}
           kill={() => killWindow(w.id)}
           bringToTop={() => modifyWindow(w => ({ ...w, z: ++curZ.current }), w.id)}
         />

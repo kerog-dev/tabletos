@@ -1,4 +1,4 @@
-const { default: Atrament } = await import("atrament" as any);
+const { default: Atrament } = await import("atrament" as any); // eslint-disable-line @typescript-eslint/no-explicit-any
 
 import { useEffect, useRef, useState } from "react";
 import storage from "../storage.ts";
@@ -48,7 +48,7 @@ export default function Whiteboard() {
       at.destroy();
       atramentRef.current = null;
     };
-  }, [active]);
+  }, [active, color, weight]);
 
   useEffect(() => {
     const at = atramentRef.current;

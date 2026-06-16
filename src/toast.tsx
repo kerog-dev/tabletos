@@ -45,7 +45,7 @@ function ToastComponent({ t }: { t: ToastInternal }) {
 
 export function Toasts() {
   const [toasts, setToasts] = useState<ToastInternal[]>([]);
-  let nextId = useRef(0);
+  const nextId = useRef(0);
 
   function addToast({ title, desc, urgency = Urgency.Info, duration = 5 }: Toast) {
     setToasts(toasts => [...toasts, { title, desc, duration, at: Date.now(), id: ++nextId.current, urgency }]);

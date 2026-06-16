@@ -61,7 +61,7 @@ export default function Calculator() {
         placeholder="e.g. 18 months to year"
       />
       <button onClick={evaluate}>Run</button>
-      <div>${output}</div>
+      <div>{output}</div>
     </div>
   );
 }

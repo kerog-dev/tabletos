@@ -22,10 +22,11 @@ export default function Frame() {
           type="text"
           value={value}
           onChange={e => setValue(e.target.value)}
-          onKeyUp={(e: any) => {
+          onKeyUp={(e) => {
             if (e.code === "Enter") {
-              setRecent([...recent.filter(x => x !== e.target.value), e.target.value]);
-              setUri(e.target.value);
+              const input = e.target as HTMLInputElement;
+              setRecent([...recent.filter(x => x !== input.value), input.value]);
+              setUri(input.value);
             }
           }}
         />

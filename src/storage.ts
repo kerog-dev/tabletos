@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-function makeProxy(target: any, flush: () => void): any {
+function makeProxy(target: any, flush: () => void): any { // eslint-disable-line @typescript-eslint/no-explicit-any
   return new Proxy(target, {
     set(t, key: string, value) {
       t[key] = value;
@@ -8,8 +8,9 @@ function makeProxy(target: any, flush: () => void): any {
       return true;
     },
     get(t, key: string) {
-      if (typeof t[key] === "object" && t[key] !== null)
+      if (typeof t[key] === "object" && t[key] !== null) {
         return makeProxy(t[key], flush);
+      }
       return t[key];
     },
     deleteProperty(t, key: string) {
