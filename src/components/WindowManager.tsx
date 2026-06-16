@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { type App, apps } from "../apps.ts";
-import AppWindow from "../components/AppWindow.tsx";
-import "./WM.css";
+import AppWindow from "./AppWindow.tsx";
+import "./WindowManager.css";
 import { toast } from "../toast.tsx";
 
 function Window(
@@ -19,6 +19,31 @@ function Window(
   const lastHeightRef = useRef<number>(0);
   const draggedRef = useRef<boolean>(false);
   const [minimized, setMinimized] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
+  const [floatRect, setFloatRect] = useState({ x: 0, y: 0, width: 0, height: 0 });
+
+  useEffect(() => {
+    if (!windowEl.current) return;
+    if (fullscreen) {
+      setFloatRect({
+        width: windowEl.current.clientWidth,
+        height: windowEl.current.clientHeight,
+        x: windowEl.current.offsetLeft,
+        y: windowEl.current.offsetTop,
+      });
+      windowEl.current.style.width = "unset";
+      windowEl.current.style.height = "unset";
+      windowEl.current.style.inset = "5px";
+    } else {
+      windowEl.current.style.inset = "unset";
+      windowEl.current.style.width = floatRect.width + "px";
+      windowEl.current.style.height = floatRect.height + "px";
+      windowEl.current.style.left = floatRect.x + "px";
+      windowEl.current.style.top = floatRect.y + "px";
+      bringToTop();
+      setFloatRect({ x: 0, y: 0, width: 0, height: 0 });
+    }
+  }, [fullscreen]);
 
   function toggleMinimize() {
     if (!windowEl.current) return;
@@ -55,12 +80,14 @@ function Window(
 
     const clampPos = () => {
       if (!windowEl.current) return;
-      if (windowEl.current.offsetTop + windowEl.current.clientHeight > window.innerHeight) {
-        windowEl.current.style.top = (window.innerHeight - windowEl.current.clientHeight - 20) + "px";
+      if (windowEl.current.offsetTop + windowEl.current.clientHeight + 5 > window.innerHeight) {
+        windowEl.current.style.top = (window.innerHeight - windowEl.current.clientHeight - 5) + "px";
       }
-      if (windowEl.current.offsetLeft + windowEl.current.clientWidth > window.innerWidth) {
-        windowEl.current.style.left = (window.innerWidth - windowEl.current.clientWidth - 20) + "px";
+      if (windowEl.current.offsetLeft + windowEl.current.clientWidth + 5 > window.innerWidth) {
+        windowEl.current.style.left = (window.innerWidth - windowEl.current.clientWidth - 5) + "px";
       }
+      windowEl.current.style.top = Math.max(0, windowEl.current.offsetTop) + "px";
+      windowEl.current.style.left = Math.max(0, windowEl.current.offsetLeft) + "px";
     };
 
     let lastTouch: Touch | null = null;
@@ -138,7 +165,7 @@ function Window(
     <div
       className="window-container"
       style={{
-        zIndex: z,
+        zIndex: fullscreen ? "10000" : z,
       }}
       ref={windowEl}
     >
@@ -155,6 +182,7 @@ function Window(
       >
         {app.name}
         <div>
+          <button onClick={() => setFullscreen(f => !f)}>F</button>
           <button onClick={() => startResize()}>!</button>
           <button onClick={() => toggleMinimize()}>_</button>
           <button onClick={() => kill()}>X</button>
@@ -165,17 +193,19 @@ function Window(
   );
 }
 
-function Launchpad({ spawnWindow }: { spawnWindow: (app: App) => void }) {
+function Launchpad({ spawnWindow, killAll }: { spawnWindow: (app: App) => void; killAll: () => void }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div style={{ position: "fixed", bottom: "0", left: "0", margin: "10px" }}>
-      <button onClick={() => setOpen(open => !open)}>{"<!>"}</button>
+    <div style={{ position: "fixed", bottom: "0", left: "0", margin: "10px", zIndex: "9999" }}>
+      <button style={{ width: "60px", height: "60px", fontSize: "200%" }} onClick={() => setOpen(open => !open)}>
+        {"<!>"}
+      </button>
       <div
         style={{
           display: open ? "unset" : "none",
           position: "fixed",
-          bottom: "50px",
+          bottom: "80px",
           left: "10px",
           backgroundColor: "#aeaeae",
           padding: "10px",
@@ -200,6 +230,12 @@ function Launchpad({ spawnWindow }: { spawnWindow: (app: App) => void }) {
             ))}
           </ul>
         </div>
+        <div>
+          <button onClick={() => document.body.requestFullscreen()}>Fullscreen</button>
+          <br />
+          <button onClick={() => killAll()}>Close all</button>
+          <br />
+        </div>
       </div>
     </div>
   );
@@ -213,7 +249,7 @@ interface WindowDesc {
   z: number;
 }
 
-export default function WM() {
+export default function WindowManager() {
   const [windows, setWindows] = useState<WindowDesc[]>([]);
   const curZ = useRef(0);
   const curId = useRef(0);
@@ -238,8 +274,8 @@ export default function WM() {
   }
 
   return (
-    <div>
-      <Launchpad spawnWindow={spawnWindow} />
+    <div style={{ margin: "0", padding: "0", width: "100vw", height: "100vh", position: "relative" }}>
+      <Launchpad spawnWindow={spawnWindow} killAll={() => setWindows([])} />
       {windows.map((w) => (
         <Window
           key={w.id}

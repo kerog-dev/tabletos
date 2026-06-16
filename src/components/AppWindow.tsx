@@ -1,28 +1,14 @@
-import { Suspense, useEffect, useState } from "react";
-import { type App, getManifestKey } from "../apps.ts";
+import { Suspense, useState } from "react";
+import { type App } from "../apps.ts";
 import ErrorBoundary from "./ErrorBoundary.tsx";
-import OverlayToolbar from "./OverlayToolbar.tsx";
 
 export default function AppWindow(
-  { app, setActiveApp = () => {}, hidden = false, showToolbar = false }: {
+  { app, hidden = false }: {
     app: App;
-    setActiveApp?: (app: App | null) => void;
     hidden?: boolean;
-    showToolbar?: boolean;
   },
 ) {
   const [errKey, setErrKey] = useState(0);
-  const [altToolbarPos, setAltToolbarPos] = useState(false);
-
-  useEffect(() => {
-    (async () => {
-      setAltToolbarPos(await getManifestKey(app, "alternateToolbarPosition"));
-    })();
-  }, [app]);
-
-  const toolbar = showToolbar
-    ? <OverlayToolbar {...{ setActiveApp, altPos: altToolbarPos, activeApp: app }} />
-    : null;
 
   return (
     <div
@@ -35,7 +21,6 @@ export default function AppWindow(
         overflow: "scroll",
       }}
     >
-      {showToolbar && toolbar}
       <Suspense fallback={<p>Loading app...</p>}>
         <ErrorBoundary
           key={errKey}
