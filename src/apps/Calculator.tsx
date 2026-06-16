@@ -1,6 +1,7 @@
 import { parser } from "mathjs";
 import { useRef, useState } from "react";
 import { toast, Urgency } from "../toast.tsx";
+import "./Calculator.css";
 
 export default function Calculator() {
   const [input, setInput] = useState("");
@@ -53,15 +54,17 @@ export default function Calculator() {
   }
 
   return (
-    <div>
+    <div className="calculator">
       <input
+        className="input"
         value={input}
         onChange={(e) => setInput(e.target.value)}
         onKeyDown={onKeyDown}
         placeholder="e.g. 18 months to year"
       />
-      <button onClick={evaluate}>Run</button>
-      <div>{output}</div>
+      <br />
+      <button className="run" onClick={evaluate}>Run</button>
+      <div className="output">{output}</div>
     </div>
   );
 }

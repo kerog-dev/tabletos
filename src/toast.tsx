@@ -24,13 +24,13 @@ interface ToastInternal extends Toast {
 
 let addToastG: ((toast: Toast) => void) | null = null;
 
-function ToastComponent({ t }: { t: ToastInternal }) {
+function ToastComponent({ t, dismiss }: { t: ToastInternal; dismiss: () => void }) {
   const backgroundColor =
     ({ [Urgency.Info]: "blue", [Urgency.Warning]: "orange", [Urgency.Error]: "red", [Urgency.Critical]: "black" })[
       t.urgency
     ];
   return (
-    <div className="toast" style={{ backgroundColor }}>
+    <div className="toast" style={{ backgroundColor }} onClick={dismiss}>
       <span className="toast-title">
         {t.title}
       </span>
@@ -62,7 +62,17 @@ export function Toasts() {
     return () => clearInterval(id);
   }, []);
 
-  return <div className="toasts">{toasts.map(t => <ToastComponent key={t.id} t={t} />)}</div>;
+  return (
+    <div className="toasts">
+      {toasts.map(t => (
+        <ToastComponent
+          key={t.id}
+          t={t}
+          dismiss={() => setToasts(toasts => toasts.filter(t2 => t2.id !== t.id))}
+        />
+      ))}
+    </div>
+  );
 }
 
 export function toast(toast: Toast) {

@@ -1,0 +1,9 @@
+.window-container {
+  background-color: white;
+  border: 5px solid black;
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  overflow: scroll;
+  resize: both;
+}

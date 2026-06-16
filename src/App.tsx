@@ -21,7 +21,7 @@ function Main() {
       setActiveApp(apps.find(app => app.name === hash) ?? null);
     };
     window.addEventListener("hashchange", listener);
-    return window.removeEventListener("hashchange", listener);
+    return () => window.removeEventListener("hashchange", listener);
   }, []);
 
   if (activeApp === null) {

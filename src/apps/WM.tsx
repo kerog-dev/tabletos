@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { type App, apps } from "../apps.ts";
 import AppWindow from "../components/AppWindow.tsx";
+import "./WM.css";
+import { toast } from "../toast.tsx";
 
 function Window(
   { app, initialPos, initialSize, z, kill, bringToTop }: {
@@ -30,13 +32,26 @@ function Window(
     setMinimized(m => !m);
   }
 
+  function startResize() {
+    toast({ title: "Resizing window! Press somewhere to expand the window to that point." });
+    window.addEventListener("mouseup", e => {
+      if (!windowEl.current) return;
+      e.preventDefault();
+      const [x, y] = [e.clientX, e.clientY];
+      const [wx, wy] = [windowEl.current.offsetLeft, windowEl.current.offsetTop];
+
+      windowEl.current.style.width = `${x - wx}px`;
+      windowEl.current.style.height = `${y - wy}px`;
+    }, { once: true });
+  }
+
   useEffect(() => {
     if (!windowEl.current || !windowBarEl.current) return;
 
     windowEl.current.style.width = initialSize[0] + "px";
     windowEl.current.style.height = initialSize[1] + "px";
-    windowEl.current.style.top = initialPos[1] + "px";
     windowEl.current.style.left = initialPos[0] + "px";
+    windowEl.current.style.top = initialPos[1] + "px";
 
     const clampPos = () => {
       if (!windowEl.current) return;
@@ -121,15 +136,9 @@ function Window(
 
   return (
     <div
+      className="window-container"
       style={{
-        backgroundColor: "white",
-        border: "5px solid black",
-        position: "absolute",
         zIndex: z,
-        display: "flex",
-        flexDirection: "column",
-        overflow: "scroll",
-        resize: "both",
       }}
       ref={windowEl}
     >
@@ -141,12 +150,14 @@ function Window(
           alignItems: "center",
           height: "30px",
           borderBottom: "3px solid grey",
+          padding: "5px",
         }}
       >
         {app.name}
         <div>
-          <button onClick={() => kill()}>X</button>
+          <button onClick={() => startResize()}>!</button>
           <button onClick={() => toggleMinimize()}>_</button>
+          <button onClick={() => kill()}>X</button>
         </div>
       </div>
       <AppWindow app={app} hidden={minimized} />
@@ -177,7 +188,14 @@ function Launchpad({ spawnWindow }: { spawnWindow: (app: App) => void }) {
           <ul style={{ margin: 0 }}>
             {apps.map(app => (
               <li key={app.name}>
-                <button onClick={() => spawnWindow(app)}>{app.name}</button>
+                <button
+                  onClick={() => {
+                    spawnWindow(app);
+                    setOpen(false);
+                  }}
+                >
+                  {app.name}
+                </button>
               </li>
             ))}
           </ul>
