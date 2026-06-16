@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import type { App } from "../apps.ts";
 import "./OverlayToolbar.css";
 
@@ -10,6 +11,16 @@ export default function OverlayToolbar({
   setActiveApp: (app: App | null) => any;
   altPos: boolean;
 }) {
+  const [isFullscreen, setIsFullscreen] = useState(document.fullscreenElement !== null);
+
+  useEffect(() => {
+    const listener = () => {
+      setIsFullscreen(document.fullscreenElement !== null);
+    };
+    window.addEventListener("fullscreenchange", listener);
+    return window.removeEventListener("fullscreenchange", listener);
+  }, []);
+
   return (
     <div
       className={"overlay-toolbar" + (altPos ? " alternate-toolbar-position" : "")}
@@ -19,7 +30,7 @@ export default function OverlayToolbar({
           X
         </button>
       )}
-      {document.fullscreenElement === null
+      {!isFullscreen
         ? <button onClick={() => document.body.requestFullscreen()}>Fullscreen</button>
         : ""}
       <span>{__COMMIT_HASH__}</span>

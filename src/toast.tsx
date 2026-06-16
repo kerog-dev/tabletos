@@ -56,9 +56,10 @@ export function Toasts() {
   }, []);
 
   useEffect(() => {
-    setInterval(() => {
+    const id = setInterval(() => {
       setToasts(toasts => toasts.filter(t => Date.now() - t.at < t.duration * 1000));
     }, 1_000);
+    return () => clearInterval(id);
   }, []);
 
   return <div className="toasts">{toasts.map(t => <ToastComponent key={t.id} t={t} />)}</div>;

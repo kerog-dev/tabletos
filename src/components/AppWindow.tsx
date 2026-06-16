@@ -11,18 +11,13 @@ export default function AppWindow(
     showToolbar?: boolean;
   },
 ) {
-  const [AppComponent, setComponent] = useState(() => app.component);
   const [errKey, setErrKey] = useState(0);
-
   const [altToolbarPos, setAltToolbarPos] = useState(false);
+
   useEffect(() => {
     (async () => {
       setAltToolbarPos(await getManifestKey(app, "alternateToolbarPosition"));
     })();
-  }, []);
-
-  useEffect(() => {
-    setComponent(() => app.component);
   }, [app]);
 
   const toolbar = showToolbar
@@ -48,17 +43,14 @@ export default function AppWindow(
             <p>
               Error occured in app {app.name}: {String(e)}.{" "}
               <button
-                onClick={() => {
-                  setComponent(() => app.component);
-                  setErrKey(n => n + 1);
-                }}
+                onClick={() => setErrKey(n => n + 1)}
               >
                 Refresh?
               </button>
             </p>
           )}
         >
-          <AppComponent />
+          <app.component />
         </ErrorBoundary>
       </Suspense>
     </div>

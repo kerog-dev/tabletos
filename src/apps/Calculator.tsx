@@ -41,7 +41,7 @@ export default function Calculator() {
   function evaluate() {
     try {
       const result = curParser.current.evaluate(input);
-      setOutput(result);
+      setOutput(String(result));
     } catch (e) {
       toast({
         title: "Calculator Error",
@@ -61,9 +61,7 @@ export default function Calculator() {
         placeholder="e.g. 18 months to year"
       />
       <button onClick={evaluate}>Run</button>
-      <div
-        dangerouslySetInnerHTML={{ __html: output }}
-      />
+      <div>${output}</div>
     </div>
   );
 }

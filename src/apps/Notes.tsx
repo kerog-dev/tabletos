@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import storage, { useStorage } from "../storage.ts";
 
-function NoteEditor({ note }: { note: string }) {
+function NoteEditor({ note, back }: { note: string; back: () => void }) {
   const [content, setContent] = useState<string>(storage.notes.contents[note]);
 
   useEffect(() => {
@@ -13,6 +13,7 @@ function NoteEditor({ note }: { note: string }) {
 
   return (
     <div>
+      <button onClick={() => back}>${"<--"}</button>
       <textarea onChange={(e) => setContent(e.target.value)} value={content}></textarea>
     </div>
   );
@@ -50,5 +51,11 @@ function NoteList({ setOpenNote }: { setOpenNote: (name: string) => void }) {
 export default function Notes() {
   const [openNote, setOpenNote] = useState<string | null>(null);
 
-  return <div>{openNote ? <NoteEditor note={openNote} /> : <NoteList setOpenNote={setOpenNote} />}</div>;
+  return (
+    <div>
+      {openNote
+        ? <NoteEditor note={openNote} back={() => setOpenNote(null)} />
+        : <NoteList setOpenNote={setOpenNote} />}
+    </div>
+  );
 }

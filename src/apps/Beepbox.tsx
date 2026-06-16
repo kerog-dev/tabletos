@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import compressedUri from "../assets/beepbox_offline.html.gz?url";
 
-export default function Snap() {
+export default function Beepbox() {
   const [outputUrl, setOutputUrl] = useState<string | null>(null);
   const [srcDoc, setSrcDoc] = useState("");
 

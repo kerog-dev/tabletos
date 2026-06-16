@@ -3,28 +3,42 @@ import { type App, apps } from "../apps.ts";
 import AppWindow from "../components/AppWindow.tsx";
 
 function Window(
-  { app, pos, initialSize, z, onClick = () => {}, move, kill }: {
+  { app, initialPos, initialSize, z, move, kill, bringToTop }: {
     app: App;
-    pos: [number, number];
+    initialPos: [number, number];
     initialSize: [number, number];
     z: number;
-    onClick?: () => any;
     move: (newPos: [number, number]) => void;
     kill: () => void;
+    bringToTop: () => void;
   },
 ) {
-  const dragged = useRef(false);
   const windowEl = useRef<HTMLDivElement | null>(null);
   const windowBarEl = useRef<HTMLDivElement | null>(null);
   const [minimized, setMinimized] = useState(false);
+  const lastHeightRef = useRef<number>(0);
+
+  function toggleMinimize() {
+    if (!windowEl.current) return;
+    if (!minimized) {
+      lastHeightRef.current = windowEl.current.clientHeight;
+      windowEl.current.style.height = "30px";
+    } else {
+      windowEl.current.style.height = lastHeightRef.current + "px";
+      lastHeightRef.current = 0;
+    }
+    setMinimized(m => !m);
+  }
 
   useEffect(() => {
     if (!windowEl.current || !windowBarEl.current) return;
 
     windowEl.current.style.width = initialSize[0] + "px";
     windowEl.current.style.height = initialSize[1] + "px";
+    windowEl.current.style.top = initialPos[1] + "px";
+    windowEl.current.style.left = initialPos[0] + "px";
 
-    const finishMove = () => {
+    const updateReactPos = () => {
       if (!windowEl.current) return;
       if (windowEl.current.offsetTop + windowEl.current.clientHeight > window.innerHeight) {
         windowEl.current.style.top = (window.innerHeight - windowEl.current.clientHeight - 20) + "px";
@@ -32,22 +46,22 @@ function Window(
       if (windowEl.current.offsetLeft + windowEl.current.clientWidth > window.innerWidth) {
         windowEl.current.style.left = (window.innerWidth - windowEl.current.clientWidth - 20) + "px";
       }
-      move([windowEl.current.offsetTop, windowEl.current.offsetLeft]);
+      move([windowEl.current.offsetTop, windowEl.current.offsetTop]);
     };
 
     let lastTouch: Touch | null = null;
 
     const touchStartListener = () => {
-      dragged.current = true;
+      updateReactPos();
+      bringToTop();
     };
     const touchEndListener = () => {
-      if (!dragged.current || !windowEl.current) return;
-      dragged.current = false;
+      if (!windowEl.current) return;
       lastTouch = null;
-      finishMove();
+      updateReactPos();
     };
     const touchMoveListener = (e: TouchEvent) => {
-      if (!windowEl.current || !dragged.current) return;
+      if (!windowEl.current) return;
       e.preventDefault();
       const touch = e.touches[0];
       if (lastTouch) {
@@ -61,15 +75,15 @@ function Window(
 
     const downListener = (e: MouseEvent) => {
       e.preventDefault();
-      dragged.current = true;
+      updateReactPos();
+      bringToTop();
     };
     const upListener = () => {
-      if (!dragged.current || !windowEl.current) return;
-      dragged.current = false;
-      finishMove();
+      if (!windowEl.current) return;
+      updateReactPos();
     };
     const moveListener = (e: MouseEvent) => {
-      if (!windowEl.current || !dragged.current) return;
+      if (!windowEl.current) return;
       windowEl.current.style.left = (windowEl.current.offsetLeft + e.movementX) + "px";
       windowEl.current.style.top = (windowEl.current.offsetTop + e.movementY) + "px";
     };
@@ -105,13 +119,10 @@ function Window(
 
   return (
     <div
-      onClick={onClick}
       style={{
         backgroundColor: "white",
         border: "5px solid black",
         position: "absolute",
-        top: dragged.current ? undefined : Math.min(window.innerHeight, pos[0]) + "px",
-        left: dragged.current ? undefined : Math.min(window.innerWidth, pos[1]) + "px",
         zIndex: z,
         display: "flex",
         flexDirection: "column",
@@ -133,7 +144,7 @@ function Window(
         {app.name}
         <div>
           <button onClick={() => kill()}>X</button>
-          <button onClick={() => setMinimized(minimized => !minimized)}>_</button>
+          <button onClick={() => toggleMinimize()}>_</button>
         </div>
       </div>
       <AppWindow app={app} hidden={minimized} />
@@ -177,7 +188,7 @@ function Launchpad({ spawnWindow }: { spawnWindow: (app: App) => void }) {
 interface WindowDesc {
   id: number;
   app: App;
-  pos: [number, number];
+  initialPos: [number, number];
   initialSize: [number, number];
   z: number;
 }
@@ -191,7 +202,7 @@ export default function WM() {
     const newWindow: WindowDesc = {
       id: ++curId.current,
       app,
-      pos: [Math.random() * window.innerWidth, Math.random() * window.innerHeight],
+      initialPos: [Math.random() * window.innerWidth, Math.random() * window.innerHeight],
       initialSize: [window.innerWidth / 3, window.innerHeight / 3],
       z: ++curZ.current,
     };
@@ -213,14 +224,12 @@ export default function WM() {
         <Window
           key={w.id}
           app={w.app}
-          pos={w.pos}
+          initialPos={w.initialPos}
           initialSize={w.initialSize}
           z={w.z}
-          onClick={() => {
-            setWindows(windows => windows.map(w2 => w.id === w2.id ? { ...w2, z: ++curZ.current } : w2));
-          }}
-          move={([x, y]) => modifyWindow(w => ({ ...w, pos: [x, y] }), w.id)}
+          move={([x, y]) => modifyWindow(w => ({ ...w, initialPos: [x, y] }), w.id)}
           kill={() => killWindow(w.id)}
+          bringToTop={() => modifyWindow(w => ({ ...w, z: ++curZ.current }), w.id)}
         />
       ))}
     </div>

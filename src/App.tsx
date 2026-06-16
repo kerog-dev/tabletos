@@ -16,10 +16,12 @@ function Main() {
   }, [activeApp]);
 
   useEffect(() => {
-    window.addEventListener("hashchange", () => {
+    const listener = () => {
       const hash = window.location.hash.slice(1);
       setActiveApp(apps.find(app => app.name === hash) ?? null);
-    });
+    };
+    window.addEventListener("hashchange", listener);
+    return window.removeEventListener("hashchange", listener);
   }, []);
 
   if (activeApp === null) {
@@ -28,8 +30,8 @@ function Main() {
       <>
         no app selected
         <ul>
-          {apps.map((app, i) => (
-            <li key={i}>
+          {apps.map(app => (
+            <li key={app.name}>
               <button onClick={() => setActiveApp(app)}>{app.name}</button>
             </li>
           ))}
