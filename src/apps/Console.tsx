@@ -1,7 +1,8 @@
-import { useRef, useState } from "react";
+import { Fragment, type JSX, useEffect, useRef, useState } from "react";
 import * as fs from "../fs.ts";
 import { fetch as afetch } from "../net.ts";
 import storage from "../storage.ts";
+import "./Console.css";
 
 Object.assign(window as any, {
   $fs: fs,
@@ -9,39 +10,73 @@ Object.assign(window as any, {
   $storage: storage,
 });
 
-function run(script: string): string {
-  try {
-    return String(window.eval(script));
-  } catch (e) {
-    return String(e);
-  }
+function PromiseTracker({ promise }: { promise: Promise<any> }) {
+  const [status, setStatus] = useState(`ongoing`);
+
+  useEffect(() => {
+    promise.then(value => setStatus(`resolved: ${value}`)).catch(reason => setStatus(`rejected: ${reason}`));
+  }, [promise]);
+
+  return <span>promise: {status}</span>;
+}
+
+function Evaluated({ script }: { script: string }): JSX.Element {
+  const [result, setResult] = useState<JSX.Element | null>(null);
+
+  useEffect(() => {
+    try {
+      const result = window.eval(script);
+      if (result instanceof Promise) {
+        setResult(<PromiseTracker promise={result} />);
+      } else {
+        setResult(<span>{String(result)}</span>);
+      }
+    } catch (e) {
+      setResult(<span style={{ color: "red" }}>{String(e)}</span>);
+    }
+  }, [script]);
+
+  return <>{result}</>;
 }
 
 export default function Console() {
-  const [output, setOutput] = useState("Enter JS and see it's output here:\n");
-  const inputRef = useRef<HTMLInputElement | null>(null);
+  const [outputs, setOutputs] = useState<JSX.Element[]>([<span>Enter JS and see it's output here:</span>]);
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const outputRef = useRef<HTMLDivElement | null>(null);
 
   const clicked = () => {
-    if (!inputRef.current) return;
-    setOutput(output + run(inputRef.current.value ?? "") + "\n");
+    if (!inputRef.current || !outputRef.current) return;
+    const script = inputRef.current?.value ?? "'Nothing entered.'";
+    setOutputs(outputs => [...outputs, <Evaluated script={script} />]);
+    setTimeout(() => outputRef.current!.scrollTop = outputRef.current!.scrollHeight, 100);
     inputRef.current.value = "";
   };
 
   return (
-    <div>
-      <pre>{output}</pre>
-      <input
-        type="text"
-        ref={inputRef}
-        onKeyUp={e => {
-          if (e.code === "Enter") clicked();
-        }}
-      />
-      <button
-        onClick={clicked}
-      >
-        Run
-      </button>
+    <div className="console">
+      <div className="output" ref={outputRef}>
+        {outputs.map((o, i) => (
+          <Fragment key={i}>
+            {o}
+            <br />
+          </Fragment>
+        ))}
+      </div>
+      <div className="controls">
+        <textarea
+          className="input"
+          ref={inputRef}
+          onKeyDown={e => {
+            if (e.code === "Enter" && e.ctrlKey) clicked();
+          }}
+        />
+        <button
+          className="run"
+          onClick={clicked}
+        >
+          Run
+        </button>
+      </div>
     </div>
   );
 }

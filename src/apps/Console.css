@@ -1,0 +1,44 @@
+.console {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.console > *, textarea {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+textarea {
+  resize: none;
+}
+
+.controls {
+  height: 20%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+}
+
+.controls > * {
+  height: 100%;
+}
+
+.run {
+  flex: 1;
+  font-size: 300%;
+}
+
+.input {
+  width: 70%;
+}
+
+.output {
+  height: 70%;
+  font-family: "Courier New", Courier, monospace;
+  overflow-y: scroll;
+  word-wrap: normal;
+}
