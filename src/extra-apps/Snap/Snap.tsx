@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import compressedUri from "../assets/beepbox_offline.html.gz?url";
+import compressedUri from "./assets/snap.html.gz?url";
 
-export default function Beepbox() {
+export default function Snap() {
   const [outputUrl, setOutputUrl] = useState<string | null>(null);
   const [srcDoc, setSrcDoc] = useState("");
 
@@ -31,9 +31,9 @@ export default function Beepbox() {
     <iframe
       src={srcDoc ? undefined : outputUrl ?? "about:blank"}
       srcDoc={outputUrl ? undefined : srcDoc}
-      title="Beepbox"
+      title="Snap!"
       style={{ width: "100%", height: "100%" }}
-      sandbox="allow-scripts allow-same-origin allow-downloads"
+      sandbox="allow-scripts allow-same-origin allow-camera allow-microphone"
     >
     </iframe>
   );
