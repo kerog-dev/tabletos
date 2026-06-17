@@ -5,20 +5,21 @@ import AppWindow from "../AppWindow.tsx";
 import { windowTransparency } from "./WindowManager.tsx";
 
 export function Window(
-  { app, initialPos, initialSize, z, kill, bringToTop }: {
+  { app, initialPos, initialSize, minimized, toggleMinimized, z, kill, bringToTop }: {
     app: App;
     initialPos: [number, number];
     initialSize: [number, number];
     z: number;
     kill: () => void;
     bringToTop: () => void;
+    minimized: boolean;
+    toggleMinimized: () => void;
   },
 ) {
   const windowEl = useRef<HTMLDivElement | null>(null);
   const windowBarEl = useRef<HTMLDivElement | null>(null);
   const lastHeightRef = useRef<number>(0);
   const draggedRef = useRef<boolean>(false);
-  const [minimized, setMinimized] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [floatRect, setFloatRect] = useState({ x: 0, y: 0, width: 0, height: 0 });
 
@@ -41,21 +42,19 @@ export function Window(
       windowEl.current.style.left = floatRect.x + "px";
       windowEl.current.style.top = floatRect.y + "px";
       bringToTop();
-      setFloatRect({ x: 0, y: 0, width: 0, height: 0 });
     }
   }, [fullscreen]);
 
-  function toggleMinimize() {
+  useEffect(() => {
     if (!windowEl.current) return;
-    if (!minimized) {
+    if (minimized) {
       lastHeightRef.current = windowEl.current.clientHeight;
       windowEl.current.style.height = "30px";
     } else {
       windowEl.current.style.height = lastHeightRef.current + "px";
       lastHeightRef.current = 0;
     }
-    setMinimized(m => !m);
-  }
+  }, [minimized]);
 
   function startResize() {
     toast({ title: "Resizing window! Press somewhere to expand the window to that point." });
@@ -189,7 +188,7 @@ export function Window(
           {!fullscreen && (
             <>
               <button onClick={() => startResize()}>!</button>
-              <button onClick={() => toggleMinimize()}>_</button>
+              <button onClick={() => toggleMinimized()}>_</button>
             </>
           )}
           <button onClick={() => kill()}>X</button>

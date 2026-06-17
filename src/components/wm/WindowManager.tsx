@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { type App } from "../../apps.ts";
-import { Launchpad } from "./Launchpad.tsx";
+import { Taskbar } from "./Taskbar.tsx";
 import { Window } from "./Window.tsx";
 import "./WindowManager.css";
 import * as fs from "../../fs.ts";
@@ -16,12 +16,13 @@ try {
 
 export const windowTransparency = storage.windowTransparency ?? 0;
 
-interface WindowDesc {
+export interface WindowDesc {
   id: number;
   app: App;
   initialPos: [number, number];
   initialSize: [number, number];
   z: number;
+  minimized: boolean;
 }
 
 export default function WindowManager() {
@@ -30,12 +31,14 @@ export default function WindowManager() {
   const curId = useRef(0);
 
   function spawnWindow(app: App) {
+    const posPcnt = Math.max(0, Math.min(0.95, curId.current / 15)) + 0.025;
     const newWindow: WindowDesc = {
       id: ++curId.current,
       app,
-      initialPos: [Math.random() * window.innerWidth, Math.random() * window.innerHeight],
+      initialPos: [posPcnt * window.innerWidth, posPcnt * window.innerHeight],
       initialSize: [window.innerWidth / 3, window.innerHeight / 3],
       z: ++curZ.current,
+      minimized: false,
     };
     setWindows(windows => [...windows, newWindow]);
   }
@@ -62,7 +65,13 @@ export default function WindowManager() {
         backgroundPosition: "50%, 50%",
       }}
     >
-      <Launchpad spawnWindow={spawnWindow} killAll={() => setWindows([])} />
+      <Taskbar
+        spawnWindow={spawnWindow}
+        killAll={() => setWindows([])}
+        windows={windows}
+        toggleMinimized={id => modifyWindow(w => ({ ...w, minimized: !w.minimized }), id)}
+        kill={killWindow}
+      />
       {windows.map((w) => (
         <Window
           key={w.id}
@@ -72,6 +81,8 @@ export default function WindowManager() {
           z={w.z}
           kill={() => killWindow(w.id)}
           bringToTop={() => modifyWindow(w => ({ ...w, z: ++curZ.current }), w.id)}
+          minimized={w.minimized}
+          toggleMinimized={() => modifyWindow(w => ({ ...w, minimized: !w.minimized }), w.id)}
         />
       ))}
     </div>
