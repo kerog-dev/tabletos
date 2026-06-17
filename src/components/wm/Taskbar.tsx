@@ -13,15 +13,9 @@ export function Launcher(
 ) {
   return (
     <div
+      className="launcher"
       style={{
         display: open ? "unset" : "none",
-        position: "fixed",
-        bottom: "80px",
-        left: "10px",
-        backgroundColor: "#aeaeae",
-        padding: "10px",
-        borderRadius: "8px",
-        width: "10%",
       }}
     >
       <div>
@@ -84,7 +78,6 @@ export function Taskbar(
       <div className="taskbar">
         <button
           className="start-button"
-          style={{ width: "60px", height: "60px", fontSize: "200%" }}
           onClick={() => setLauncherOpen(open => !open)}
         >
           {"<!>"}
@@ -92,6 +85,7 @@ export function Taskbar(
         <div className="window-list">
           {windows.map(w => (
             <div
+              key={w.id}
               className="taskbar-window"
               onContextMenu={e => {
                 e.preventDefault();

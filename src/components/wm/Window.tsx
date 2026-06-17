@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { type App } from "../../apps.ts";
 import { toast } from "../../toast.tsx";
+import { sleep } from "../../utils.ts";
 import AppWindow from "../AppWindow.tsx";
 import { windowTransparency } from "./WindowManager.tsx";
 
@@ -18,7 +19,7 @@ export function Window(
 ) {
   const windowEl = useRef<HTMLDivElement | null>(null);
   const windowBarEl = useRef<HTMLDivElement | null>(null);
-  const lastHeightRef = useRef<number>(0);
+  const lastHeightRef = useRef<number | null>(null);
   const draggedRef = useRef<boolean>(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [floatRect, setFloatRect] = useState({ x: 0, y: 0, width: 0, height: 0 });
@@ -47,17 +48,18 @@ export function Window(
 
   useEffect(() => {
     if (!windowEl.current) return;
-    if (minimized) {
+    if (lastHeightRef.current === null) {
       lastHeightRef.current = windowEl.current.clientHeight;
       windowEl.current.style.height = "30px";
     } else {
       windowEl.current.style.height = lastHeightRef.current + "px";
-      lastHeightRef.current = 0;
+      lastHeightRef.current = null;
     }
   }, [minimized]);
 
-  function startResize() {
+  async function startResize() {
     toast({ title: "Resizing window! Press somewhere to expand the window to that point." });
+    await sleep(100);
     window.addEventListener("mouseup", e => {
       if (!windowEl.current) return;
       e.preventDefault();
@@ -167,7 +169,7 @@ export function Window(
       className="window-container"
       style={{
         zIndex: fullscreen ? "10000" : z,
-        backgroundColor: `#ffffff${hexTransparency}`,
+        backgroundColor: fullscreen ? "#ffffff" : `#ffffff${hexTransparency}`,
       }}
       ref={windowEl}
     >
