@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { toast } from "../toast.tsx";
+import type { Sdk } from "../../sdk.ts";
+
+const { toast }: Sdk = (window as any).$;
 
 enum TileState {
   Empty = " ",

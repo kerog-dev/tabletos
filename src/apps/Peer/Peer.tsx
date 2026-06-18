@@ -168,7 +168,9 @@ export default function PeerApp() {
 
   return (
     <p>
-      End<br />signaller: {signaller}
+      End
+      <br />
+      signaller: {signaller}
       <br />
       peers: {JSON.stringify(peers)}
       <br />

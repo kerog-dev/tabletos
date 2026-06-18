@@ -1,7 +1,8 @@
+import { useEffect, useRef, useState } from "react";
+import type { Sdk } from "../../sdk.ts";
 const { default: Atrament } = await import("atrament" as any); // eslint-disable-line @typescript-eslint/no-explicit-any
 
-import { useEffect, useRef, useState } from "react";
-import storage from "../storage.ts";
+const { storage }: Sdk = (window as any).$;
 
 storage.whiteboards ??= {};
 
