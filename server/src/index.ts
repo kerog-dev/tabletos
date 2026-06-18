@@ -4,7 +4,7 @@ import fs from "node:fs/promises";
 import { networkInterfaces } from "os";
 import { join } from "path";
 
-spawn("./build-apps.ts", { shell: true, cwd: join(import.meta.dirname, "../../") });
+// spawn("./build-apps.ts", { shell: true, cwd: join(import.meta.dirname, "../../") });
 
 const appsDir = join(import.meta.dirname, "../../dist/apps/");
 
@@ -33,7 +33,7 @@ app.get("/health", (req, res) => {
 });
 
 app.get("/available-apps", async (req, res) => {
-  const apps = (await fs.readdir(appsDir)).map(x => x.replace(".js.gz", ""));
+  const apps = (await fs.readdir(appsDir)).filter(x => x.endsWith(".js.gz")).map(x => x.replace(".js.gz", ""));
   res.json(apps);
 });
 
