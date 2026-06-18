@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { type App, useApps } from "../../apps.ts";
 import "./Taskbar.css";
+import { Toasts } from "../../toast.tsx";
 import type { WindowDesc } from "./WindowManager.tsx";
 
 export function Launcher(
@@ -107,6 +108,7 @@ export function Taskbar(
         </div>
         <div className="tray">tray</div>
       </div>
+      <Toasts />
       <Launcher {...{ spawnWindow, open: launcherOpen, killAll, setLauncherOpen }} />
     </>
   );
