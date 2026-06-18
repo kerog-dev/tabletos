@@ -5,6 +5,7 @@ import react from "@vitejs/plugin-react";
 import { globSync } from "glob";
 import { resolve } from "node:path";
 import { build } from "vite";
+import viteCompression from "vite-plugin-compression";
 import { viteSingleFile } from "vite-plugin-singlefile";
 
 const entries = Object.fromEntries(
@@ -19,7 +20,7 @@ const input = Object.entries(entries).map(x => `${x[1]}/${x[0]}.tsx`);
 for (const file of input) {
   const first = file === input[0];
   const promise = build({
-    plugins: [react(), viteSingleFile()],
+    plugins: [react(), viteSingleFile(), viteCompression({ deleteOriginFile: true })],
     resolve: {
       alias: {
         "react/jsx-runtime": resolve(import.meta.dirname, "app-shims/jsx-runtime-shim.ts"),

@@ -91,6 +91,12 @@ export async function readTextFile(path: string): Promise<string> {
   return result;
 }
 
+export async function readBlobFile(path: string): Promise<Blob> {
+  const result = await readFile(path);
+  if (typeof result === "string") throw `File ${path} is not a blob.`;
+  return result;
+}
+
 export async function ls(path: string): Promise<string[]> {
   await assertIsDir(path);
   const keys = await db.getAllKeys("fs");

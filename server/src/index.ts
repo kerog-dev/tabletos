@@ -30,7 +30,7 @@ app.get("/health", (req, res) => {
 });
 
 app.get("/available-apps", async (req, res) => {
-  const apps = (await fs.readdir(appsDir)).map(x => x.replace(".js", ""));
+  const apps = (await fs.readdir(appsDir)).map(x => x.replace(".js.gz", ""));
   res.json(apps);
 });
 

@@ -3,6 +3,7 @@ import { loadAppFromScript, unloadApp } from "../apps.ts";
 import { useApps } from "../apps.ts";
 import * as fs from "../fs.ts";
 import { fetch } from "../net.ts";
+import { compress, decompress } from "../utils.ts";
 
 export default function Installer() {
   const apps = useApps();
@@ -10,6 +11,7 @@ export default function Installer() {
 
   const installAppNameRef = useRef<HTMLInputElement | null>(null);
   const installFileInputRef = useRef<HTMLInputElement | null>(null);
+  const installFileCompressedRef = useRef<HTMLInputElement | null>(null);
 
   const uninstallAppNameRef = useRef<HTMLInputElement | null>(null);
 
@@ -17,13 +19,15 @@ export default function Installer() {
     fetch("http://server/available-apps").then(res => res.json()).then(json => setRemoteApps(json));
   }, []);
 
-  async function getData(): Promise<[string, string] | null> {
+  async function getData(compressed: boolean): Promise<[string, string] | null> {
     if (!installAppNameRef.current || !installFileInputRef.current || !installFileInputRef.current.files) return null;
-    return [installAppNameRef.current.value, await installFileInputRef.current.files[0].text()];
+    const file = installFileInputRef.current.files[0];
+    const script = compressed ? await (await decompress(file)).text() : await file.text();
+    return [installAppNameRef.current.value, script];
   }
 
-  async function tempLoad(quiet = false) {
-    const data = await getData();
+  async function tempLoad(compressed: boolean, quiet = false) {
+    const data = await getData(compressed);
     if (!data) {
       alert(`Did you provide the correct data?`);
       return;
@@ -33,13 +37,18 @@ export default function Installer() {
     return data;
   }
 
-  async function install() {
-    const data = await tempLoad();
+  async function install(compressed: boolean) {
+    const data = await tempLoad(compressed);
     if (!data) return;
     if (!(await fs.isDir("/apps"))) {
       await fs.mkdir("/apps");
     }
-    await fs.writeFile(`/apps/${data[0]}.js`, data[1]);
+    await fs.writeFile(
+      `/apps/${data[0]}.js.gz`,
+      compressed
+        ? new Blob([data[1]], { type: "application/gzip" })
+        : await compress(new Blob([data[1]], { type: "text/javascript" })),
+    );
   }
 
   async function uninstall(name?: string) {
@@ -47,7 +56,7 @@ export default function Installer() {
     if (!name && uninstallAppNameRef.current) name = uninstallAppNameRef.current.value;
 
     try {
-      await fs.unlink(`/apps/${name}.js`);
+      await fs.unlink(`/apps/${name}.js.gz`);
       unloadApp(name!);
       alert("Uninstalled successfully!");
     } catch (e) {
@@ -56,21 +65,28 @@ export default function Installer() {
   }
 
   async function remoteInstall(name: string) {
-    const content = await (await fetch(`http://server/apps/${name}.js`)).text();
-    loadAppFromScript(name, content).catch((reason) => alert(`Failed to load: ${reason}`));
+    const response = await fetch(`http://server/apps/${name}.js.gz`);
+    const inBlob = await response.blob();
+    const decompressed = await decompress(inBlob);
+    const script = await decompressed.text();
+    loadAppFromScript(name, script).catch((reason) => alert(`Failed to load: ${reason}`));
     if (!(await fs.isDir("/apps"))) {
       await fs.mkdir("/apps");
     }
-    await fs.writeFile(`/apps/${name}.js`, content);
+    await fs.writeFile(`/apps/${name}.js.gz`, inBlob);
     alert("Installed successfully!");
   }
 
   return (
     <div>
       <input type="text" ref={installAppNameRef} />
+      <br />
       <input type="file" ref={installFileInputRef} />
-      <button onClick={() => tempLoad()}>Load temporarily</button>
-      <button onClick={install}>Install</button>
+      <br />
+      <label>gz compressed?</label>
+      <input type="checkbox" ref={installFileCompressedRef} />
+      <button onClick={() => tempLoad(installFileCompressedRef.current?.checked ?? false)}>Load temporarily</button>
+      <button onClick={() => install(installFileCompressedRef.current?.checked ?? false)}>Install</button>
       <hr />
       <input type="text" ref={uninstallAppNameRef} />
       <button onClick={() => uninstall()}>Uninstall</button>

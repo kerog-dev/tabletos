@@ -1,5 +1,6 @@
 import { lazy, useEffect, useState } from "react";
 import * as fs from "./fs.ts";
+import { decompress } from "./utils.ts";
 
 interface AppComponentParams {}
 
@@ -77,8 +78,9 @@ async function loadFsApps() {
   const children = await fs.ls("/apps");
   for (const child of children) {
     try {
-      const content = await fs.readTextFile(`/apps/${child}`);
-      loadAppFromScript(child.replace(".js", ""), content);
+      const compressed = await fs.readBlobFile(`/apps/${child}`);
+      const decompressed = await decompress(compressed);
+      loadAppFromScript(child.replace(".js.gz", ""), await decompressed.text());
     } catch {}
   }
 }
@@ -89,7 +91,7 @@ export function useApps() {
   const [sapps, setSapps] = useState(apps);
 
   useEffect(() => {
-    onAppsChanged(() => setSapps(apps));
+    onAppsChanged(() => setSapps([...apps]));
   }, []);
 
   return sapps;
