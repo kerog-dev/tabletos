@@ -1,7 +1,10 @@
 import express from "express";
+import { spawn } from "node:child_process";
 import fs from "node:fs/promises";
 import { networkInterfaces } from "os";
 import { join } from "path";
+
+spawn("./build-apps.ts", { shell: true, cwd: join(import.meta.dirname, "../../") });
 
 const appsDir = join(import.meta.dirname, "../../dist/apps/");
 
