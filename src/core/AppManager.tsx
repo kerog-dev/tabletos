@@ -84,7 +84,15 @@ export default function Installer() {
                 {app} ({apps.some(app2 => app2.name === app)
                   ? (
                     <>
-                      Installed, <button onClick={() => uninstall(app)}>Uninstall</button>
+                      Installed, <button onClick={() => uninstall(app)}>Uninstall</button>,{" "}
+                      <button
+                        onClick={() => {
+                          uninstall(app).then(() => remoteInstall(app)).then(() => alert("Updated successfully!"))
+                            .catch((reason) => alert(`Failed to update: ${reason}`));
+                        }}
+                      >
+                        Update
+                      </button>
                     </>
                   )
                   : <button onClick={() => remoteInstall(app)}>Install</button>})

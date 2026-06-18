@@ -50,7 +50,10 @@ const appsChanged = () => appChangeListeners.forEach(l => l());
 export async function loadAppFromScript(name: string, script: string) {
   if (apps.some(app => app.name === name)) throw "App with that name is already loaded!";
 
-  const mod = () => import(`data:text/javascript;base64,${btoa(script)}`);
+  const blob = new Blob([script], { type: "text/javascript" });
+  const uri = URL.createObjectURL(blob);
+
+  const mod = () => import(uri);
   const app: App = { name, manifest: Promise.resolve({}), component: lazy(mod), isCore: false };
 
   apps.push(app);
