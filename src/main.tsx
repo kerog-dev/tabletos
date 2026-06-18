@@ -1,8 +1,15 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
+import React from "react";
+import * as JSXRuntime from "react/jsx-runtime";
 import Main from "./App.tsx";
 import favicon from "./assets/favicon.svg";
+
+Object.assign(window as any, {
+  __React: React,
+  __ReactJsxRuntime: JSXRuntime,
+});
 
 window.addEventListener("error", (e) => {
   alert(e.error);

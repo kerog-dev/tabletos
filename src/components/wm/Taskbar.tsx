@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { type App, apps } from "../../apps.ts";
+import { type App, useApps } from "../../apps.ts";
 import "./Taskbar.css";
 import type { WindowDesc } from "./WindowManager.tsx";
 
@@ -11,6 +11,8 @@ export function Launcher(
     setLauncherOpen: (open: boolean) => void;
   },
 ) {
+  const apps = useApps();
+
   return (
     <div
       className="launcher"
