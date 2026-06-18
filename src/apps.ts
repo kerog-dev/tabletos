@@ -85,7 +85,7 @@ async function loadFsApps() {
   }
 }
 
-await loadFsApps();
+loadFsApps();
 
 export function useApps() {
   const [sapps, setSapps] = useState(apps);

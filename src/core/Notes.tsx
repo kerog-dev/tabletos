@@ -1,42 +1,45 @@
-import { useEffect, useRef, useState } from "react";
-import storage, { useStorage } from "../storage.ts";
+import { useRef, useState } from "react";
+import type { Sdk } from "../sdk.ts";
+
+const { fs, getAppDir }: Sdk = (window as any).$;
+
+const appDir = await getAppDir("Notes");
+const notesDir = `${appDir}/notes`;
+
+if (!(await fs.isDir(notesDir))) await fs.mkdir(notesDir);
 
 function NoteEditor({ note, back }: { note: string; back: () => void }) {
-  const [content, setContent] = useState<string>(storage.notes.contents[note]);
+  const notePath = `${notesDir}/${note}.txt`;
+  const text = fs.useTextFile(notePath);
 
-  useEffect(() => {
-    const id = setTimeout(() => {
-      storage.notes.contents[note] = content;
-    }, 500);
-    return () => clearTimeout(id);
-  }, [content]);
+  async function write(updated: string) {
+    fs.writeFile(notePath, updated);
+  }
 
   return (
     <div>
-      <button onClick={() => back}>${"<--"}</button>
-      <textarea onChange={(e) => setContent(e.target.value)} value={content}></textarea>
+      <button onClick={() => back()}>{"<--"}</button>
+      <br />
+      <textarea onChange={(e) => write(e.target.value)} value={text ?? "Note not found"}></textarea>
     </div>
   );
 }
 
 function NoteList({ setOpenNote }: { setOpenNote: (name: string) => void }) {
   const newNoteNameRef = useRef<HTMLInputElement | null>(null);
-  const [notes, setNotes] = useStorage<string[]>("notes.list", []);
+  const notes = fs.useDirListing(notesDir)?.map(x => x.replace(".txt", ""));
 
-  function createNote() {
+  async function createNote() {
     if (!newNoteNameRef.current) return;
     const newName = newNoteNameRef.current.value;
-    setNotes([...notes, newName]);
-    storage.notes ??= {};
-    storage.notes.contents ??= {};
-    storage.notes.contents[newName] = "";
+    await fs.writeFile(`${notesDir}/${newName}.txt`, "");
   }
 
   return (
     <div>
       Notes:
       <ul>
-        {notes.map(note => (
+        {notes?.map(note => (
           <li key={note}>
             <button onClick={() => setOpenNote(note)}>{note}</button>
           </li>

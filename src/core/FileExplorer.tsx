@@ -21,13 +21,20 @@ export default function FileExplorer() {
   const [cwd, setCwd] = useState("");
   const [children, setChildren] = useState<FileDesc[]>([]);
 
+  async function update() {
+    const children = await fs.ls(cwd === "" ? "/" : cwd);
+    const childrenPathes = children.map(c => `${cwd}/${c}`);
+    const childrenAreDirs = await Promise.all(childrenPathes.map(fs.isDir));
+    setChildren(children.map((name, i) => ({ isDir: childrenAreDirs[i], name, path: `${cwd}/${name}` })));
+  }
+
   useEffect(() => {
-    (async () => {
-      const children = await fs.ls(cwd === "" ? "/" : cwd);
-      const childrenPathes = children.map(c => `${cwd}/${c}`);
-      const childrenAreDirs = await Promise.all(childrenPathes.map(fs.isDir));
-      setChildren(children.map((name, i) => ({ isDir: childrenAreDirs[i], name, path: `${cwd}/${name}` })));
-    })();
+    update();
+    const listener = () => update();
+    fs.watchDir(cwd === "" ? "/" : cwd, listener, false, ["delete", "create"]);
+    return () => {
+      fs.unwatch(listener);
+    };
   }, [cwd]);
 
   return (
