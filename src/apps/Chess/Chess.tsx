@@ -1,5 +1,4 @@
-import { Chess } from "chess.js";
-import type { Square } from "chess.js";
+import { Chess, type Square } from "chess.js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Chessboard, type PieceDropHandlerArgs } from "react-chessboard";
 

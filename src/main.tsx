@@ -5,6 +5,7 @@ import React from "react";
 import * as JSXRuntime from "react/jsx-runtime";
 import Main from "./App.tsx";
 import favicon from "./assets/favicon.svg";
+import "./sdk.ts";
 
 Object.assign(window as any, {
   __React: React,

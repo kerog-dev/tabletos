@@ -115,3 +115,15 @@ export async function unlink(path: string) {
   }
   await db.delete("fs", path);
 }
+
+// watchFile
+// watchDir(recursive = true)
+//
+// readJsonFile
+// writeJsonFile
+//
+// useDirListing
+// useTextFile
+// useJsonFile
+//
+// delete(recursive = true)
