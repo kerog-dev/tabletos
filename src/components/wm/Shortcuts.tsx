@@ -10,6 +10,7 @@ interface ShortcutDesc {
   pos: [number, number];
 }
 
+// TODO: display: grid; instead of this current thing.
 function Shortcut({ s, spawnWindow }: { s: ShortcutDesc; spawnWindow: (app: App) => void }) {
   const src = s.iconFile ? useBlobFileUrl(s.iconFile) : undefined;
 
@@ -39,9 +40,9 @@ export function Shortcuts({ spawnWindow }: { spawnWindow: (app: App) => void }) 
   const shortcuts = useMemo<ShortcutDesc[]>(() => {
     return apps.map((app, i) => {
       const pos: [number, number] = [i * SHORTCUT_SIZE, 0];
-      while (pos[0] >= innerWidth) {
-        console.log(pos);
+      while (pos[0] >= innerWidth - SHORTCUT_SIZE) {
         pos[0] -= innerWidth;
+        pos[0] = Math.max(0, pos[0]);
         pos[1] += SHORTCUT_SIZE;
       }
       return ({ name: app.name, target: app, iconFile: "/wallpaper.img", pos });

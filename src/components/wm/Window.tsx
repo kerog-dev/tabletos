@@ -96,7 +96,6 @@ export function Window(
     const touchStartListener = () => {
       draggedRef.current = true;
       clampPos();
-      bringToTop();
     };
     const touchEndListener = () => {
       lastTouch = null;
@@ -120,7 +119,6 @@ export function Window(
       if (draggedRef.current) return;
       e.preventDefault();
       draggedRef.current = true;
-      bringToTop();
     };
     const upListener = () => {
       draggedRef.current = false;
@@ -172,6 +170,7 @@ export function Window(
         backgroundColor: fullscreen ? "#ffffff" : `#ffffff${hexTransparency}`,
       }}
       ref={windowEl}
+      onClick={() => bringToTop()}
     >
       <div
         ref={windowBarEl}
