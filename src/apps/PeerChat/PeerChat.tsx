@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import conn from "../../applib/rpc.ts";
+import type { Sdk } from "../../sdk";
+
+const { conn }: Sdk = (window as any).$;
 
 export default function PeerChat() {
   const [inbox, setInbox] = useState<[string, string, string][]>([]);

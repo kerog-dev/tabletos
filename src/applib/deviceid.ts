@@ -1,6 +1,4 @@
-import type { Sdk } from "../sdk.ts";
-
-const { fs }: Sdk = (window as any).$;
+import * as fs from "../fs.ts";
 
 let deviceId: string;
 if (await fs.pathExists("/deviceid.txt")) deviceId = await fs.readTextFile("/deviceid.txt");

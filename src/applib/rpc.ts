@@ -1,4 +1,5 @@
 import { getServerAddr } from "../server.ts";
+import * as contacts from "./contacts.ts";
 import deviceId from "./deviceid.ts";
 
 export class RpcConnection {
@@ -73,11 +74,12 @@ export class RpcConnection {
   }
 
   async proxyObject<T>(
-    targetClient: string,
+    targetClient: string | contacts.Contact,
     ref: string,
   ): Promise<
     { [K in keyof T]: T[K] extends (...args: infer A) => infer R ? (...args: A) => Promise<Awaited<R>> : T[K] }
   > {
+    const targetId = typeof targetClient === "string" ? targetClient : targetClient.id;
     const self = this;
     await this.ready();
     return new Proxy({}, {
@@ -90,7 +92,7 @@ export class RpcConnection {
               if (data.err) rej(`Remote function errored: ${data.err}`);
               else res(data.result);
             });
-            self.sendCall(targetClient, { ref, target: p, payload: argArray, mid });
+            self.sendCall(targetId, { ref, target: p, payload: argArray, mid });
           });
         };
       },

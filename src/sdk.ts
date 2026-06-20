@@ -1,3 +1,4 @@
+import conn from "./applib/rpc.ts";
 import { useApps } from "./apps.ts";
 import * as fs from "./fs.ts";
 import storage, { useStorage } from "./storage.ts";
@@ -11,6 +12,7 @@ interface Sdk {
   fs: typeof fs;
   getAppDir(name: string): Promise<string>;
   useApps: typeof useApps;
+  conn: typeof conn;
 }
 
 const sdk: Sdk = {
@@ -25,6 +27,7 @@ const sdk: Sdk = {
     return `/appdata/${name}`;
   },
   useApps,
+  conn,
 };
 
 (window as any).$ = sdk;

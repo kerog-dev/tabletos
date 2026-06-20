@@ -1,8 +1,7 @@
 import { useState } from "react";
-import conn from "../../applib/rpc.ts";
 import type { Sdk } from "../../sdk.ts";
 
-const { fs, getAppDir }: Sdk = (window as any).$;
+const { fs, getAppDir, conn }: Sdk = (window as any).$;
 const appDir = await getAppDir(`FileShare`);
 
 interface RpcObject {
