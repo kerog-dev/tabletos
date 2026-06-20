@@ -3,6 +3,7 @@ import { loadAppFromScript, unloadApp } from "../apps.ts";
 import { useApps } from "../apps.ts";
 import * as fs from "../fs.ts";
 import { fetch } from "../net.ts";
+import { toast, Urgency } from "../toast.tsx";
 import { compress, decompress } from "../utils.ts";
 
 export default function Installer() {
@@ -29,11 +30,11 @@ export default function Installer() {
   async function tempLoad(compressed: boolean, quiet = false) {
     const data = await getData(compressed);
     if (!data) {
-      alert(`Did you provide the correct data?`);
+      toast({ title: "Failed to load app", desc: "Did you provide the correct data?", urgency: Urgency.Error });
       return;
     }
-    loadAppFromScript(data[0], data[1]).then(() => quiet ? void 0 : alert(`Loaded successfully!`))
-      .catch((reason) => alert(`Failed to load: ${reason}`));
+    loadAppFromScript(data[0], data[1]).then(() => quiet ? void 0 : toast({ title: "Loaded successfully!" }))
+      .catch((reason) => toast({ title: "Failed to load", desc: "Reason: " + reason }));
     return data;
   }
 
@@ -51,30 +52,30 @@ export default function Installer() {
     );
   }
 
-  async function uninstall(name?: string) {
+  async function uninstall(name?: string, quiet = false) {
     if (!name && !uninstallAppNameRef.current) return;
     if (!name && uninstallAppNameRef.current) name = uninstallAppNameRef.current.value;
 
     try {
       await fs.unlink(`/apps/${name}.js.gz`);
       unloadApp(name!);
-      alert("Uninstalled successfully!");
+      if (!quiet) toast({ title: "Uninstalled successfully!" });
     } catch (e) {
-      alert(`Failed to uninstall: ${e}`);
+      toast({ title: "Failed to uninstall", desc: "Error: " + e });
     }
   }
 
-  async function remoteInstall(name: string) {
+  async function remoteInstall(name: string, quiet = false) {
     const response = await fetch(`http://server/apps/${name}.js.gz`);
     const inBlob = await response.blob();
     const decompressed = await decompress(inBlob);
     const script = await decompressed.text();
-    loadAppFromScript(name, script).catch((reason) => alert(`Failed to load: ${reason}`));
+    loadAppFromScript(name, script).catch((reason) => toast({ title: "Failed to load", desc: "Reason: " + reason }));
     if (!(await fs.isDir("/apps"))) {
       await fs.mkdir("/apps");
     }
     await fs.writeFile(`/apps/${name}.js.gz`, inBlob);
-    alert("Installed successfully!");
+    if (!quiet) toast({ title: "Installed successfully!" });
   }
 
   return (
@@ -103,8 +104,10 @@ export default function Installer() {
                       Installed, <button onClick={() => uninstall(app)}>Uninstall</button>,{" "}
                       <button
                         onClick={() => {
-                          uninstall(app).then(() => remoteInstall(app)).then(() => alert("Updated successfully!"))
-                            .catch((reason) => alert(`Failed to update: ${reason}`));
+                          uninstall(app, true).then(() => remoteInstall(app, true)).then(() =>
+                            toast({ title: "Updated successfully!" })
+                          )
+                            .catch((reason) => toast({ title: "Failed to update", desc: "Reason: " + reason }));
                         }}
                       >
                         Update

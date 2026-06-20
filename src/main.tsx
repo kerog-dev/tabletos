@@ -6,6 +6,7 @@ import * as JSXRuntime from "react/jsx-runtime";
 import Main from "./App.tsx";
 import favicon from "./assets/favicon.svg";
 import "./sdk.ts";
+import { toast, Urgency } from "./toast.tsx";
 
 Object.assign(window as any, {
   __React: React,
@@ -13,7 +14,11 @@ Object.assign(window as any, {
 });
 
 window.addEventListener("error", (e) => {
-  alert(e.error);
+  try {
+    toast({ title: "Error", desc: String(e.error), urgency: Urgency.Error });
+  } catch {
+    alert(String(e.error));
+  }
 });
 
 const faviconEl = document.createElement("link");
