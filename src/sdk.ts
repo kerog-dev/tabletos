@@ -1,3 +1,4 @@
+import { useApps } from "./apps.ts";
 import * as fs from "./fs.ts";
 import storage, { useStorage } from "./storage.ts";
 import { toast, Urgency } from "./toast.tsx";
@@ -9,6 +10,7 @@ interface Sdk {
   useStorage: typeof useStorage;
   fs: typeof fs;
   getAppDir(name: string): Promise<string>;
+  useApps: typeof useApps;
 }
 
 const sdk: Sdk = {
@@ -22,6 +24,7 @@ const sdk: Sdk = {
     if (!(await fs.isDir(`/appdata/${name}`))) await fs.mkdir(`/appdata/${name}`);
     return `/appdata/${name}`;
   },
+  useApps,
 };
 
 (window as any).$ = sdk;
