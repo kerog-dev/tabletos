@@ -29,7 +29,8 @@
   background-color: #aeaeae;
   padding: 10px;
   border-radius: 8px;
-  width: 10%;
+  width: max-content;
+  z-index: 10000;
 }
 
 .window-list {

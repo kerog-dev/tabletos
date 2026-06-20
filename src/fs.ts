@@ -209,6 +209,25 @@ export function useTextFile(path: string) {
   return content;
 }
 
+export function useBlobFileUrl(path: string) {
+  const [url, setUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let curUrl: string;
+    const listener = async () => {
+      setUrl(await pathExists(path) ? curUrl = URL.createObjectURL(await readBlobFile(path)) : null);
+    };
+    listener();
+    watchFile(path, listener);
+    return () => {
+      URL.revokeObjectURL(curUrl);
+      unwatch(listener);
+    };
+  }, []);
+
+  return url;
+}
+
 export function useDirListing(path: string) {
   const [children, setChildren] = useState<string[] | null>(null);
 

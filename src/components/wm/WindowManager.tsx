@@ -5,6 +5,7 @@ import { Window } from "./Window.tsx";
 import "./WindowManager.css";
 import * as fs from "../../fs.ts";
 import storage from "../../storage.ts";
+import { Shortcuts } from "./Shortcuts.tsx";
 
 let wallpaper: string | null = null;
 try {
@@ -72,6 +73,7 @@ export default function WindowManager() {
         toggleMinimized={id => modifyWindow(w => ({ ...w, minimized: !w.minimized }), id)}
         kill={killWindow}
       />
+      <Shortcuts spawnWindow={spawnWindow} />
       {windows.map((w) => (
         <Window
           key={w.id}
