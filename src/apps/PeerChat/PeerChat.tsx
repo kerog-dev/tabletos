@@ -1,9 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { RpcConnection } from "../../applib/rpc.ts";
-import { getServerAddr } from "../../server.ts";
-
-const uid = Math.floor(Math.random() * 0xf0000000).toString(16);
-const connection = new RpcConnection((await getServerAddr())?.replace("8086", "8085")!, "peerchat-" + uid);
+import conn from "../../applib/rpc.ts";
 
 export default function PeerChat() {
   const [inbox, setInbox] = useState<[string, string, string][]>([]);
@@ -17,8 +13,8 @@ export default function PeerChat() {
         setInbox(inbox => [...inbox, [user, id, message]]);
       },
     };
-    connection.exposeObject(object, "chat");
-    return () => connection.unexposeObject("chat");
+    conn.exposeObject(object, "chat");
+    return () => conn.unexposeObject("chat");
   }, []);
 
   async function send() {
@@ -26,16 +22,16 @@ export default function PeerChat() {
     const senderName = senderNameInputRef.current.value;
     const userId = userIdInputRef.current.value;
     const message = messageInputRef.current.value;
-    const proxy = await connection.proxyObject<{ send(user: string, id: string, message: string): void }>(
+    const proxy = await conn.proxyObject<{ send(user: string, id: string, message: string): void }>(
       userId,
       "chat",
     );
-    await proxy.send(senderName, uid, message);
+    await proxy.send(senderName, conn.name, message);
   }
 
   return (
     <div>
-      <p>your id: {uid}</p>
+      <p>your id: {conn.name}</p>
       <div>
         {inbox.map(([user, id, message]) => (
           <>

@@ -1,9 +1,12 @@
+import { getServerAddr } from "../server.ts";
+import deviceId from "./deviceid.ts";
+
 export class RpcConnection {
   private reconnects = -1;
   private ws!: WebSocket;
   private exposedObjects: Partial<Record<string, Record<string, any>>> = {};
 
-  constructor(private readonly address: string, private readonly name: string) {
+  constructor(private readonly address: string, readonly name: string) {
     this.connect();
   }
 
@@ -99,7 +102,9 @@ export class RpcConnection {
   }
 
   unexposeObject(ref: string) {
-    delete this.exposedObjects[ref];
+    try {
+      delete this.exposedObjects[ref];
+    } catch {}
   }
 
   private async onWsMessage(data: Record<string, any>) {
@@ -126,3 +131,7 @@ export class RpcConnection {
     this.ws.close();
   }
 }
+
+const address = (await getServerAddr())?.replace(":8086", ":8085") ?? "nowhere.invalid";
+const conn = new RpcConnection(address, "tabletos-" + deviceId);
+export default conn;
