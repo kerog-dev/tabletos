@@ -5,3 +5,5 @@ procs:
     shell: pnpm vite dev
   lazygit:
     shell: lazygit
+  tabletos-server:
+    shell: cd server && pnpm run dev
