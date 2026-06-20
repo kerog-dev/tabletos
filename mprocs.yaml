@@ -1,0 +1,7 @@
+procs:
+  builder:
+    shell: read n && pnpm build && ./build-apps.ts && curl -X DELETE 'http://192.168.1.31:8081/tabletos.html' && curl -T dist/index.html 'http://192.168.1.31:8081/tabletos.html' && deploy_tabletos_apps
+  dev:
+    shell: pnpm vite dev
+  lazygit:
+    shell: lazygit
