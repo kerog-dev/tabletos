@@ -6,43 +6,20 @@ interface AppComponentParams {
   args: any[];
 }
 
-interface AppManifest {
-  alternateToolbarPosition: boolean;
-}
-
-const defaultManifest: AppManifest = { alternateToolbarPosition: false };
-
 interface App {
   name: string;
   component: React.LazyExoticComponent<React.FC<AppComponentParams>>;
-  manifest: Promise<Partial<AppManifest>>;
   isCore: boolean;
 }
 
-// TODO: make manifests just a thing apps export
-async function getManifestKey<T extends keyof AppManifest>(
-  app: App,
-  key: T,
-): Promise<AppManifest[T]> {
-  return (await app.manifest)[key] ?? defaultManifest[key];
-}
-
 const appModules = import.meta.glob("./core/*.tsx");
-const appManifests = import.meta.glob("./core/*.json");
 
-const apps: App[] = Object.entries(appModules).map(([path, importFn]) => {
+const apps: App[] = Object.entries(appModules).map(([path, importFunc]) => {
   const name = path.replace("./core/", "").replace(".tsx", "");
-  const manifestPath = `./core/${name}.json`;
-  const manifestImport = appManifests[manifestPath];
 
   return {
     name,
-    component: lazy(importFn as () => Promise<{ default: React.FC<AppComponentParams> }>),
-    manifest: manifestImport
-      ? (manifestImport() as Promise<{ default: Partial<AppManifest> }>)
-        .then(m => m.default)
-        .catch(() => defaultManifest)
-      : Promise.resolve(defaultManifest),
+    component: lazy(importFunc as () => Promise<{ default: React.FC<AppComponentParams> }>),
     isCore: true,
   };
 });
@@ -56,8 +33,8 @@ export async function loadAppFromScript(name: string, script: string) {
   const blob = new Blob([script], { type: "text/javascript" });
   const uri = URL.createObjectURL(blob);
 
-  const mod = () => import(uri);
-  const app: App = { name, manifest: Promise.resolve({}), component: lazy(mod), isCore: false };
+  const mod = () => import(/* @vite-ignore */ uri);
+  const app: App = { name, component: lazy(mod), isCore: false };
 
   apps.push(app);
   appsChanged();
@@ -99,4 +76,4 @@ export function useApps() {
   return sapps;
 }
 
-export { type App, apps, getManifestKey };
+export { type App, apps };

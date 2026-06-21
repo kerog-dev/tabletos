@@ -54,7 +54,7 @@ export default function Whiteboard() {
   useEffect(() => {
     const at = atramentRef.current;
     if (!at) return;
-    at.mode = tool === "erase" ? "erase" : "draw";
+    at.mode = tool;
   }, [tool]);
 
   useEffect(() => {
@@ -99,8 +99,10 @@ export default function Whiteboard() {
 
   const toolbar: React.CSSProperties = {
     position: "absolute",
-    top: 12,
-    left: 12,
+    positionAnchor: "--container",
+    top: "anchor(top)",
+    left: "50%",
+    transform: "translate(-50%, 0)",
     zIndex: 10,
     display: "flex",
     alignItems: "center",
@@ -112,7 +114,7 @@ export default function Whiteboard() {
   };
 
   return (
-    <div style={{ position: "absolute", inset: 0 }}>
+    <div style={{ width: "100%", height: "100%", anchorName: "--container" }}>
       <div style={toolbar}>
         <button onClick={() => setActive(null)}>← boards</button>
         {(["draw", "erase"] as Tool[]).map((t) => (

@@ -3,9 +3,9 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import React from "react";
 import * as JSXRuntime from "react/jsx-runtime";
-import Main from "./App.tsx";
 import favicon from "./assets/favicon.svg";
 import "./sdk.ts";
+import WindowManager from "./components/wm/WindowManager.tsx";
 import { toast, Urgency } from "./toast.tsx";
 
 Object.assign(window as any, {
@@ -29,6 +29,6 @@ document.head.appendChild(faviconEl);
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <Main />
+    <WindowManager />
   </StrictMode>,
 );
