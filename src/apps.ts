@@ -2,7 +2,9 @@ import { lazy, useEffect, useState } from "react";
 import * as fs from "./fs.ts";
 import { decompress } from "./utils.ts";
 
-interface AppComponentParams {}
+interface AppComponentParams {
+  args: any[];
+}
 
 interface AppManifest {
   alternateToolbarPosition: boolean;

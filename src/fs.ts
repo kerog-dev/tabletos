@@ -118,6 +118,18 @@ export async function writeFile(path: string, content: string | Blob) {
   emitWatchAction(path, "write");
 }
 
+export async function appendBlobFile(path: string, appended: Uint8Array<ArrayBuffer> | Blob) {
+  await assertIsDir(parent(path));
+  if (await isDir(path)) throw `Path ${path} is a directory, can't write to it.`;
+  const tx = db.transaction("fs", "readwrite");
+  const fsStore = tx.objectStore("fs");
+  const entry = await fsStore.get(path);
+  const newBlob = new Blob([entry.content as Blob, appended]);
+  await fsStore.put({ type: "file", content: newBlob }, path);
+  tx.commit();
+  emitWatchAction(path, "write");
+}
+
 export async function readFile(path: string): Promise<string | Blob> {
   const result = await db.get("fs", path);
   if (!result || result.type !== "file") throw `Path ${path} either does not exist or is not a file.`;
@@ -147,6 +159,63 @@ export async function ls(path: string): Promise<string[]> {
   }
   emitWatchAction(path, "read");
   return children.map(child => parsePath(child).at(-1)!);
+}
+
+export async function move(from: string, to: string) {
+  await assertPathExists(from);
+  assertPath(to);
+  await assertIsDir(parent(to));
+  if (to === from || to.startsWith(from + "/")) throw "Cannot move something inside itself";
+
+  const allKeys = (await db.getAllKeys("fs")).filter(
+    (k): k is string => typeof k === "string",
+  );
+  const toMove = allKeys.filter(
+    key => key === from || key.startsWith(from + "/"),
+  );
+  const targetKeys = new Set(
+    toMove.map(oldKey => to + oldKey.slice(from.length)),
+  );
+
+  // Anything currently under `to` that won't be directly overwritten by the
+  // move gets wiped, so the destination ends up a replica of `from`'s
+  // subtree rather than a merge of the two.
+  const toNuke = allKeys.filter(
+    key => (key === to || key.startsWith(to + "/")) && !targetKeys.has(key),
+  );
+
+  const tx = db.transaction("fs", "readwrite", { durability: "strict" });
+  const fsStore = tx.objectStore("fs");
+
+  // Read everything first — `from` and `to` can overlap (moving "/x/y" onto
+  // "/x"), so a source key can also be a nuke target. Reading before deleting
+  // avoids losing data in that case.
+  const entries = new Map<string, unknown>();
+  for (const oldKey of toMove) {
+    entries.set(oldKey, await fsStore.get(oldKey));
+  }
+
+  for (const key of toNuke) {
+    await fsStore.delete(key);
+  }
+
+  const renamed: [string, string][] = [];
+  for (const oldKey of toMove) {
+    const newKey = to + oldKey.slice(from.length);
+    await fsStore.put(entries.get(oldKey), newKey);
+    await fsStore.delete(oldKey); // no-op if `toNuke` already removed it
+    renamed.push([oldKey, newKey]);
+  }
+
+  tx.commit();
+
+  for (const key of toNuke) {
+    emitWatchAction(key, "delete");
+  }
+  for (const [oldKey, newKey] of renamed) {
+    emitWatchAction(oldKey, "delete");
+    emitWatchAction(newKey, "create");
+  }
 }
 
 export async function unlink(path: string) {
@@ -209,10 +278,14 @@ export function useTextFile(path: string) {
   return content;
 }
 
-export function useBlobFileUrl(path: string) {
+export function useBlobFileUrl(path: string | null) {
   const [url, setUrl] = useState<string | null>(null);
 
   useEffect(() => {
+    if (path === null) {
+      setUrl(null);
+      return;
+    }
     let curUrl: string;
     const listener = async () => {
       setUrl(await pathExists(path) ? curUrl = URL.createObjectURL(await readBlobFile(path)) : null);
@@ -223,7 +296,7 @@ export function useBlobFileUrl(path: string) {
       URL.revokeObjectURL(curUrl);
       unwatch(listener);
     };
-  }, []);
+  }, [path]);
 
   return url;
 }

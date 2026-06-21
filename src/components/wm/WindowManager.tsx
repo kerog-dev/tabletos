@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { type App } from "../../apps.ts";
+import { type App, apps } from "../../apps.ts";
 import { Taskbar } from "./Taskbar.tsx";
 import { Window } from "./Window.tsx";
 import "./WindowManager.css";
@@ -24,25 +24,39 @@ export interface WindowDesc {
   initialSize: [number, number];
   z: number;
   minimized: boolean;
+  args: any[];
 }
+
+let sSpawnWindow: (w: Omit<Partial<WindowDesc>, "app" | "id" | "z"> & { app: string }) => void;
+export { sSpawnWindow as spawnWindow };
 
 export default function WindowManager() {
   const [windows, setWindows] = useState<WindowDesc[]>([]);
   const curZ = useRef(0);
   const curId = useRef(0);
 
-  function spawnWindow(app: App) {
+  function spawnWindow(
+    app: App,
+    minimized = false,
+    initialPos: [number, number] | null = null,
+    initialSize: [number, number] | null = null,
+    args: any[] = [],
+  ) {
     const posPcnt = Math.max(0, Math.min(0.95, curId.current / 15)) + 0.025;
     const newWindow: WindowDesc = {
       id: ++curId.current,
       app,
-      initialPos: [posPcnt * window.innerWidth, posPcnt * window.innerHeight],
-      initialSize: [window.innerWidth / 3, window.innerHeight / 3],
+      initialPos: initialPos ?? [posPcnt * window.innerWidth, posPcnt * window.innerHeight],
+      initialSize: initialSize ?? [window.innerWidth / 3, window.innerHeight / 3],
       z: ++curZ.current,
-      minimized: false,
+      minimized,
+      args,
     };
     setWindows(windows => [...windows, newWindow]);
   }
+
+  sSpawnWindow = w =>
+    spawnWindow(apps.find(app => app.name === w.app)!, w.minimized, w.initialPos, w.initialSize, w.args);
 
   function killWindow(id: number) {
     setWindows(windows => windows.filter(w => w.id !== id));
@@ -85,6 +99,7 @@ export default function WindowManager() {
           bringToTop={() => modifyWindow(w => ({ ...w, z: ++curZ.current }), w.id)}
           minimized={w.minimized}
           toggleMinimized={() => modifyWindow(w => ({ ...w, minimized: !w.minimized }), w.id)}
+          args={w.args}
         />
       ))}
     </div>

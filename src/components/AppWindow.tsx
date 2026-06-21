@@ -3,9 +3,10 @@ import { type App } from "../apps.ts";
 import ErrorBoundary from "./ErrorBoundary.tsx";
 
 export default function AppWindow(
-  { app, hidden = false }: {
+  { app, hidden = false, args }: {
     app: App;
     hidden?: boolean;
+    args: any[];
   },
 ) {
   const [errKey, setErrKey] = useState(0);
@@ -35,7 +36,7 @@ export default function AppWindow(
             </p>
           )}
         >
-          <app.component />
+          <app.component args={args} />
         </ErrorBoundary>
       </Suspense>
     </div>

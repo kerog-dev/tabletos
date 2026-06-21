@@ -6,7 +6,7 @@ import AppWindow from "../AppWindow.tsx";
 import { windowTransparency } from "./WindowManager.tsx";
 
 export function Window(
-  { app, initialPos, initialSize, minimized, toggleMinimized, z, kill, bringToTop }: {
+  { app, initialPos, initialSize, minimized, toggleMinimized, z, kill, bringToTop, args }: {
     app: App;
     initialPos: [number, number];
     initialSize: [number, number];
@@ -15,6 +15,7 @@ export function Window(
     bringToTop: () => void;
     minimized: boolean;
     toggleMinimized: () => void;
+    args: any[];
   },
 ) {
   const windowEl = useRef<HTMLDivElement | null>(null);
@@ -195,7 +196,7 @@ export function Window(
           <button onClick={() => kill()}>X</button>
         </div>
       </div>
-      <AppWindow app={app} hidden={minimized} />
+      <AppWindow app={app} hidden={minimized} args={args} />
     </div>
   );
 }
