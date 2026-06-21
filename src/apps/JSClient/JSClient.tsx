@@ -1,46 +1,31 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import type { Sdk } from "../../sdk.ts";
+import type { RpcObject } from "../JSServer/JSServer.tsx";
 
-const ws = new WebSocket("ws://192.168.1.31:8085/");
+const { conn }: Sdk = (window as any).$;
 
 export default function JSClient() {
-  const idInputRef = useRef<HTMLInputElement | null>(null);
-  const codeInputRef = useRef<HTMLTextAreaElement | null>(null);
-
   const [results, setResults] = useState<string[]>([]);
 
-  useEffect(() => {
-    console.log("starting listener");
-    const listener = (e: MessageEvent) => {
-      console.log("received", e.data);
-      const msg = JSON.parse(e.data.toString());
-      if (msg.type === "js-server-result") {
-        console.log(results);
-        setResults(results => [...results, `${msg.id}: ${msg.result}`]);
-      }
-    };
+  const idInputRef = useRef<HTMLInputElement | null>(null);
+  const scriptInputRef = useRef<HTMLTextAreaElement | null>(null);
 
-    ws.addEventListener("message", listener);
-    return () => ws.removeEventListener("message", listener);
-  }, []);
-
-  function run() {
-    if (!idInputRef.current || !codeInputRef.current) return;
-    ws.send(JSON.stringify({
-      type: "js-server-run",
-      targetId: idInputRef.current.value,
-      code: codeInputRef.current.value,
-    }));
+  async function run() {
+    if (!idInputRef.current || !scriptInputRef.current) return;
+    const targetId = idInputRef.current.value;
+    const script = scriptInputRef.current.value;
+    const object = await conn.proxyObject<RpcObject>(targetId, "jsserver");
+    const result = await object.run(script);
+    setResults(results => [...results, result]);
   }
 
   return (
     <div>
-      <span>{ws.readyState === ws.CLOSED ? "closed" : ws.readyState === ws.OPEN ? "open" : "idk"}</span>
-      <br />
       <label>Target ID</label>
       <input type="text" ref={idInputRef} />
       <br />
       <label>Code</label>
-      <textarea ref={codeInputRef} />
+      <textarea style={{ width: "100%", height: "50px" }} ref={scriptInputRef} />
       <br />
       <button onClick={run}>Run!</button>
       <br />

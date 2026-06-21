@@ -1,37 +1,28 @@
-const id = (Math.floor(Math.random() * 0xfffff)).toString(16);
+import type { Sdk } from "../../sdk";
 
-const ws = new WebSocket("ws://192.168.1.31:8085/");
-ws.addEventListener("open", () => {
-  ws.send(JSON.stringify({
-    type: "js-server-announce",
-    id,
-  }));
-});
+export interface RpcObject {
+  run(script: string): string;
+}
 
-ws.addEventListener("message", e => {
-  const msg = JSON.parse(e.data.toString());
-  if (msg.type === "js-server-run" && msg.targetId === id) {
-    let result;
+const { conn }: Sdk = (window as any).$;
+
+const object: RpcObject = {
+  run(script) {
+    let result: string;
     try {
-      result = String(window.eval(msg.code));
+      result = String(window.eval(script));
     } catch (e) {
       result = "Error: " + String(e);
     }
-    ws.send(JSON.stringify({
-      type: "js-server-result",
-      id,
-      result,
-    }));
-  }
-});
+    return result;
+  },
+};
+conn.exposeObject(object, "jsserver");
 
-// TODO: only allow execution while visible
 export default function JSServer() {
   return (
     <div>
-      <span>{ws.readyState === ws.CLOSED ? "closed" : ws.readyState === ws.OPEN ? "open" : "idk"}</span>
-      <br />
-      <span>{id}</span>
+      <span>you are: {conn.name}</span>
     </div>
   );
 }
