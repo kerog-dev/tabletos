@@ -24,6 +24,7 @@ export function Window(
   const draggedRef = useRef<boolean>(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [floatRect, setFloatRect] = useState({ x: 0, y: 0, width: 0, height: 0 });
+  const isMountedRef = useRef<boolean>(false);
 
   useEffect(() => {
     if (!windowEl.current) return;
@@ -48,13 +49,16 @@ export function Window(
   }, [fullscreen]);
 
   useEffect(() => {
+    if (!isMountedRef.current) {
+      isMountedRef.current = true;
+      return;
+    }
     if (!windowEl.current) return;
-    if (lastHeightRef.current === null) {
+    if (minimized) {
       lastHeightRef.current = windowEl.current.clientHeight;
       windowEl.current.style.height = "30px";
-    } else {
+    } else if (lastHeightRef.current !== null) {
       windowEl.current.style.height = lastHeightRef.current + "px";
-      lastHeightRef.current = null;
     }
   }, [minimized]);
 
