@@ -261,10 +261,14 @@ export function unwatch(listener: WatchListener) {
   return true;
 }
 
-export function useTextFile(path: string) {
+export function useTextFile(path: string | null) {
   const [content, setContent] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!path) {
+      setContent(null);
+      return;
+    }
     const listener = async () => {
       setContent(await pathExists(path) ? await readTextFile(path) : null);
     };
@@ -273,7 +277,7 @@ export function useTextFile(path: string) {
     return () => {
       unwatch(listener);
     };
-  }, []);
+  }, [path]);
 
   return content;
 }
