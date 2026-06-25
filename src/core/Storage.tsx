@@ -15,7 +15,7 @@ function StorageExplorerNode({
   nodePath,
 }: {
   nodeKey: string;
-  nodeValue: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  nodeValue: any;
   nodePath: string;
 }) {
   if (typeof nodeValue !== "object") {

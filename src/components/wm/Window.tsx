@@ -3,6 +3,10 @@ import { type App } from "../../apps.ts";
 import { toast } from "../../toast.tsx";
 import { sleep } from "../../utils.ts";
 import AppWindow from "../AppWindow.tsx";
+import closeIcon from "./icons/close.png";
+import fullscreenIcon from "./icons/fullscreen.png";
+import minimizeIcon from "./icons/minimize.png";
+import resizeIcon from "./icons/resize.png";
 import { windowTransparency } from "./WindowManager.tsx";
 
 export function Window(
@@ -190,14 +194,16 @@ export function Window(
       >
         {app.name}
         <div>
-          <button onClick={() => setFullscreen(f => !f)}>F</button>
-          {!fullscreen && (
-            <>
-              <button onClick={() => startResize()}>!</button>
-              <button onClick={() => toggleMinimized()}>_</button>
-            </>
-          )}
-          <button onClick={() => kill()}>X</button>
+          {[
+            [fullscreenIcon, () => setFullscreen(f => !f)],
+            ...(fullscreen ? [] : [[resizeIcon, startResize], [minimizeIcon, toggleMinimized]]),
+            [closeIcon, kill],
+          ]
+            .map(([icon, cb], i) => (
+              <button key={i} onClick={() => (cb as () => void)()}>
+                <img style={{ width: "100%", height: "100%", imageRendering: "pixelated" }} src={icon as string} />
+              </button>
+            ))}
         </div>
       </div>
       <AppWindow app={app} hidden={minimized} args={args} />

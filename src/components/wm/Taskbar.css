@@ -50,6 +50,11 @@
 
 .tray {}
 
+.tray-entry {
+  width: 30px;
+  height: 30px;
+}
+
 .taskbar-window {
   width: 12%;
   height: 100%;

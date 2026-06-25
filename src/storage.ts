@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-function makeProxy(target: any, flush: () => void): any { // eslint-disable-line @typescript-eslint/no-explicit-any
+function makeProxy(target: any, flush: () => void): any {
   return new Proxy(target, {
     set(t, key: string, value) {
       t[key] = value;

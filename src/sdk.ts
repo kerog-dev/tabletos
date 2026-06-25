@@ -1,4 +1,4 @@
-import conn from "./applib/rpc.ts";
+import type { RpcConnection } from "./applib/rpc.ts";
 import { useApps } from "./apps.ts";
 import { spawnWindow } from "./components/wm/WindowManager.tsx";
 import * as fs from "./fs.ts";
@@ -13,7 +13,7 @@ interface Sdk {
   fs: typeof fs;
   getAppDir(name: string): Promise<string>;
   useApps: typeof useApps;
-  conn: typeof conn;
+  conn: RpcConnection | undefined;
   spawnWindow: typeof spawnWindow;
 }
 
@@ -29,9 +29,11 @@ const sdk: Sdk = {
     return `/appdata/${name}`;
   },
   useApps,
-  conn,
+  conn: undefined,
   spawnWindow: (...args) => spawnWindow(...args),
 };
+
+import("./applib/rpc.ts").then(mod => sdk.conn = mod.default);
 
 (window as any).$ = sdk;
 

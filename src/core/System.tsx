@@ -1,7 +1,19 @@
 import { useRef } from "react";
+import { setTray } from "../components/wm/tray.ts";
 import * as fs from "../fs.ts";
 import { exportJSON, importJSON } from "../storage.ts";
 import storage from "../storage.ts";
+
+setInterval(() => {
+  setTray({
+    id: "system",
+    name: "System",
+    iconUrl: "",
+    show() {
+      return <p>hi</p>;
+    },
+  });
+}, 500);
 
 export default function System() {
   const wallpaperInputRef = useRef<HTMLInputElement | null>(null);

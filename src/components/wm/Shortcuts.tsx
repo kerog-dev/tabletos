@@ -1,8 +1,11 @@
 import { useMemo } from "react";
 import { type App, apps, useApps } from "../../apps.ts";
-import { readTextFile, useBlobFileUrl } from "../../fs.ts";
+import { pathExists, readTextFile, useBlobFileUrl, writeFile } from "../../fs.ts";
 import "./Shortcuts.css";
 import { toast, Urgency } from "../../toast.tsx";
+import noIconIcon from "./icons/noicon.png?url";
+
+if (!(await pathExists("/noicon.png"))) await writeFile("/noicon.png", await (await fetch(noIconIcon)).blob());
 
 interface ShortcutShared {
   name: string;
@@ -76,7 +79,7 @@ function Shortcut({ s, spawnWindow }: { s: ShortcutDesc; spawnWindow: (app: App)
 }
 
 function appsToShortcuts(apps: App[]): ShortcutDesc[] {
-  return apps.map(app => ({ name: app.name, targetType: "app", app, iconFile: "/wallpaper.img" }));
+  return apps.map(app => ({ name: app.name, targetType: "app", app, iconFile: "/noicon.png" }));
 }
 
 export function Shortcuts({ spawnWindow }: { spawnWindow: (app: App) => void }) {

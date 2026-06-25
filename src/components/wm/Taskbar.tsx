@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { type App, useApps } from "../../apps.ts";
 import "./Taskbar.css";
+import { useBlobFileUrl } from "../../fs.ts";
 import { Toasts } from "../../toast.tsx";
+import startIcon from "./icons/start.png";
+import { toggleTrayOpen, useTrayDescs } from "./tray.ts";
 import type { WindowDesc } from "./WindowManager.tsx";
 
 export function Launcher(
@@ -70,6 +73,8 @@ export function Taskbar(
 ) {
   const [launcherOpen, setLauncherOpen] = useState(false);
   const [contextMenuOpens, setContextMenuOpens] = useState(Object.fromEntries(windows.map(w => [w.id, false])));
+  const trayDescs = useTrayDescs();
+  const wallpaperBlobUrl = useBlobFileUrl("/wallpaper.img");
 
   useEffect(() => {
     const old = contextMenuOpens;
@@ -83,7 +88,7 @@ export function Taskbar(
           className="start-button"
           onClick={() => setLauncherOpen(open => !open)}
         >
-          {"<!>"}
+          <img style={{ width: "100%", height: "100%", imageRendering: "pixelated" }} src={startIcon} />
         </button>
         <div className="window-list">
           {windows.map(w => (
@@ -106,7 +111,21 @@ export function Taskbar(
             </div>
           ))}
         </div>
-        <div className="tray">tray</div>
+        <div className="tray">
+          {Object.values(trayDescs).map(t => (
+            <div key={t.id} className="tray-entry">
+              <img
+                className="tray-entry-image"
+                width={30}
+                height={30}
+                src={(t.iconUrl || wallpaperBlobUrl) ?? ""}
+                title={t.name}
+                onClick={() => toggleTrayOpen(t.id)}
+              />
+              {t.open && <div className="tray-entry-popup">{/*t.show()*/ ""}meow</div>}
+            </div>
+          ))}
+        </div>
       </div>
       <Toasts />
       <Launcher {...{ spawnWindow, open: launcherOpen, killAll, setLauncherOpen }} />
