@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
+import closeIcon from "vfs:/vendor/icons/close.png?url";
+import fullscreenIcon from "vfs:/vendor/icons/fullscreen.png?url";
+import minimizeIcon from "vfs:/vendor/icons/minimize.png?url";
+import resizeIcon from "vfs:/vendor/icons/resize.png?url";
 import { type App } from "../../apps.ts";
 import { toast } from "../../toast.tsx";
 import { sleep } from "../../utils.ts";
 import AppWindow from "../AppWindow.tsx";
-import closeIcon from "./icons/close.png";
-import fullscreenIcon from "./icons/fullscreen.png";
-import minimizeIcon from "./icons/minimize.png";
-import resizeIcon from "./icons/resize.png";
 import { windowTransparency } from "./WindowManager.tsx";
 
 export function Window(

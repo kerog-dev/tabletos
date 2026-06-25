@@ -1,6 +1,6 @@
 import type { RpcConnection } from "./applib/rpc.ts";
 import { useApps } from "./apps.ts";
-import { spawnWindow } from "./components/wm/WindowManager.tsx";
+import type { WindowDesc } from "./components/wm/WindowManager.tsx";
 import * as fs from "./fs.ts";
 import storage, { useStorage } from "./storage.ts";
 import { toast, Urgency } from "./toast.tsx";
@@ -14,7 +14,7 @@ interface Sdk {
   getAppDir(name: string): Promise<string>;
   useApps: typeof useApps;
   conn: RpcConnection | undefined;
-  spawnWindow: typeof spawnWindow;
+  spawnWindow: ((w: Omit<Partial<WindowDesc>, "app" | "id" | "z"> & { app: string }) => void) | undefined;
 }
 
 const sdk: Sdk = {
@@ -30,11 +30,12 @@ const sdk: Sdk = {
   },
   useApps,
   conn: undefined,
-  spawnWindow: (...args) => spawnWindow(...args),
+  spawnWindow: undefined,
 };
 
 import("./applib/rpc.ts").then(mod => sdk.conn = mod.default);
 
 (window as any).$ = sdk;
+(window as any).$resolve();
 
 export { type Sdk };

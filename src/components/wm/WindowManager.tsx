@@ -3,17 +3,9 @@ import { type App, apps } from "../../apps.ts";
 import { Taskbar } from "./Taskbar.tsx";
 import { Window } from "./Window.tsx";
 import "./WindowManager.css";
-import * as fs from "../../fs.ts";
+import wallpaperUrl from "vfs:/wallpaper.img?url";
 import storage from "../../storage.ts";
 import { Shortcuts } from "./Shortcuts.tsx";
-
-let wallpaper: string | null = null;
-try {
-  const content = await fs.readFile("/wallpaper.img");
-  if (!(content instanceof Blob)) throw "Wallpaper file is not a blob";
-  const uri = URL.createObjectURL(content);
-  wallpaper = uri;
-} catch (e) {}
 
 export const windowTransparency = storage.windowTransparency ?? 0;
 
@@ -26,9 +18,6 @@ export interface WindowDesc {
   minimized: boolean;
   args: any[];
 }
-
-let sSpawnWindow: (w: Omit<Partial<WindowDesc>, "app" | "id" | "z"> & { app: string }) => void;
-export { sSpawnWindow as spawnWindow };
 
 export default function WindowManager() {
   const [windows, setWindows] = useState<WindowDesc[]>([]);
@@ -55,7 +44,7 @@ export default function WindowManager() {
     setWindows(windows => [...windows, newWindow]);
   }
 
-  sSpawnWindow = w =>
+  (window as any).$.spawnWindow = (w: any) =>
     spawnWindow(apps.find(app => app.name === w.app)!, w.minimized, w.initialPos, w.initialSize, w.args);
 
   function killWindow(id: number) {
@@ -74,7 +63,7 @@ export default function WindowManager() {
         width: "100vw",
         height: "100vh",
         position: "relative",
-        backgroundImage: wallpaper == null ? undefined : `url(${wallpaper})`,
+        backgroundImage: wallpaperUrl ? `url(${wallpaperUrl})` : undefined,
         backgroundSize: "cover",
         backgroundRepeat: "no-repeat",
         backgroundPosition: "50%, 50%",

@@ -8,6 +8,7 @@ import { resolve } from "node:path";
 import { promisify } from "node:util";
 import { build } from "vite";
 import cssInjectedByJsPlugin from "vite-plugin-css-injected-by-js";
+import vitePluginVfsImport from "./vite-plugin-vfs-import.ts";
 
 const execFileAsync = promisify(execFile);
 
@@ -29,6 +30,7 @@ const builds = input.map(file =>
     plugins: [
       react(),
       cssInjectedByJsPlugin(),
+      vitePluginVfsImport(),
     ],
     resolve: {
       alias: {

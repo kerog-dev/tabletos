@@ -161,6 +161,14 @@ export async function ls(path: string): Promise<string[]> {
   return children.map(child => parsePath(child).at(-1)!);
 }
 
+export async function mkdirp(path: string) {
+  const parts = parsePath(path);
+  for (let i = 1; i <= parts.length; i++) {
+    const dirPath = encodePath(parts.slice(0, i));
+    if (!(await isDir(dirPath))) await mkdir(dirPath);
+  }
+}
+
 export async function move(from: string, to: string) {
   await assertPathExists(from);
   assertPath(to);
