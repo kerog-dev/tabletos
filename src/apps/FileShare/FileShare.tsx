@@ -18,7 +18,7 @@ interface Transfer {
   contentType: string;
 }
 
-const CHUNK_SIZE = 64 * 1024;
+const CHUNK_SIZE = 256 * 1024;
 
 function bytesToBinaryString(bytes: Uint8Array): string {
   const BATCH = 0x8000;

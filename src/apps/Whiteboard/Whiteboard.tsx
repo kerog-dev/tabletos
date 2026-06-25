@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { Sdk } from "../../sdk.ts";
-const { default: Atrament } = await import("atrament" as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+const { default: Atrament } = await import("atrament" as any);
 
 const { storage }: Sdk = (window as any).$;
 
