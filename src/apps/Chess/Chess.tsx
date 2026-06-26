@@ -1,132 +1,80 @@
-import { Chess, type Square } from "chess.js";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Chessboard, type PieceDropHandlerArgs } from "react-chessboard";
+import { Chess } from "chess.js";
+import { useEffect, useRef, useState } from "react";
+import "gchessboard";
+
+const GChessboard = "g-chess-board" as any;
 
 export default function ChessApp() {
-  const chessElRef = useRef<HTMLDivElement | null>(null);
-
-  const gameRef = useRef(new Chess());
-  const game = gameRef.current;
-
-  const [chessPosition, setChessPosition] = useState(game.fen());
-  const [selectedSquare, setSelectedSquare] = useState<Square | null>(null);
-  const [availableMoves, setAvailableMoves] = useState<Square[]>([]);
-  const [lastMove, setLastMove] = useState<{ from: Square; to: Square } | null>(null);
-  const [statusText, setStatusText] = useState("White to move");
-  const [gameOver, setGameOver] = useState(false);
-
-  const [size, setSize] = useState(0);
-
-  useEffect(() => {
-    const onResize = () =>
-      setSize(Math.min(chessElRef.current?.clientWidth ?? 0, chessElRef.current?.clientHeight ?? 0));
-    onResize();
-    const observer = new ResizeObserver(onResize);
-    if (chessElRef.current) observer.observe(chessElRef.current);
-    return () => observer.disconnect();
-  }, []);
+  const boardRef = useRef<any>(null);
+  const [game] = useState(() => new Chess());
+  const [status, setStatus] = useState("White to move");
 
   function syncStatus() {
     const side = game.turn() === "w" ? "White" : "Black";
-    if (game.isCheckmate()) {
-      setStatusText(`${side === "White" ? "Black" : "White"} wins by checkmate`);
-      setGameOver(true);
-    } else if (game.isStalemate()) {
-      setStatusText("Stalemate · Draw");
-      setGameOver(true);
-    } else if (game.isDraw()) {
-      setStatusText("Draw");
-      setGameOver(true);
-    } else if (game.inCheck()) setStatusText(`${side} is in check`);
-    else setStatusText(`${side} to move`);
+    if (game.isCheckmate()) setStatus(`${side === "White" ? "Black" : "White"} wins by checkmate`);
+    else if (game.isStalemate() || game.isDraw()) setStatus("Draw");
+    else if (game.inCheck()) setStatus(`${side} in check`);
+    else setStatus(`${side} to move`);
   }
 
-  function doMove(from: Square, to: Square): boolean {
-    try {
-      game.move({ from, to, promotion: "q" });
-      setChessPosition(game.fen());
-      setLastMove({ from, to });
-      setSelectedSquare(null);
-      setAvailableMoves([]);
+  useEffect(() => {
+    const board = boardRef.current;
+    if (!board) return;
+
+    const onMoveStart = (e: CustomEvent) => {
+      e.detail.setTargets(
+        game.moves({ square: e.detail.from, verbose: true }).map((m: any) => m.to),
+      );
+    };
+
+    const onMoveEnd = (e: CustomEvent) => {
+      const move = game.move({ from: e.detail.from, to: e.detail.to, promotion: "q" });
+      if (move === null) e.preventDefault();
+    };
+
+    const onMoveFinished = () => {
+      board.fen = game.fen();
+      board.turn = game.turn() === "w" ? "white" : "black";
       syncStatus();
-      return true;
-    } catch {
-      return false;
-    }
-  }
+    };
 
-  function onPieceDrop({ sourceSquare, targetSquare }: PieceDropHandlerArgs) {
-    if (!targetSquare) return false;
-    return doMove(sourceSquare as Square, targetSquare as Square);
-  }
-
-  function onSquareClick({ square }: { square: any }) {
-    if (gameOver) return;
-    if (selectedSquare && availableMoves.includes(square)) {
-      doMove(selectedSquare, square);
-      return;
-    }
-    const piece = game.get(square);
-    if (piece && piece.color === game.turn()) {
-      setSelectedSquare(square);
-      setAvailableMoves(game.moves({ square, verbose: true }).map(m => m.to as Square));
-    } else {
-      setSelectedSquare(null);
-      setAvailableMoves([]);
-    }
-  }
-  const customSquareStyles = useMemo(() => {
-    const s: Record<string, { background: string }> = {};
-    if (lastMove) {
-      s[lastMove.from] = { background: "rgba(155, 199, 0, 0.41)" };
-      s[lastMove.to] = { background: "rgba(155, 199, 0, 0.41)" };
-    }
-    if (selectedSquare) s[selectedSquare] = { background: "rgba(20, 85, 30, 0.5)" };
-    for (const sq of availableMoves) {
-      s[sq] = game.get(sq)
-        ? { background: "radial-gradient(transparent 0 58%, rgba(20,85,30,.35) 58% 68%, transparent 68%)" }
-        : { background: "radial-gradient(rgba(20,85,30,.35) 25%, transparent 26%)" };
-    }
-    if (game.inCheck()) {
-      for (const row of game.board()) {
-        for (const p of row) {
-          if (p?.type === "k" && p.color === game.turn()) {
-            s[p.square] = { background: "radial-gradient(circle, #f00c 0%, #f006 40%, transparent 70%)" };
-          }
-        }
-      }
-    }
-    return s;
-  }, [selectedSquare, availableMoves, lastMove, chessPosition]);
+    board.addEventListener("movestart", onMoveStart);
+    board.addEventListener("moveend", onMoveEnd);
+    board.addEventListener("movefinished", onMoveFinished);
+    return () => {
+      board.removeEventListener("movestart", onMoveStart);
+      board.removeEventListener("moveend", onMoveEnd);
+      board.removeEventListener("movefinished", onMoveFinished);
+    };
+  }, []);
 
   return (
     <div
-      ref={chessElRef}
-      style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}
+      style={{
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        containerType: "size",
+      }}
     >
-      <Chessboard
-        options={{
-          allowDragging: true,
-          position: chessPosition,
-          id: "player-vs-player",
-          boardStyle: { width: size, height: size, ...customSquareStyles },
-          onPieceDrop,
-          onSquareClick,
-        }}
+      <GChessboard
+        ref={boardRef}
+        fen="start"
+        interactive
+        style={{ width: "90cqmin", aspectRatio: "1/1" }}
       />
-      <div
+      <p
         style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          zIndex: 999,
           marginTop: 8,
           fontSize: 13,
-          color: gameOver ? "#e55" : "#888",
+          color: status.includes("wins") || status.includes("Draw") ? "#e55" : "#222",
         }}
       >
-        {statusText}
-      </div>
+        {status}
+      </p>
     </div>
   );
 }

@@ -12,10 +12,10 @@
     "atrament": "^5.1.0",
     "chess.js": "^1.4.0",
     "fflate": "^0.8.3",
+    "gchessboard": "^1.4.0",
     "idb": "^8.0.3",
     "mathjs": "^15.2.0",
     "react": "^19.2.6",
-    "react-chessboard": "^5.10.0",
     "react-dom": "^19.2.6",
     "zustand": "^5.0.14"
   },
