@@ -11,3 +11,8 @@ export async function compress(input: Blob): Promise<Blob> {
   const blob = await new Response(outStream).blob();
   return blob;
 }
+
+export type Promisify<T> = {
+  [K in keyof T]: T[K] extends (...args: infer A) => infer R ? (...args: A) => Promise<Awaited<R>>
+    : T[K];
+};

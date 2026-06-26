@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import type { Sdk } from "../sdk.ts";
 
-const { fs, toast, Urgency, spawnWindow }: Sdk = (window as any).$;
+const { fs: myFs, toast, Urgency, spawnWindow }: Sdk = (window as any).$;
+
+type FS = Sdk["fs"];
 
 interface FileDesc {
   isDir: boolean;
@@ -9,7 +11,7 @@ interface FileDesc {
   path: string;
 }
 
-function Node({ c, setCwd }: { c: FileDesc; setCwd: (cwd: string) => void }) {
+function Node({ fs, c, setCwd }: { fs: FS; c: FileDesc; setCwd: (cwd: string) => void }) {
   const [ctxMenuOpen, setCtxMenuOpen] = useState(false);
 
   function deleteNode() {
@@ -110,7 +112,8 @@ function Node({ c, setCwd }: { c: FileDesc; setCwd: (cwd: string) => void }) {
   );
 }
 
-export default function FileExplorer() {
+export default function FileExplorer({ args }: { args: [] | [FS] }) {
+  const fs = args[0] ?? myFs;
   const [cwd, setCwd] = useState("");
   const [children, setChildren] = useState<FileDesc[]>([]);
 
@@ -158,7 +161,7 @@ export default function FileExplorer() {
       <ul>
         {children.map(c => (
           <li key={c.path}>
-            <Node c={c} setCwd={setCwd} />
+            <Node fs={fs} c={c} setCwd={setCwd} />
           </li>
         ))}
       </ul>

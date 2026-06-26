@@ -1,4 +1,5 @@
 import { getServerAddr } from "../server.ts";
+import type { Promisify } from "../utils.ts";
 import * as contacts from "./contacts.ts";
 import deviceId from "./deviceid.ts";
 
@@ -76,9 +77,7 @@ export class RpcConnection {
   async proxyObject<T>(
     targetClient: string | contacts.Contact,
     ref: string,
-  ): Promise<
-    { [K in keyof T]: T[K] extends (...args: infer A) => infer R ? (...args: A) => Promise<Awaited<R>> : T[K] }
-  > {
+  ): Promise<Promisify<T>> {
     const targetId = typeof targetClient === "string" ? targetClient : targetClient.id;
     const self = this;
     await this.ready();
