@@ -82,19 +82,34 @@ export class RpcConnection {
     const targetId = typeof targetClient === "string" ? targetClient : targetClient.id;
     const self = this;
     await this.ready();
-    return new Proxy({}, {
-      get(_target, p, _receiver) {
-        if (p === "then" || typeof p !== "string") return undefined;
-        return function(...argArray: any[]) {
-          return new Promise((res, rej) => {
-            const mid = Math.floor(Math.random() * 0xf0000000).toString(16);
-            self.onceListen(data => data.type === "rpc-response" && data.mid === mid, data => {
+
+    function makeNestedProxy(path: string[]): any {
+      const fn = function(...argArray: any[]) {
+        return new Promise((res, rej) => {
+          const mid = Math.floor(Math.random() * 0xf0000000).toString(16);
+          self.onceListen(
+            data => data.type === "rpc-response" && data.mid === mid,
+            data => {
               if (data.err) rej(`Remote function errored: ${data.err}`);
               else res(data.result);
-            });
-            self.sendCall(targetId, { ref, target: p, payload: argArray, mid });
-          });
-        };
+            },
+          );
+          self.sendCall(targetId, { ref, target: path.join("."), payload: argArray, mid });
+        });
+      };
+
+      return new Proxy(fn, {
+        get(_t, p) {
+          if (p === "then" || typeof p !== "string") return undefined;
+          return makeNestedProxy([...path, p]);
+        },
+      });
+    }
+
+    return new Proxy({}, {
+      get(_target, p) {
+        if (p === "then" || typeof p !== "string") return undefined;
+        return makeNestedProxy([p]);
       },
     }) as any;
   }
@@ -111,18 +126,26 @@ export class RpcConnection {
 
   private async onWsMessage(data: Record<string, any>) {
     const targetObjectName: string = data.ref;
-    const targetName: string = data.target;
+    const targetPath: string = data.target;
     const targetPayload = data.payload;
     const mid = data.mid;
 
     const targetObject = this.exposedObjects[targetObjectName];
     if (!targetObject) return;
-    const targetFunction = targetObject[targetName];
-    if (!targetFunction) return;
+
+    const parts = targetPath.split(".");
+    let current: any = targetObject;
+    for (let i = 0; i < parts.length - 1; i++) {
+      current = current[parts[i]];
+      if (current == null) return;
+    }
+    const targetFunction = current[parts[parts.length - 1]];
+    if (typeof targetFunction !== "function") return;
+
     let result: any | undefined;
     let err: any | undefined;
     try {
-      result = await targetFunction(...targetPayload);
+      result = await targetFunction.call(current, ...targetPayload);
     } catch (e) {
       err = e instanceof Error ? { message: e.message, stack: e.stack } : e;
     }
@@ -134,6 +157,6 @@ export class RpcConnection {
   }
 }
 
-const address = (await getServerAddr())?.replace(":8086", ":8085") ?? "nowhere.invalid";
+const address = (await getServerAddr())?.replace(":8086", ":8085") ?? "http://nowhere.invalid";
 const conn = new RpcConnection(address, "tabletos-" + deviceId);
 export default conn;
