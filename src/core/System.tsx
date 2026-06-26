@@ -1,8 +1,9 @@
 import { useRef } from "react";
 import { setTray } from "../components/wm/tray.ts";
-import * as fs from "../fs.ts";
-import { exportJSON, importJSON } from "../storage.ts";
-import storage from "../storage.ts";
+import { exportJSON, importJSON } from "../lib/storage.ts";
+import type { Sdk } from "../sdk.ts";
+
+const { fs, storage }: Sdk = (window as any).$;
 
 setInterval(() => {
   setTray({

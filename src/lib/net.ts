@@ -1,4 +1,4 @@
-import { serializeRequest } from "../shared/reqres.ts";
+import { serializeRequest } from "../../shared/reqres.ts";
 import { getServerAddr } from "./server.ts";
 import storage from "./storage.ts";
 

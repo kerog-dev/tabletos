@@ -1,14 +1,5 @@
 import { Fragment, type JSX, useEffect, useRef, useState } from "react";
-import * as fs from "../fs.ts";
-import { fetch as afetch } from "../net.ts";
-import storage from "../storage.ts";
 import "./Console.css";
-
-Object.assign(window as any, {
-  $fs: fs,
-  $fetch: afetch,
-  $storage: storage,
-});
 
 function PromiseTracker({ promise }: { promise: Promise<any> }) {
   const [status, setStatus] = useState(`ongoing`);

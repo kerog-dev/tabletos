@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import * as fs from "../fs.ts";
+import * as fs from "./fs.ts";
 
 if (!(await fs.pathExists("/contacts.json"))) await fs.writeFile("/contacts.json", "{}");
 

@@ -1,5 +1,5 @@
 import { lazy, useEffect, useState } from "react";
-import * as fs from "./fs.ts";
+import * as fs from "./lib/fs.ts";
 import { decompress } from "./utils.ts";
 
 interface AppComponentParams {

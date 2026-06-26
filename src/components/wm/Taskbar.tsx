@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { type App, useApps } from "../../apps.ts";
 import "./Taskbar.css";
 import startIcon from "vfs:/vendor/icons/start.png?url";
-import { useBlobFileUrl } from "../../fs.ts";
+import { useBlobFileUrl } from "../../lib/fs.ts";
 import { Toasts } from "../../toast.tsx";
 import { toggleTrayOpen, useTrayDescs } from "./tray.ts";
 import type { WindowDesc } from "./WindowManager.tsx";

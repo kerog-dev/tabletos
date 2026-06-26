@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { FilePicker } from "../components/FilePicker.tsx";
-import { readTextFile, writeFile } from "../fs.ts";
+import type { Sdk } from "../sdk.ts";
+
+const { fs }: Sdk = (window as any).$;
 
 export default function TextEditor({ args }: { args: [] | [string] }) {
   const [path, setPath] = useState<string | null>(args[0] ?? null);
@@ -13,7 +15,7 @@ export default function TextEditor({ args }: { args: [] | [string] }) {
     }
     let canceled = false;
 
-    readTextFile(path).then(content => {
+    fs.readTextFile(path).then(content => {
       if (!canceled) setText(content);
     });
 
@@ -26,7 +28,7 @@ export default function TextEditor({ args }: { args: [] | [string] }) {
     if (!path || text === null) return;
     const id = setTimeout(() => {
       console.log("write!");
-      writeFile(path, text);
+      fs.writeFile(path, text);
     }, 500);
     return () => clearInterval(id);
   }, [text]);

@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { loadAppFromScript, unloadApp } from "../apps.ts";
 import { useApps } from "../apps.ts";
-import * as fs from "../fs.ts";
-import { fetch } from "../net.ts";
+import { fetch } from "../lib/net.ts";
+import type { Sdk } from "../sdk.ts";
 import { toast, Urgency } from "../toast.tsx";
 import { compress, decompress } from "../utils.ts";
+
+const { fs }: Sdk = (window as any).$;
 
 export default function Installer() {
   const apps = useApps();

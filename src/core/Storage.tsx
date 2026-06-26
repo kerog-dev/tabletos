@@ -1,4 +1,4 @@
-import storage from "../storage.ts";
+import storage from "../lib/storage.ts";
 
 function deleteNode(path: string) {
   const keys = path.split("/").slice(1);

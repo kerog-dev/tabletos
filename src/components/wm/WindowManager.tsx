@@ -4,7 +4,7 @@ import { Taskbar } from "./Taskbar.tsx";
 import { Window } from "./Window.tsx";
 import "./WindowManager.css";
 import wallpaperUrl from "vfs:/wallpaper.img?url";
-import storage from "../../storage.ts";
+import storage from "../../lib/storage.ts";
 import { Shortcuts } from "./Shortcuts.tsx";
 
 export const windowTransparency = storage.windowTransparency ?? 0;

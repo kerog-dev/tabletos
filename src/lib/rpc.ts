@@ -1,7 +1,7 @@
-import { getServerAddr } from "../server.ts";
 import type { Promisify } from "../utils.ts";
 import * as contacts from "./contacts.ts";
 import deviceId from "./deviceid.ts";
+import { getServerAddr } from "./server.ts";
 
 export class RpcConnection {
   private reconnects = -1;

@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { useStorage } from "../storage.ts";
+import type { Sdk } from "../sdk";
+
+const { useStorage }: Sdk = (window as any).$;
 
 export default function Frame() {
   const [uri, setUri] = useState<string | null>(null);
