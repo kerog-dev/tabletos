@@ -3,35 +3,50 @@ import MathWorker from "./worker.ts?worker&inline";
 
 const worker = new MathWorker();
 
-function valueToColor(value: number): string {
-  const v = Math.floor(value) & 0xFFFFFF;
-  const r = (v >> 16) & 0xFF;
-  const g = (v >> 8) & 0xFF;
-  const b = v & 0xFF;
-  return `rgb(${r},${g},${b})`;
-}
-
 export default function ThreeDG() {
   const size = 200;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [equation, setEquation] = useState<string>("x * y");
 
   useEffect(() => {
+    let buffer: number[][] = [];
     const listener = (e: MessageEvent) => {
-      const ctx = canvasRef.current?.getContext("2d");
-      if (!ctx) return;
-      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-      for (const [x, y, value] of e.data) {
-        ctx.fillStyle = valueToColor(value);
-        ctx.fillRect(x, y, 1, 1);
-      }
+      if (!e.data) buffer = [];
+      buffer.push(e.data);
+      console.log(`got frame!`);
     };
+    const ctx = canvasRef.current?.getContext("2d");
+    let canceled = false;
+    function animate() {
+      if (!canceled) requestAnimationFrame(animate);
+      if (!ctx) return;
+      const data = buffer.shift();
+      if (!data) return;
+      const imageData = ctx.createImageData(size, size);
+      const buf = imageData.data;
+
+      for (let i = 0; i < data.length; i++) {
+        const value = Math.floor(data[i]);
+        const p = i * 4;
+        buf[p] = (value >> 16) & 0xFF; // R
+        buf[p + 1] = (value >> 8) & 0xFF; // G
+        buf[p + 2] = value & 0xFF; // B
+        buf[p + 3] = 255; // A
+      }
+
+      ctx.putImageData(imageData, 0, 0);
+    }
+    animate();
     worker.addEventListener("message", listener);
-    return () => worker.removeEventListener("message", listener);
+    return () => {
+      worker.removeEventListener("message", listener);
+      canceled = true;
+    };
   }, []);
 
   useEffect(() => {
-    worker.postMessage([size, equation]);
+    const id = setTimeout(() => worker.postMessage([size, equation]), 500);
+    return () => clearTimeout(id);
   }, [equation]);
 
   return (
