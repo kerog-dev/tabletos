@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import type { Sdk } from "../../sdk.ts";
+import "./Notes.css";
 
 const { fs, getAppDir }: Sdk = (window as any).$;
 
@@ -17,9 +18,8 @@ function NoteEditor({ note, back }: { note: string; back: () => void }) {
   }
 
   return (
-    <div>
-      <button onClick={() => back()}>{"<--"}</button>
-      <br />
+    <div className="note-editor">
+      <button onClick={() => back()}>Back</button>
       <textarea onChange={(e) => write(e.target.value)} value={text ?? "Note not found"}></textarea>
     </div>
   );
@@ -36,7 +36,10 @@ function NoteList({ setOpenNote }: { setOpenNote: (name: string) => void }) {
   }
 
   return (
-    <div>
+    <div className="note-list">
+      Create note: <input type="text" ref={newNoteNameRef} placeholder="name" />{" "}
+      <button onClick={createNote}>Create</button>
+      <br />
       Notes:
       <ul>
         {notes?.map(note => (
@@ -45,20 +48,16 @@ function NoteList({ setOpenNote }: { setOpenNote: (name: string) => void }) {
           </li>
         ))}
       </ul>
-      Create note: <input type="text" ref={newNoteNameRef} placeholder="name" />{" "}
-      <button onClick={createNote}>Create</button>
     </div>
   );
 }
 
-export default function Notes() {
-  const [openNote, setOpenNote] = useState<string | null>(null);
+export default function Notes({ args }: { args: [] | [string] }) {
+  const [openNote, setOpenNote] = useState<string | null>(args[0] ?? null);
 
   return (
-    <div>
-      {openNote
-        ? <NoteEditor note={openNote} back={() => setOpenNote(null)} />
-        : <NoteList setOpenNote={setOpenNote} />}
-    </div>
+    openNote
+      ? <NoteEditor note={openNote} back={() => setOpenNote(null)} />
+      : <NoteList setOpenNote={setOpenNote} />
   );
 }

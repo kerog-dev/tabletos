@@ -53,10 +53,9 @@ export default function RemoteClient() {
   if (clientId === null) {
     return (
       <div>
+        <label>Client name</label>
         <input type="text" ref={clientIdInputRef} />{" "}
-        <button
-          onClick={() => setClientId(clientIdInputRef.current?.value ?? null)}
-        >
+        <button onClick={() => setClientId(clientIdInputRef.current?.value ?? null)}>
           Connect
         </button>
       </div>

@@ -62,18 +62,7 @@ export default function Installer() {
 
   return (
     <div>
-      <input type="text" ref={installPackageNameRef} />
-      <br />
-      <input type="file" ref={installFileInputRef} />
-      <br />
-      <button onClick={() => installFromFile()}>
-        Install
-      </button>
-      <hr />
-      <input type="text" ref={uninstallPackageNameRef} />
-      <button onClick={() => uninstall(uninstallPackageNameRef.current?.value)}>Uninstall</button>
-      <hr />
-      Or install from your local server:
+      <h2>Install package from server</h2>
       {remotePackages
         ? (
           <ul>
@@ -94,6 +83,26 @@ export default function Installer() {
           </ul>
         )
         : <p>Loading...</p>}
+      <hr />
+      <h2>Install package from local archive</h2>
+      <label>Package name</label>
+      <br />
+      <input type="text" ref={installPackageNameRef} />
+      <br />
+      <label>File (.zip)</label>
+      <br />
+      <input type="file" accept="application/zip" ref={installFileInputRef} />
+      <br />
+      <button onClick={() => installFromFile()}>
+        Install
+      </button>
+      <hr />
+      <h2>Uninstall package</h2>
+      <label>Package name</label>
+      <br />
+      <input type="text" ref={uninstallPackageNameRef} />
+      <br />
+      <button onClick={() => uninstall(uninstallPackageNameRef.current?.value)}>Uninstall</button>
     </div>
   );
 }

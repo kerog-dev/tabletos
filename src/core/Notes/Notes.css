@@ -1,0 +1,22 @@
+.note-editor {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.note-list {
+  width: 100%;
+  height: 100%;
+}
+
+.note-editor textarea {
+  width: 100%;
+  height: 100%;
+}
+
+.note-editor button {
+  position: absolute;
+  top: 0;
+  right: 0;
+  margin: 20px;
+}

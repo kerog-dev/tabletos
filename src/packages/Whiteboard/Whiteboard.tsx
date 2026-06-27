@@ -2,20 +2,21 @@ import { useEffect, useRef, useState } from "react";
 import type { Sdk } from "../../sdk.ts";
 const { default: Atrament } = await import("atrament" as any);
 
-const { storage }: Sdk = (window as any).$;
+const { fs, getAppDir }: Sdk = (window as any).$;
+const appDir = await getAppDir("Whiteboard");
 
-storage.whiteboards ??= {};
+if (!(await fs.isDir(`${appDir}/whiteboards`))) await fs.mkdir(`${appDir}/whiteboards`);
 
 type Tool = "draw" | "erase";
 
 export default function Whiteboard() {
   const [active, setActive] = useState<string | null>(null);
-  const [, rerender] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const atramentRef = useRef<typeof Atrament | null>(null);
   const [tool, setTool] = useState<Tool>("draw");
   const [color, setColor] = useState("#1a1a1a");
   const [weight, setWeight] = useState(4);
+  const whiteboards = fs.useDirListing(`${appDir}/whiteboards`);
 
   useEffect(() => {
     if (!active) return;
@@ -29,19 +30,23 @@ export default function Whiteboard() {
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    const saved = storage.whiteboards[active];
-    if (saved) {
-      const img = new Image();
-      img.onload = () => ctx.drawImage(img, 0, 0);
-      img.src = saved;
-    }
+    const whiteboardPath = `${appDir}/whiteboards/${active}`;
+    fs.pathExists(whiteboardPath).then(exists =>
+      exists
+        ? (fs.readTextFile(whiteboardPath).then(saved => {
+          const img = new Image();
+          img.onload = () => ctx.drawImage(img, 0, 0);
+          img.src = saved;
+        }))
+        : null
+    );
 
     const at = new Atrament(canvas, { color, weight });
     at.smoothing = 0.85;
     atramentRef.current = at;
 
-    const save = () => {
-      storage.whiteboards[active] = canvas.toDataURL("image/webp", 0.92);
+    const save = async () => {
+      await fs.writeFile(whiteboardPath, canvas.toDataURL("image/webp", 0.92));
     };
     at.addEventListener("strokeend", save);
     return () => {
@@ -49,7 +54,7 @@ export default function Whiteboard() {
       at.destroy();
       atramentRef.current = null;
     };
-  }, [active, color, weight]);
+  }, [active]);
 
   useEffect(() => {
     const at = atramentRef.current;
@@ -69,15 +74,10 @@ export default function Whiteboard() {
       <div>
         <h2>Whiteboards</h2>
         <ul>
-          {Object.keys(storage.whiteboards).map((name) => (
+          {whiteboards?.map((name) => (
             <li key={name}>
               <button onClick={() => setActive(name)}>{name}</button>
-              <button
-                onClick={() => {
-                  delete storage.whiteboards[name];
-                  rerender((n) => n + 1);
-                }}
-              >
+              <button onClick={() => fs.unlink(`${appDir}/whiteboards/${name}`)}>
                 ×
               </button>
             </li>
@@ -89,8 +89,7 @@ export default function Whiteboard() {
             if (e.key !== "Enter") return;
             const name = (e.target as HTMLInputElement).value.trim();
             if (!name) return;
-            storage.whiteboards[name] ??= null;
-            setActive(name);
+            fs.writeFile(`${appDir}/whiteboards/${name}`, "").then(() => setActive(name));
           }}
         />
       </div>
