@@ -6,4 +6,4 @@ procs:
   #lazygit:
   #  shell: lazygit
   tabletos-server:
-    shell: cd server && pnpm run dev
+    shell: cd server && uv run python main.py
