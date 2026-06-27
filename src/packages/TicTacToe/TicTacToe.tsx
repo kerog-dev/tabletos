@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Sdk } from "../../sdk.ts";
+import "./TicTacToe.css";
 
 const { toast }: Sdk = (window as any).$;
 
@@ -51,37 +52,15 @@ export default function TicTacToe() {
   };
 
   return (
-    <div>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
-          gap: "10px",
-          width: "30vmin",
-          height: "30vmin",
-          position: "absolute",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-        }}
-      >
-        {board.map((tile, index) => (
-          <button
-            key={index}
-            onClick={() => handleClick(index)}
-            style={{
-              width: "100%",
-              aspectRatio: "1 / 1",
-              fontSize: "3rem",
-            }}
-          >
-            {tile === TileState.Empty ? " " : tile === TileState.X ? "X" : "O"}
-          </button>
-        ))}
+    <div className="app">
+      <div className="board">
+        {board.map((tile, i) => <button key={i} onClick={() => handleClick(i)}>{tile}</button>)}
       </div>
       <div>
-        <p>Current Player: {currentPlayer}</p>
-        <p>Winner: {winner}</p>
+        <p>
+          Current Player: {currentPlayer}
+          <br />Winner: {winner}
+        </p>
       </div>
     </div>
   );

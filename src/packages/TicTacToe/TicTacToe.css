@@ -1,0 +1,23 @@
+.app {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  aspect-ratio: 1 / 1;
+  width: 60%;
+}
+
+.board > button {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  font-size: 3rem;
+}
