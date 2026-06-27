@@ -4,6 +4,7 @@ import type { RpcConnection } from "./lib/rpc.ts";
 import conn from "./lib/rpc.ts";
 import storage, { useStorage } from "./lib/storage.ts";
 import { useApps } from "./packages.ts";
+import { sv } from "./packages.ts";
 import { toast, Urgency } from "./toast.tsx";
 
 interface Sdk {
@@ -16,6 +17,7 @@ interface Sdk {
   useApps: typeof useApps;
   conn: RpcConnection;
   spawnWindow: (w: Omit<Partial<WindowDesc>, "app" | "id" | "z"> & { app: string }) => void;
+  sv: typeof sv;
 }
 
 const sdk: Sdk = {
@@ -32,6 +34,7 @@ const sdk: Sdk = {
   useApps,
   conn,
   spawnWindow: () => {},
+  sv,
 };
 
 (window as any).$ = sdk;
