@@ -72,7 +72,7 @@ export function Taskbar(
   },
 ) {
   const [launcherOpen, setLauncherOpen] = useState(false);
-  const [contextMenuOpens, setContextMenuOpens] = useState(Object.fromEntries(windows.map(w => [w.id, false])));
+  const [contextMenuOpens, setContextMenuOpens] = useState(() => Object.fromEntries(windows.map(w => [w.id, false])));
   const trayDescs = useTrayDescs();
   const wallpaperBlobUrl = useBlobFileUrl("/wallpaper.img");
 

@@ -31,7 +31,7 @@ function Evaluated({ script }: { script: string }): JSX.Element {
 }
 
 export default function Console() {
-  const [outputs, setOutputs] = useState<JSX.Element[]>([<span>Enter JS and see it's output here:</span>]);
+  const [outputs, setOutputs] = useState<JSX.Element[]>(() => [<span>Enter JS and see it's output here:</span>]);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const outputRef = useRef<HTMLDivElement | null>(null);
 
