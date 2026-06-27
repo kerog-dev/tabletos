@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Sdk } from "../../sdk.ts";
 import { Urgency } from "../../toast.tsx";
-import type { Promisify } from "../../utils.ts";
+import { jsonStringToBlob, type Promisify } from "../../utils.ts";
 import { type RemoteServerObject } from "../RemoteServer/service.ts";
 
 const { conn, spawnWindow, fs, toast }: Sdk = (window as any).$;
@@ -21,6 +21,8 @@ export default function RemoteClient() {
   const evalScriptRef = useRef<HTMLTextAreaElement | null>(null);
 
   const uninstallAppNameRef = useRef<HTMLInputElement | null>(null);
+
+  const [screenSrc, setScreenSrc] = useState<string | null>(null);
 
   useEffect(() => {
     if (!clientId) {
@@ -98,6 +100,14 @@ export default function RemoteClient() {
     await object.current[uninstall ? "uninstallApp" : "unloadApp"](name);
   }
 
+  async function updateScreen() {
+    if (!object.current) return;
+    if (screenSrc) URL.revokeObjectURL(screenSrc);
+    const encoded = await object.current.screenshot();
+    const blob = jsonStringToBlob(encoded);
+    setScreenSrc(URL.createObjectURL(blob));
+  }
+
   return (
     <div>
       Connected to {clientId}.<br />
@@ -131,6 +141,10 @@ export default function RemoteClient() {
       <br />
       <button onClick={() => unloadApp()}>Unload app</button>
       <button onClick={() => unloadApp(true)}>Uninstall app</button>
+      <br />
+      <img style={{ width: "100%" }} src={screenSrc ?? undefined} />
+      <br />
+      <button onClick={() => updateScreen()}>Update</button>
     </div>
   );
 }

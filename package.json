@@ -13,6 +13,7 @@
     "chess.js": "^1.4.0",
     "fflate": "^0.8.3",
     "gchessboard": "^1.4.0",
+    "html2canvas": "^1.4.1",
     "idb": "^8.0.3",
     "mathjs": "^15.2.0",
     "react": "^19.2.6",

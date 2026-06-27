@@ -18,6 +18,7 @@ interface Sdk {
   conn: RpcConnection;
   spawnWindow: (w: Omit<Partial<WindowDesc>, "app" | "id" | "z"> & { app: string }) => void;
   sv: typeof sv;
+  screenshot(quality?: number): Promise<Blob>;
 }
 
 const sdk: Sdk = {
@@ -35,6 +36,9 @@ const sdk: Sdk = {
   conn,
   spawnWindow: () => {},
   sv,
+  screenshot() {
+    throw "ScreenshotService package not installed.";
+  },
 };
 
 (window as any).$ = sdk;

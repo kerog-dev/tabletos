@@ -1,7 +1,7 @@
 import { type Service } from "../../packages.ts";
 import { loadAppFromScript, unloadApp } from "../../packages.ts";
 import type { Sdk } from "../../sdk.ts";
-import { compress } from "../../utils.ts";
+import { blobToJsonString, compress } from "../../utils.ts";
 
 export interface RemoteServerObject {
   fs: Sdk["fs"];
@@ -12,6 +12,7 @@ export interface RemoteServerObject {
   loadAppFromFs: (name: string, path: string, install?: boolean) => Promise<void>;
   unloadApp: (name: string) => void;
   uninstallApp: (name: string) => Promise<void>;
+  screenshot: () => Promise<string>;
 }
 
 const service: Service = {
@@ -20,7 +21,7 @@ const service: Service = {
     dependencies: [],
     autostart: false,
   },
-  start({ fs, spawnWindow, toast, conn }) {
+  start({ fs, spawnWindow, toast, conn, screenshot }) {
     const object: RemoteServerObject = {
       fs,
       spawnWindow,
@@ -45,6 +46,7 @@ const service: Service = {
       unloadApp(name) {
         unloadApp(name);
       },
+      screenshot: async () => await blobToJsonString(await screenshot(0.3)),
     };
 
     async function loadApp(name: string, script: string, install: boolean) {
