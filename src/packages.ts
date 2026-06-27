@@ -116,104 +116,89 @@ const devPackageServiceModules = import.meta.env.DEV
   ? Object.entries(import.meta.glob("./packages/*/service.ts"))
   : [];
 
-async function loadServices() {
-  const loads = [...coreServiceModules, ...devPackageServiceModules].map((
-    [path, importFunc],
-  ): [string, Promise<{ default: Service }>] => [
-    path.split("/").at(-2)!,
-    (importFunc as () => Promise<{ default: Service }>)(),
-  ]);
+class ServiceManager {
+  static readonly sv = new ServiceManager();
 
-  const results = await Promise.allSettled(loads.map(l => l[1]));
+  private services: Service[] = [];
+  private startedServices: { started: StartedService; service: Service }[] = [];
+  private runChangeListeners: [string[] | undefined, ((running: boolean, name: string) => void)][] = [];
 
-  for (const result of results.map((x, i): [PromiseSettledResult<{ default: Service }>, string] => [x, loads[i][0]])) {
-    if (result[0].status === "rejected") {
-      console.log(result[1] + "'s service failed to start: " + result[0].reason);
+  private constructor() {
+    this.init().catch(reason => console.error(`Failed to start services: ${reason}`));
+  }
+
+  async init() {
+    await this.loadServices();
+    await this.loadFsServices();
+    await sv.start(sv.list().filter(s => s.autostart).map(s => s.name));
+    console.log("Started services successfully!");
+  }
+
+  private async loadServices() {
+    const allModules = [...coreServiceModules, ...devPackageServiceModules];
+    const results = await Promise.allSettled(
+      allModules.map(([, importFunc]) => (importFunc as () => Promise<{ default: Service }>)()),
+    );
+
+    for (const [i, result] of results.entries()) {
+      const name = allModules[i][0].split("/").at(-2)!;
+      if (result.status === "rejected") {
+        console.error(`${name}'s service failed to start: ${result.reason}`);
+      } else {
+        this.services.push(result.value.default);
+      }
     }
   }
 
-  results.filter(r => r.status === "fulfilled").forEach(r => services.push(r.value.default));
-}
-
-async function startServices(names: string[]) {
-  names = names.filter(sn => !startedServices.some(s => s.service.info.name === sn));
-  await (window as any).$ready;
-  await Promise.allSettled(
-    services.filter(s => names.includes(s.info.name)).map(async service =>
-      startedServices.push({ service, started: await service.start((window as any).$) })
-    ),
-  );
-}
-
-async function stopServices(names: string[]) {
-  names = names.filter(sn => startedServices.some(s => s.service.info.name === sn));
-  await (window as any).$ready;
-  await Promise.allSettled(
-    startedServices.filter(s => names.includes(s.service.info.name)).map(async s => {
-      await s.started.stop();
-      startedServices.splice(startedServices.indexOf(s), 1);
-    }),
-  );
-}
-
-const services: Service[] = [];
-const startedServices: { started: StartedService; service: Service }[] = [];
-
-loadServices().then(() => ServiceManager.sv.loadFsServices()).then(() =>
-  ServiceManager.sv.start(services.filter(s => s.info.autostart).map(s => s.info.name))
-).then(() => console.log(`Started services succesfully!`)).catch(
-  reason => console.log(`Failed to start services: ${reason}`),
-);
-
-class ServiceManager {
-  static sv = new this();
-
-  private runChangeListeners: [string[] | undefined, ((running: boolean, name: string) => void)][] = [];
-
-  private constructor() {}
-
-  async start(target?: string | string[]) {
-    const targets = typeof target === "string" ? [target] : (target ?? services.map(s => s.info.name));
-    const result = await startServices(targets);
+  private notifyListeners(running: boolean, targets: string[]) {
     for (const target of targets) {
       for (const [svcs, listener] of this.runChangeListeners) {
         if (svcs && !svcs.includes(target)) continue;
         try {
-          listener(true, target);
+          listener(running, target);
         } catch (e) {
           console.error(`Error running service state change listener (target: ${target}): ${e}`);
         }
       }
     }
-    return result;
+  }
+
+  async start(target?: string | string[]) {
+    const targets = typeof target === "string" ? [target] : (target ?? this.services.map(s => s.info.name));
+    const toStart = targets.filter(n => !this.startedServices.some(s => s.service.info.name === n));
+    await (window as any).$ready;
+    await Promise.allSettled(
+      this.services
+        .filter(s => toStart.includes(s.info.name))
+        .map(async service => this.startedServices.push({ service, started: await service.start((window as any).$) })),
+    );
+    this.notifyListeners(true, targets);
   }
 
   async stop(target?: string | string[]) {
-    const targets = typeof target === "string" ? [target] : (target ?? services.map(s => s.info.name));
-    const result = await stopServices(targets);
-    for (const target of targets) {
-      for (const [svcs, listener] of this.runChangeListeners) {
-        if (svcs && !svcs.includes(target)) continue;
-        try {
-          listener(false, target);
-        } catch (e) {
-          console.error(`Error running service state change listener (target: ${target}): ${e}`);
-        }
-      }
-    }
-    return result;
+    const targets = typeof target === "string" ? [target] : (target ?? this.services.map(s => s.info.name));
+    const toStop = targets.filter(n => this.startedServices.some(s => s.service.info.name === n));
+    await (window as any).$ready;
+    await Promise.allSettled(
+      this.startedServices
+        .filter(s => toStop.includes(s.service.info.name))
+        .map(async entry => {
+          await entry.started.stop();
+          this.startedServices.splice(this.startedServices.indexOf(entry), 1);
+        }),
+    );
+    this.notifyListeners(false, targets);
   }
 
   async load(service: Service, start = true) {
-    if (services.some(s => s.info.name === service.info.name)) throw "Service with that name is already loaded!";
-    services.push(service);
+    if (this.services.some(s => s.info.name === service.info.name)) throw "Service with that name is already loaded!";
+    this.services.push(service);
     if (start) await this.start(service.info.name);
   }
 
   async unload(service: Service) {
-    const isStarted = startedServices.some(s => s.service === service);
-    if (isStarted) await this.stop(service.info.name);
-    services.splice(services.indexOf(service), 1);
+    if (this.startedServices.some(s => s.service === service)) await this.stop(service.info.name);
+    this.services.splice(this.services.indexOf(service), 1);
   }
 
   async loadFsServices() {
@@ -223,19 +208,19 @@ class ServiceManager {
       try {
         const compressed = await fs.readBlobFile(`/services/${child}`);
         const decompressed = await decompress(compressed);
-        const moduleBlobUrl = URL.createObjectURL(decompressed);
-        const module: { default: Service } = await import(moduleBlobUrl);
+        const url = URL.createObjectURL(decompressed);
+        const module: { default: Service } = await import(url);
         await this.load(module.default);
       } catch {}
     }
   }
 
   get(name: string): object | null {
-    return startedServices.find(s => s.service.info.name === name)?.started.exposed ?? null;
+    return this.startedServices.find(s => s.service.info.name === name)?.started.exposed ?? null;
   }
 
   isRunning(name: string): boolean {
-    return startedServices.some(s => s.service.info.name === name);
+    return this.startedServices.some(s => s.service.info.name === name);
   }
 
   onRunningStateChanged(targets: string[] | undefined, listener: (running: boolean, name: string) => void) {
@@ -247,7 +232,7 @@ class ServiceManager {
   }
 
   list(): ServiceInfo[] {
-    return services.map(s => s.info);
+    return this.services.map(s => s.info);
   }
 }
 
