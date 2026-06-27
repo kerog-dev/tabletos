@@ -24,7 +24,7 @@ function emitWatchAction(path: string, action: WatchAction) {
   for (const w of watchers) {
     if (!w.actions.includes(action)) continue;
     if (!tree.includes(w.path)) continue;
-    if (!w.recursive && w.path !== path) continue;
+    if (!w.recursive && w.path !== path && parent(path) !== w.path) continue;
     try {
       w.listener(path, action);
     } catch (e) {
@@ -114,8 +114,9 @@ export async function mkdir(path: string) {
 export async function writeFile(path: string, content: string | Blob) {
   await assertIsDir(parent(path));
   if (await isDir(path)) throw `Path ${path} is a directory, can't write to it.`;
+  const existed = await pathExists(path);
   await db.put("fs", { type: "file", content }, path);
-  emitWatchAction(path, "write");
+  emitWatchAction(path, existed ? "write" : "create");
 }
 
 export async function appendBlobFile(path: string, appended: Uint8Array<ArrayBuffer> | Blob) {
@@ -313,10 +314,14 @@ export function useBlobFileUrl(path: string | null) {
   return url;
 }
 
-export function useDirListing(path: string) {
+export function useDirListing(path: string | null) {
   const [children, setChildren] = useState<string[] | null>(null);
 
   useEffect(() => {
+    if (path === null) {
+      setChildren(null);
+      return;
+    }
     const listener = async () => {
       setChildren(await isDir(path) ? await ls(path) : null);
     };
@@ -325,7 +330,7 @@ export function useDirListing(path: string) {
     return () => {
       unwatch(listener);
     };
-  }, []);
+  }, [path]);
 
   return children;
 }

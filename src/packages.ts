@@ -181,9 +181,11 @@ class ServiceManager {
     if (start) await this.start(service.info.name);
   }
 
-  async unload(service: Service) {
-    if (this.startedServices.some(s => s.service === service)) await this.stop(service.info.name);
-    this.services.splice(this.services.indexOf(service), 1);
+  async unload(name: string) {
+    const target = this.services.find(s => s.info.name === name);
+    if (!target) throw "Service not found";
+    if (this.startedServices.some(s => s.service === target)) await this.stop(name);
+    this.services.splice(this.services.indexOf(target), 1);
   }
 
   get<T extends object>(name: string): T | null {
@@ -209,10 +211,13 @@ class ServiceManager {
 
 export const sv = ServiceManager.sv;
 
-async function loadPackageService(scriptBlob: Blob) {
+const packageServiceNameMapping: Partial<Record<string, string>> = {};
+
+async function loadPackageService(packageName: string, scriptBlob: Blob) {
   const url = URL.createObjectURL(scriptBlob);
   const module: { default: Service } = await import(url);
-  await sv.load(module.default);
+  await sv.load(module.default, module.default.info.autostart);
+  packageServiceNameMapping[packageName] = module.default.info.name;
 }
 
 function loadPackage(name: string): Promise<void> {
@@ -229,7 +234,7 @@ function loadPackage(name: string): Promise<void> {
     const promises = [];
     if (data[name + ".js"]) promises.push(loadAppFromScript(name, new TextDecoder().decode(data[name + ".js"])));
     if (data["service.js"]) {
-      promises.push(loadPackageService(new Blob([data["service.js"]], { type: "text/javascript" })));
+      promises.push(loadPackageService(name, new Blob([data["service.js"]], { type: "text/javascript" })));
     }
     return Promise.all(promises);
   }).then(() => console.log(`Loaded packages successfully!`)).catch(reason =>
@@ -237,10 +242,30 @@ function loadPackage(name: string): Promise<void> {
   );
 }
 
+async function unloadPackage(name: string) {
+  if (packageServiceNameMapping[name]) sv.unload(packageServiceNameMapping[name]);
+  unloadApp(name);
+}
+
 async function loadPackages() {
   if (!(await fs.isDir("/packages"))) return;
   const names = (await fs.ls("/packages")).map(filename => filename.replace(".zip", ""));
   await Promise.allSettled(names.map(name => loadPackage(name)));
+  fs.watchDir(
+    "/packages",
+    async (path, action) => {
+      const name = path.split("/").at(-1)!.replace(".zip", "");
+      if (action === "create") {
+        console.log(`New package: ${name}`);
+        await loadPackage(name);
+      } else if (action === "delete") {
+        console.log(`Deleted package: ${name}`);
+        await unloadPackage(name);
+      }
+    },
+    false,
+    ["create", "delete"],
+  );
 }
 
 loadPackages();
