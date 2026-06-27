@@ -1,7 +1,7 @@
+import { unzip } from "fflate";
 import { lazy, useEffect, useState } from "react";
 import * as fs from "./lib/fs.ts";
 import type { Sdk } from "./sdk.ts";
-import { decompress } from "./utils.ts";
 
 interface AppComponentParams {
   args: any[];
@@ -86,20 +86,6 @@ function onAppsChanged(listener: () => void) {
   appChangeListeners.push(listener);
 }
 
-async function loadFsApps() {
-  if (!(await fs.isDir("/apps"))) return;
-  const children = await fs.ls("/apps");
-  for (const child of children) {
-    try {
-      const compressed = await fs.readBlobFile(`/apps/${child}`);
-      const decompressed = await decompress(compressed);
-      loadAppFromScript(child.replace(".js.gz", ""), await decompressed.text());
-    } catch {}
-  }
-}
-
-loadFsApps();
-
 export function useApps() {
   const [sapps, setSapps] = useState(apps);
 
@@ -129,7 +115,6 @@ class ServiceManager {
 
   async init() {
     await this.loadServices();
-    await this.loadFsServices();
     await sv.start(sv.list().filter(s => s.autostart).map(s => s.name));
     console.log("Started services successfully!");
   }
@@ -201,20 +186,6 @@ class ServiceManager {
     this.services.splice(this.services.indexOf(service), 1);
   }
 
-  async loadFsServices() {
-    if (!(await fs.isDir("/services"))) return;
-    const children = await fs.ls("/services");
-    for (const child of children) {
-      try {
-        const compressed = await fs.readBlobFile(`/services/${child}`);
-        const decompressed = await decompress(compressed);
-        const url = URL.createObjectURL(decompressed);
-        const module: { default: Service } = await import(url);
-        await this.load(module.default);
-      } catch {}
-    }
-  }
-
   get<T extends object>(name: string): T | null {
     return this.startedServices.find(s => s.service.info.name === name)?.started.exposed as T | null ?? null;
   }
@@ -237,3 +208,39 @@ class ServiceManager {
 }
 
 export const sv = ServiceManager.sv;
+
+async function loadPackageService(scriptBlob: Blob) {
+  const url = URL.createObjectURL(scriptBlob);
+  const module: { default: Service } = await import(url);
+  await sv.load(module.default);
+}
+
+function loadPackage(name: string): Promise<void> {
+  return fs.readBlobFile(`/packages/${name}.zip`).then(zipBlob => zipBlob.arrayBuffer()).then(zipBuf =>
+    new Promise<Record<string, Uint8Array<ArrayBuffer>>>((res, rej) => {
+      unzip(new Uint8Array(zipBuf), {}, (err, data) => {
+        if (err) {
+          return rej(err);
+        }
+        res(data);
+      });
+    })
+  ).then(data => {
+    const promises = [];
+    if (data[name + ".js"]) promises.push(loadAppFromScript(name, new TextDecoder().decode(data[name + ".js"])));
+    if (data["service.js"]) {
+      promises.push(loadPackageService(new Blob([data["service.js"]], { type: "text/javascript" })));
+    }
+    return Promise.all(promises);
+  }).then(() => console.log(`Loaded packages successfully!`)).catch(reason =>
+    console.error(`Error loading packages: ${reason}`)
+  );
+}
+
+async function loadPackages() {
+  if (!(await fs.isDir("/packages"))) return;
+  const names = (await fs.ls("/packages")).map(filename => filename.replace(".zip", ""));
+  await Promise.allSettled(names.map(name => loadPackage(name)));
+}
+
+loadPackages();

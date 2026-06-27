@@ -1,111 +1,81 @@
 import { useEffect, useRef, useState } from "react";
 import { fetch } from "../../lib/net.ts";
-import { loadAppFromScript, unloadApp, useApps } from "../../packages.ts";
+import { unloadApp } from "../../packages.ts";
 import type { Sdk } from "../../sdk.ts";
-import { toast, Urgency } from "../../toast.tsx";
-import { compress, decompress } from "../../utils.ts";
+import { toast } from "../../toast.tsx";
 
 const { fs }: Sdk = (window as any).$;
 
 export default function Installer() {
-  const apps = useApps();
-  const [remoteApps, setRemoteApps] = useState<string[] | null>(null);
+  const packageDirListing = fs.useDirListing("/packages");
+  const [remotePackages, setRemotePackages] = useState<string[] | null>(null);
 
-  const installAppNameRef = useRef<HTMLInputElement | null>(null);
+  const installPackageNameRef = useRef<HTMLInputElement | null>(null);
   const installFileInputRef = useRef<HTMLInputElement | null>(null);
-  const installFileCompressedRef = useRef<HTMLInputElement | null>(null);
 
-  const uninstallAppNameRef = useRef<HTMLInputElement | null>(null);
+  const uninstallPackageNameRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
-    fetch("http://server/available-apps").then(res => res.json()).then(json => setRemoteApps(json));
+    fetch("http://server/available-packages").then(res => res.json()).then(json => setRemotePackages(json));
   }, []);
 
-  async function getData(compressed: boolean): Promise<[string, string] | null> {
-    if (!installAppNameRef.current || !installFileInputRef.current || !installFileInputRef.current.files) return null;
-    const file = installFileInputRef.current.files[0];
-    const script = compressed ? await (await decompress(file)).text() : await file.text();
-    return [installAppNameRef.current.value, script];
-  }
-
-  async function tempLoad(compressed: boolean, quiet = false) {
-    const data = await getData(compressed);
-    if (!data) {
-      toast({ title: "Failed to load app", desc: "Did you provide the correct data?", urgency: Urgency.Error });
-      return;
-    }
-    loadAppFromScript(data[0], data[1]).then(() => quiet ? void 0 : toast({ title: "Loaded successfully!" }))
-      .catch((reason) => toast({ title: "Failed to load", desc: "Reason: " + reason }));
-    return data;
-  }
-
-  async function install(compressed: boolean) {
-    const data = await tempLoad(compressed);
-    if (!data) return;
-    if (!(await fs.isDir("/apps"))) {
-      await fs.mkdir("/apps");
-    }
-    await fs.writeFile(
-      `/apps/${data[0]}.js.gz`,
-      compressed
-        ? new Blob([data[1]], { type: "application/gzip" })
-        : await compress(new Blob([data[1]], { type: "text/javascript" })),
-    );
+  async function install(name: string, zipBlob: Blob) {
+    if (!(await fs.isDir("/packages"))) await fs.mkdir("/packages");
+    await fs.writeFile(`/packages/${name}.zip`, zipBlob);
+    toast({ title: "Installed successfully!" });
   }
 
   async function uninstall(name?: string, quiet = false) {
-    if (!name && !uninstallAppNameRef.current) return;
-    if (!name && uninstallAppNameRef.current) name = uninstallAppNameRef.current.value;
+    if (!name) throw "No name provided!";
 
     try {
-      await fs.unlink(`/apps/${name}.js.gz`);
-      unloadApp(name!);
+      await fs.unlink(`/packages/${name}.zip`);
+      unloadApp(name);
       if (!quiet) toast({ title: "Uninstalled successfully!" });
     } catch (e) {
       toast({ title: "Failed to uninstall", desc: "Error: " + e });
     }
   }
 
-  async function remoteInstall(name: string, quiet = false) {
-    const response = await fetch(`http://server/apps/${name}.js.gz`);
-    const inBlob = await response.blob();
-    const decompressed = await decompress(inBlob);
-    const script = await decompressed.text();
-    loadAppFromScript(name, script).catch((reason) => toast({ title: "Failed to load", desc: "Reason: " + reason }));
-    if (!(await fs.isDir("/apps"))) {
-      await fs.mkdir("/apps");
-    }
-    await fs.writeFile(`/apps/${name}.js.gz`, inBlob);
-    if (!quiet) toast({ title: "Installed successfully!" });
+  async function remoteInstall(name: string) {
+    const response = await fetch(`http://server/packages/${name}.zip`);
+    const zipBlob = await response.blob();
+    install(name, zipBlob);
   }
 
   return (
     <div>
-      <input type="text" ref={installAppNameRef} />
+      <input type="text" ref={installPackageNameRef} />
       <br />
       <input type="file" ref={installFileInputRef} />
       <br />
-      <label>gz compressed?</label>
-      <input type="checkbox" ref={installFileCompressedRef} />
-      <button onClick={() => tempLoad(installFileCompressedRef.current?.checked ?? false)}>Load temporarily</button>
-      <button onClick={() => install(installFileCompressedRef.current?.checked ?? false)}>Install</button>
+      <button
+        onClick={() => {
+          if (!installPackageNameRef.current || !installFileInputRef.current) return;
+          const file = installFileInputRef.current.files?.[0];
+          if (!file) throw "No file provided";
+          install(installPackageNameRef.current.value, file);
+        }}
+      >
+        Install
+      </button>
       <hr />
-      <input type="text" ref={uninstallAppNameRef} />
-      <button onClick={() => uninstall()}>Uninstall</button>
+      <input type="text" ref={uninstallPackageNameRef} />
+      <button onClick={() => uninstall(uninstallPackageNameRef.current?.value)}>Uninstall</button>
       <hr />
       Or install from your local server:
-      {remoteApps
+      {remotePackages
         ? (
           <ul>
-            {remoteApps.map(app => (
-              <li key={app}>
-                {app} ({apps.some(app2 => app2.name === app)
+            {remotePackages.map(p => (
+              <li key={p}>
+                {p} ({packageDirListing?.includes(p + ".zip")
                   ? (
                     <>
-                      Installed, <button onClick={() => uninstall(app)}>Uninstall</button>,{" "}
+                      Installed, <button onClick={() => uninstall(p)}>Uninstall</button>,{" "}
                       <button
                         onClick={() => {
-                          uninstall(app, true).then(() => remoteInstall(app, true)).then(() =>
+                          uninstall(p, true).then(() => remoteInstall(p)).then(() =>
                             toast({ title: "Updated successfully!" })
                           )
                             .catch((reason) => toast({ title: "Failed to update", desc: "Reason: " + reason }));
@@ -115,7 +85,7 @@ export default function Installer() {
                       </button>
                     </>
                   )
-                  : <button onClick={() => remoteInstall(app)}>Install</button>})
+                  : <button onClick={() => remoteInstall(p)}>Install</button>})
               </li>
             ))}
           </ul>

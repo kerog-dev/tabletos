@@ -1,10 +1,9 @@
 import express from "express";
-// import { spawn } from "node:child_process";
 import fs from "node:fs/promises";
 import { networkInterfaces } from "os";
 import { join } from "path";
 
-const appsDir = join(import.meta.dirname, "../../dist/packages/");
+const packagesDir = join(import.meta.dirname, "../../dist/packages/");
 
 const PORT = 8086;
 let ip: string | null = null;
@@ -30,12 +29,12 @@ app.get("/health", (req, res) => {
   res.send("hello! tabletos server");
 });
 
-app.get("/available-apps", async (req, res) => {
-  const apps = (await fs.readdir(appsDir)).filter(x => x.endsWith(".js.gz")).map(x => x.replace(".js.gz", ""));
+app.get("/available-packages", async (req, res) => {
+  const apps = (await fs.readdir(packagesDir)).map(x => x.replace(".zip", ""));
   res.json(apps);
 });
 
-app.use("/apps", express.static(appsDir));
+app.use("/packages", express.static(packagesDir));
 
 app.listen(PORT, () => {
   console.log(`Listening on https://${ip ?? "0.0.0.0"}:${PORT}`);
