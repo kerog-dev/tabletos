@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { type App, useApps } from "../../packages.ts";
 import "./Taskbar.css";
+import closeIcon from "vfs:/vendor/icons/close.png?url";
+import fullscreenIcon from "vfs:/vendor/icons/fullscreen.png?url";
 import startIcon from "vfs:/vendor/icons/start.png?url";
 import { useBlobFileUrl } from "../../lib/fs.ts";
 import { Toasts } from "../../toast.tsx";
@@ -26,7 +28,7 @@ export function Launcher(
     >
       <div>
         Apps:
-        <ul style={{ margin: 0 }}>
+        <ul className="launcher-app-list" style={{ margin: 0 }}>
           {apps.map(app => (
             <li key={app.name}>
               <button
@@ -41,11 +43,13 @@ export function Launcher(
           ))}
         </ul>
       </div>
-      <div>
-        <button onClick={() => document.body.requestFullscreen()}>Fullscreen</button>
-        <br />
-        <button onClick={() => killAll()}>Close all</button>
-        <br />
+      <div className="launcher-quick-actions">
+        <button onClick={() => document.body.requestFullscreen()}>
+          <img src={fullscreenIcon} />
+        </button>
+        <button onClick={() => killAll()}>
+          <img src={closeIcon} />
+        </button>
       </div>
     </div>
   );
