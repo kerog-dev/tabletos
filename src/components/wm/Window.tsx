@@ -3,7 +3,7 @@ import closeIcon from "vfs:/vendor/icons/close.png?url";
 import fullscreenIcon from "vfs:/vendor/icons/fullscreen.png?url";
 import minimizeIcon from "vfs:/vendor/icons/minimize.png?url";
 import resizeIcon from "vfs:/vendor/icons/resize.png?url";
-import { type App } from "../../apps.ts";
+import { type App } from "../../packages.ts";
 import { toast } from "../../toast.tsx";
 import { sleep } from "../../utils.ts";
 import AppWindow from "../AppWindow.tsx";

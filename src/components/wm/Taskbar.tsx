@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { type App, useApps } from "../../apps.ts";
+import { type App, useApps } from "../../packages.ts";
 import "./Taskbar.css";
 import startIcon from "vfs:/vendor/icons/start.png?url";
 import { useBlobFileUrl } from "../../lib/fs.ts";

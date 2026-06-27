@@ -4,9 +4,7 @@ import fs from "node:fs/promises";
 import { networkInterfaces } from "os";
 import { join } from "path";
 
-// spawn("./build-apps.ts", { shell: true, cwd: join(import.meta.dirname, "../../") });
-
-const appsDir = join(import.meta.dirname, "../../dist/apps/");
+const appsDir = join(import.meta.dirname, "../../dist/packages/");
 
 const PORT = 8086;
 let ip: string | null = null;

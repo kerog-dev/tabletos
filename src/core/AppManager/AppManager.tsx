@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { loadAppFromScript, unloadApp } from "../apps.ts";
-import { useApps } from "../apps.ts";
-import { fetch } from "../lib/net.ts";
-import type { Sdk } from "../sdk.ts";
-import { toast, Urgency } from "../toast.tsx";
-import { compress, decompress } from "../utils.ts";
+import { fetch } from "../../lib/net.ts";
+import { loadAppFromScript, unloadApp, useApps } from "../../packages.ts";
+import type { Sdk } from "../../sdk.ts";
+import { toast, Urgency } from "../../toast.tsx";
+import { compress, decompress } from "../../utils.ts";
 
 const { fs }: Sdk = (window as any).$;
 

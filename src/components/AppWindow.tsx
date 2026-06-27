@@ -1,5 +1,5 @@
 import { Suspense, useState } from "react";
-import { type App } from "../apps.ts";
+import { type App } from "../packages.ts";
 import ErrorBoundary from "./ErrorBoundary.tsx";
 
 export default function AppWindow(

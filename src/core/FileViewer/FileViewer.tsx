@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { FilePicker } from "../components/FilePicker.tsx";
-import type { Sdk } from "../sdk.ts";
+import { FilePicker } from "../../components/FilePicker.tsx";
+import type { Sdk } from "../../sdk.ts";
 
 const { fs }: Sdk = (window as any).$;
 

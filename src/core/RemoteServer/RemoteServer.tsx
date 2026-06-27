@@ -1,6 +1,6 @@
-import { loadAppFromScript, unloadApp } from "../apps.ts";
-import type { Sdk } from "../sdk.ts";
-import { compress } from "../utils.ts";
+import { loadAppFromScript, unloadApp } from "../../packages.ts";
+import type { Sdk } from "../../sdk.ts";
+import { compress } from "../../utils.ts";
 
 export interface RemoteServerObject {
   fs: Sdk["fs"];

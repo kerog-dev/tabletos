@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { type App, apps } from "../../apps.ts";
+import { type App, apps } from "../../packages.ts";
 import { Taskbar } from "./Taskbar.tsx";
 import { Window } from "./Window.tsx";
 import "./WindowManager.css";

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
-import { type App, apps, useApps } from "../../apps.ts";
 import { readTextFile, useBlobFileUrl } from "../../lib/fs.ts";
+import { type App, apps, useApps } from "../../packages.ts";
 import "./Shortcuts.css";
 import { toast, Urgency } from "../../toast.tsx";
 

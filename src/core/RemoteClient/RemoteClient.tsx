@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import type { Sdk } from "../sdk.ts";
-import { Urgency } from "../toast.tsx";
-import type { Promisify } from "../utils.ts";
-import { type RemoteServerObject } from "./RemoteServer.tsx";
+import type { Sdk } from "../../sdk.ts";
+import { Urgency } from "../../toast.tsx";
+import type { Promisify } from "../../utils.ts";
+import { type RemoteServerObject } from "../RemoteServer/RemoteServer.tsx";
 
 const { conn, spawnWindow, fs, toast }: Sdk = (window as any).$;
 

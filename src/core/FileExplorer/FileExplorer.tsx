@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { Sdk } from "../sdk.ts";
+import type { Sdk } from "../../sdk.ts";
 
 const { fs: myFs, toast, Urgency, spawnWindow }: Sdk = (window as any).$;
 

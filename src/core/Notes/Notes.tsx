@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import type { Sdk } from "../sdk.ts";
+import type { Sdk } from "../../sdk.ts";
 
 const { fs, getAppDir }: Sdk = (window as any).$;
 

@@ -1,7 +1,7 @@
 import { useRef } from "react";
-import { setTray } from "../components/wm/tray.ts";
-import { exportJSON, importJSON } from "../lib/storage.ts";
-import type { Sdk } from "../sdk.ts";
+import { setTray } from "../../components/wm/tray.ts";
+import { exportJSON, importJSON } from "../../lib/storage.ts";
+import type { Sdk } from "../../sdk.ts";
 
 const { fs, storage }: Sdk = (window as any).$;
 

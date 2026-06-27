@@ -12,10 +12,17 @@ interface App {
   isCore: boolean;
 }
 
-const appModules = import.meta.glob("./core/*.tsx");
+// EXAMPLE: ./core/One/One.tsx but not ./core/Two/Other.tsx
+const appModules = Object.entries(import.meta.glob("./core/**/*.tsx"))
+  .filter(([path]) => {
+    const parts = path.split("/");
+    const file = parts.at(-1)?.replace(".tsx", "");
+    const folder = parts.at(-2);
+    return file === folder;
+  });
 
-const apps: App[] = Object.entries(appModules).map(([path, importFunc]) => {
-  const name = path.replace("./core/", "").replace(".tsx", "");
+const apps: App[] = appModules.map(([path, importFunc]) => {
+  const name = path.split("/").at(-2)!;
 
   return {
     name,

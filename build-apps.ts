@@ -13,14 +13,14 @@ import vitePluginVfsImport from "./vite-plugin-vfs-import.ts";
 const execFileAsync = promisify(execFile);
 
 const entries = Object.fromEntries(
-  globSync("src/apps/*").map(f => [
-    f.replace("src/apps/", ""),
+  globSync("src/packages/*").map(f => [
+    f.replace("src/packages/", ""),
     resolve(import.meta.dirname, f),
   ]),
 );
 const input = Object.entries(entries).map(x => `${x[1]}/${x[0]}.tsx`);
 
-const outDir = resolve(import.meta.dirname, "dist/apps");
+const outDir = resolve(import.meta.dirname, "dist/packages");
 
 await rm(outDir, { recursive: true, force: true });
 await mkdir(outDir, { recursive: true });

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Sdk } from "../sdk";
+import type { Sdk } from "../../sdk.ts";
 
 const { useStorage }: Sdk = (window as any).$;
 
