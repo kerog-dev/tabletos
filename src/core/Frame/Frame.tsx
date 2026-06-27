@@ -3,8 +3,8 @@ import type { Sdk } from "../../sdk.ts";
 
 const { useStorage }: Sdk = (window as any).$;
 
-export default function Frame() {
-  const [uri, setUri] = useState<string | null>(null);
+export default function Frame({ args }: { args: [] | [string] }) {
+  const [uri, setUri] = useState<string | null>(args[0] ?? null);
   const [recent, setRecent] = useStorage<string[]>("frame.recent", []);
   const [value, setValue] = useState("");
 

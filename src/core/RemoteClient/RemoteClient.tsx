@@ -24,6 +24,16 @@ export default function RemoteClient() {
 
   const [screenSrc, setScreenSrc] = useState<string | null>(null);
 
+  const [autoRefresh, setAutoRefresh] = useState(false);
+
+  async function updateScreen() {
+    if (!object.current) return;
+    if (screenSrc) URL.revokeObjectURL(screenSrc);
+    const encoded = await object.current.screenshot();
+    const blob = jsonStringToBlob(encoded);
+    setScreenSrc(URL.createObjectURL(blob));
+  }
+
   useEffect(() => {
     if (!clientId) {
       object.current = null;
@@ -33,6 +43,12 @@ export default function RemoteClient() {
       console.error("failed to proxy RemoteServerObject", e)
     );
   }, [clientId]);
+
+  useEffect(() => {
+    if (!autoRefresh) return;
+    const id = setInterval(() => updateScreen(), 3_000);
+    return () => clearInterval(id);
+  }, [autoRefresh]);
 
   if (clientId === null) {
     return (
@@ -100,12 +116,8 @@ export default function RemoteClient() {
     await object.current[uninstall ? "uninstallApp" : "unloadApp"](name);
   }
 
-  async function updateScreen() {
-    if (!object.current) return;
-    if (screenSrc) URL.revokeObjectURL(screenSrc);
-    const encoded = await object.current.screenshot();
-    const blob = jsonStringToBlob(encoded);
-    setScreenSrc(URL.createObjectURL(blob));
+  function toggleScreenRefresh() {
+    setAutoRefresh(f => !f);
   }
 
   return (
@@ -145,6 +157,7 @@ export default function RemoteClient() {
       <img style={{ width: "100%" }} src={screenSrc ?? undefined} />
       <br />
       <button onClick={() => updateScreen()}>Update</button>
+      <button onClick={() => toggleScreenRefresh()}>Toggle screen refresh</button>
     </div>
   );
 }

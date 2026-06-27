@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Sdk } from "../../sdk.ts";
 
 const { fs: myFs, toast, Urgency, spawnWindow }: Sdk = (window as any).$;
@@ -13,6 +13,7 @@ interface FileDesc {
 
 function Node({ fs, c, setCwd }: { fs: FS; c: FileDesc; setCwd: (cwd: string) => void }) {
   const [ctxMenuOpen, setCtxMenuOpen] = useState(false);
+  const anchorId = useMemo(() => Math.floor(Math.random() * 10000), []);
 
   function deleteNode() {
     if (confirm("Are you sure you want to delete " + c.path + "?")) {
@@ -59,7 +60,7 @@ function Node({ fs, c, setCwd }: { fs: FS; c: FileDesc; setCwd: (cwd: string) =>
     <div
       style={{
         position: "fixed",
-        positionAnchor: "--ctx-anchor",
+        positionAnchor: "--ctx-anchor-" + anchorId,
         top: "anchor(bottom)",
         left: "anchor(right)",
         margin: "0",
@@ -99,7 +100,7 @@ function Node({ fs, c, setCwd }: { fs: FS; c: FileDesc; setCwd: (cwd: string) =>
 
   return (
     <div
-      style={{ anchorName: "--ctx-anchor" }}
+      style={{ anchorName: "--ctx-anchor-" + anchorId }}
       onContextMenu={(e) => {
         e.preventDefault();
         setCtxMenuOpen(true);
