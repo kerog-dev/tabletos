@@ -33,6 +33,7 @@ async function discovery() {
 }
 
 async function getIp(): Promise<string | null> {
+  if (import.meta.env.DEV) return null;
   const now = Date.now();
   if (!storage.serverIp) await discovery();
   else if (now - lastPing > 5 * 60 * 1_000) {

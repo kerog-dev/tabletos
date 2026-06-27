@@ -33,17 +33,21 @@ function StorageExplorerNode({
       <span>
         {nodeKey} (<button onClick={() => deleteNode(nodePath)}>Delete</button>)
       </span>
-      <ul>
-        {Object.entries(nodeValue).map(([childKey, childValue]) => (
-          <li key={childKey}>
-            <StorageExplorerNode
-              nodeKey={childKey}
-              nodeValue={childValue}
-              nodePath={`${nodePath}/${childKey}`}
-            />
-          </li>
-        ))}
-      </ul>
+      {nodeValue
+        ? (
+          <ul>
+            {Object.entries(nodeValue).map(([childKey, childValue]) => (
+              <li key={childKey}>
+                <StorageExplorerNode
+                  nodeKey={childKey}
+                  nodeValue={childValue}
+                  nodePath={`${nodePath}/${childKey}`}
+                />
+              </li>
+            ))}
+          </ul>
+        )
+        : <span>: {String(nodeValue)}</span>}
     </>
   );
 }

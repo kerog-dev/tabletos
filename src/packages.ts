@@ -21,7 +21,17 @@ const appModules = Object.entries(import.meta.glob("./core/**/*.tsx"))
     return file === folder;
   });
 
-const apps: App[] = appModules.map(([path, importFunc]) => {
+const devPackageModules = import.meta.env.DEV
+  ? Object.entries(import.meta.glob("./packages/**/*.tsx"))
+    .filter(([path]) => {
+      const parts = path.split("/");
+      const file = parts.at(-1)?.replace(".tsx", "");
+      const folder = parts.at(-2);
+      return file === folder;
+    })
+  : [];
+
+const apps: App[] = [...appModules, ...devPackageModules].map(([path, importFunc]) => {
   const name = path.split("/").at(-2)!;
 
   return {
