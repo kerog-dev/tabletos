@@ -2,9 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { Sdk } from "../../sdk.ts";
 import "./FileExplorer.css";
 
-const { fs: myFs, toast, Urgency, spawnWindow }: Sdk = (window as any).$;
-
-type FS = Sdk["fs"];
+const { fs, toast, Urgency, spawnWindow }: Sdk = (window as any).$;
 
 interface FileDesc {
   isDir: boolean;
@@ -12,7 +10,7 @@ interface FileDesc {
   path: string;
 }
 
-function Node({ fs, c, setCwd }: { fs: FS; c: FileDesc; setCwd: (cwd: string) => void }) {
+function Node({ c, setCwd }: { c: FileDesc; setCwd: (cwd: string) => void }) {
   const [ctxMenuOpen, setCtxMenuOpen] = useState(false);
   const anchorId = useMemo(() => Math.floor(Math.random() * 10000), []);
 
@@ -101,9 +99,8 @@ function Node({ fs, c, setCwd }: { fs: FS; c: FileDesc; setCwd: (cwd: string) =>
   );
 }
 
-export default function FileExplorer({ args }: { args: [] | [FS] }) {
-  const fs = args[0] ?? myFs;
-  const [cwd, setCwd] = useState("");
+export default function FileExplorer({ args }: { args: [] | [string] }) {
+  const [cwd, setCwd] = useState((args[0] === "/" ? "" : args[0]) ?? "");
   const [children, setChildren] = useState<FileDesc[]>([]);
 
   const uploadRef = useRef<HTMLInputElement | null>(null);
@@ -114,8 +111,9 @@ export default function FileExplorer({ args }: { args: [] | [FS] }) {
     if (!file) return;
     const name = prompt("File name?");
     if (!name) return;
-    const text = confirm("Is this a text file? OK for yes, Cancel for no");
-    await fs.writeFile(cwd + "/" + name, text ? await file.text() : file);
+    const isTextStr = prompt("Is this a text file? (yes or no)")?.toLowerCase();
+    if (!isTextStr || (isTextStr !== "yes" && isTextStr !== "no")) throw "Must enter yes or no.";
+    await fs.writeFile(cwd + "/" + name, isTextStr === "yes" ? await file.text() : file);
   }
 
   async function update() {
@@ -163,7 +161,7 @@ export default function FileExplorer({ args }: { args: [] | [FS] }) {
       <ul>
         {children.map(c => (
           <li key={c.path}>
-            <Node fs={fs} c={c} setCwd={setCwd} />
+            <Node c={c} setCwd={setCwd} />
           </li>
         ))}
       </ul>

@@ -1,13 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import type { Sdk } from "../../sdk.ts";
 import { Urgency } from "../../toast.tsx";
-import { jsonStringToBlob, type Promisify } from "../../utils.ts";
+import { blobToJsonString, jsonStringToBlob, type Promisify } from "../../utils.ts";
 import { type RemoteServerObject } from "../RemoteServer/service.ts";
 
-const { conn, spawnWindow, fs, toast }: Sdk = (window as any).$;
+const { conn, spawnWindow, fs, toast, getAppDir }: Sdk = (window as any).$;
+const appDir = await getAppDir("RemoteClient");
+
+if (!(await fs.isDir(`${appDir}/mirrors`))) await fs.mkdir(`${appDir}/mirrors`);
 
 export default function RemoteClient() {
   const [clientId, setClientId] = useState<string | null>(null);
+  const mirrorFsPath = `${appDir}/mirrors/${clientId}`;
+  const [mirrorFs, setMirrorFs] = useState(false);
   const clientIdInputRef = useRef<HTMLInputElement | null>(null);
   const object = useRef<Promisify<RemoteServerObject> | null>(null);
 
@@ -45,6 +50,49 @@ export default function RemoteClient() {
   }, [clientId]);
 
   useEffect(() => {
+    (async () => {
+      if (!clientId) {
+        setMirrorFs(false);
+        return;
+      }
+      if (!mirrorFs) {
+        if (((await fs.ls(`${appDir}/mirrors`)).includes(clientId))) {
+          fs.unmount(mirrorFsPath);
+        }
+        return;
+      }
+      if (!object.current) return;
+      const rfs = object.current.fs;
+      fs.mount({
+        root: mirrorFsPath,
+        async stat(path) {
+          return await rfs.isDir(path) ? "dir" : await rfs.pathExists(path) ? "file" : null;
+        },
+        async ls(path) {
+          return await rfs.ls(path);
+        },
+        async mkdir(path) {
+          return await rfs.mkdir(path);
+        },
+        async read(path) {
+          const result = await rfs.readFile(path);
+          if (typeof result === "string") return result;
+          const encoded = await object.current!.readBlob(path);
+          return jsonStringToBlob(encoded);
+        },
+        async write(path, content) {
+          if (typeof content === "string") {
+            return await rfs.writeFile(path, content);
+          } else return await object.current!.writeBlob(path, await blobToJsonString(content));
+        },
+        async unlink(path) {
+          return await rfs.unlink(path);
+        },
+      });
+    })();
+  }, [clientId, mirrorFs]);
+
+  useEffect(() => {
     if (!autoRefresh) return;
     const id = setInterval(() => updateScreen(), 3_000);
     return () => clearInterval(id);
@@ -66,14 +114,7 @@ export default function RemoteClient() {
     if (!object.current) return;
     spawnWindow({
       app: "FileExplorer",
-      args: [
-        new Proxy(object.current.fs, {
-          get(target, p, receiver) {
-            if (p !== "parent") return Reflect.get(target, p, receiver);
-            return fs.parent;
-          },
-        }),
-      ],
+      args: [mirrorFsPath],
     });
   }
 
@@ -121,11 +162,7 @@ export default function RemoteClient() {
 
   return (
     <div>
-      Connected to {clientId}.<br />
-      <button onClick={() => browseFs()}>
-        Browse filesystem
-      </button>
-      <br />
+      Connected to {clientId}. <br />
       Launch app:<br />
       <input type="text" placeholder="App name" ref={launchAppNameRef} />
       <input type="text" placeholder="Args as js, e.g. [1, 2, 'dog']" ref={launchAppArgsJsRef} />
@@ -157,6 +194,14 @@ export default function RemoteClient() {
       <br />
       <button onClick={() => updateScreen()}>Update</button>
       <button onClick={() => toggleScreenRefresh()}>Toggle screen refresh</button>
+      <br />
+      {mirrorFs ? "Mirroring fs at " + mirrorFsPath : "Not mirroring fs"}
+      <br />
+      <button onClick={() => setMirrorFs(m => !m)}>{mirrorFs ? "Stop" : "Start"} mirroring fs</button>
+      <br />
+      <button onClick={() => browseFs()}>
+        Browse filesystem
+      </button>
     </div>
   );
 }

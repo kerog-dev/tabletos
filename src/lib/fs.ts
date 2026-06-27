@@ -11,7 +11,84 @@ interface Watcher {
   listener: WatchListener;
 }
 
+interface Mount {
+  root: string;
+  stat(path: string): Promise<"file" | "dir" | null> | "file" | "dir" | null;
+  read(path: string): Promise<string | Blob> | string | Blob;
+  write(path: string, content: string | Blob): Promise<void> | void;
+  mkdir(path: string): Promise<void> | void;
+  ls(path: string): Promise<string[]> | string[];
+  unlink(path: string): Promise<void> | void;
+  appendBlob?(path: string, blob: Blob): Promise<void> | void;
+}
+
 const watchers: Watcher[] = [];
+const mounts: Mount[] = [];
+
+function resolveMount(path: string): { mount: Mount; relative: string } | null {
+  for (const mount of mounts) {
+    if (path === mount.root || path.startsWith(mount.root + "/")) {
+      return { mount, relative: path.slice(mount.root.length) || "/" };
+    }
+  }
+  return null;
+}
+
+export function mount(mount: Mount) {
+  for (const m of mounts) if (m.root === mount.root) throw "Something is already mounted at that path!";
+  mounts.push(mount);
+  // TODO: mount and unmount actions
+  emitWatchAction(mount.root, "create");
+}
+
+export function unmount(root: string) {
+  mounts.splice(mounts.findIndex(m => m.root === root), 1);
+  emitWatchAction(root, "delete");
+}
+
+export function fsMount(root: string, files: Record<string, string | Blob>): Mount {
+  const normalized: Record<string, string | Blob> = {};
+  for (const [k, v] of Object.entries(files)) {
+    normalized[k.startsWith("/") ? k : "/" + k] = v;
+  }
+  files = normalized;
+  const dirs = new Set<string>(["/"]);
+  for (const path of Object.keys(files)) {
+    const parts = path.split("/").filter(Boolean);
+    for (let i = 1; i < parts.length; i++) {
+      dirs.add("/" + parts.slice(0, i).join("/"));
+    }
+  }
+
+  return {
+    root,
+    stat(path) {
+      if (dirs.has(path)) return "dir";
+      if (path in files) return "file";
+      return null;
+    },
+    read(path) {
+      if (!(path in files)) throw `Not a file: ${path}`;
+      return files[path];
+    },
+    ls(path) {
+      const prefix = path === "/" ? "/" : path + "/";
+      const results = new Set<string>();
+      for (const f of Object.keys(files)) {
+        if (f.startsWith(prefix)) results.add(f.slice(prefix.length).split("/")[0]);
+      }
+      for (const d of dirs) {
+        if (d !== path && d.startsWith(prefix) && !d.slice(prefix.length).includes("/")) {
+          results.add(d.slice(prefix.length));
+        }
+      }
+      return [...results];
+    },
+    write() {},
+    mkdir() {},
+    unlink() {},
+  };
+}
 
 function emitWatchAction(path: string, action: WatchAction) {
   const tree = [];
@@ -83,6 +160,8 @@ function assertPath(path: string) {
 export async function isDir(path: string) {
   if (path === "/") return true;
   assertPath(path);
+  const m = resolveMount(path);
+  if (m) return await m.mount.stat(m.relative) === "dir";
   const value = await db.get("fs", path);
   return value != null && value.type === "dir";
 }
@@ -97,6 +176,8 @@ export async function pathExists(path: string) {
   for (let i = 1; i < parts.length; i++) {
     if (!(await isDir(encodePath(parts.slice(0, i))))) return false;
   }
+  const m = resolveMount(path);
+  if (m) return await m.mount.stat(m.relative) !== null;
   return (await db.get("fs", path)) != undefined;
 }
 
@@ -107,34 +188,51 @@ async function assertPathExists(path: string) {
 export async function mkdir(path: string) {
   await assertIsDir(parent(path));
   if (await pathExists(path)) throw `Path ${path} already exists.`;
-  await db.put("fs", { type: "dir" }, path);
   emitWatchAction(path, "create");
+  const m = resolveMount(path);
+  if (m) return await m.mount.mkdir(m.relative);
+  await db.put("fs", { type: "dir" }, path);
 }
 
 export async function writeFile(path: string, content: string | Blob) {
   await assertIsDir(parent(path));
   if (await isDir(path)) throw `Path ${path} is a directory, can't write to it.`;
   const existed = await pathExists(path);
-  await db.put("fs", { type: "file", content }, path);
   emitWatchAction(path, existed ? "write" : "create");
+  const m = resolveMount(path);
+  if (m) return await m.mount.write(m.relative, content);
+  await db.put("fs", { type: "file", content }, path);
 }
 
 export async function appendBlobFile(path: string, appended: Uint8Array<ArrayBuffer> | Blob) {
   await assertIsDir(parent(path));
   if (await isDir(path)) throw `Path ${path} is a directory, can't write to it.`;
+  emitWatchAction(path, "write");
+  const m = resolveMount(path);
+  if (m) {
+    const blob = appended instanceof Blob ? appended : new Blob([appended]);
+    if (m.mount.appendBlob) return await m.mount.appendBlob(m.relative, blob);
+    else {
+      const content = await m.mount.read(m.relative);
+      if (!(content instanceof Blob)) throw "Not a blob file!";
+      await m.mount.write(m.relative, new Blob([content, blob]));
+      return;
+    }
+  }
   const tx = db.transaction("fs", "readwrite");
   const fsStore = tx.objectStore("fs");
   const entry = await fsStore.get(path);
   const newBlob = new Blob([entry.content as Blob, appended]);
   await fsStore.put({ type: "file", content: newBlob }, path);
   tx.commit();
-  emitWatchAction(path, "write");
 }
 
 export async function readFile(path: string): Promise<string | Blob> {
+  emitWatchAction(path, "read");
+  const m = resolveMount(path);
+  if (m) return await m.mount.read(m.relative);
   const result = await db.get("fs", path);
   if (!result || result.type !== "file") throw `Path ${path} either does not exist or is not a file.`;
-  emitWatchAction(path, "read");
   return result.content;
 }
 
@@ -151,6 +249,9 @@ export async function readBlobFile(path: string): Promise<Blob> {
 }
 
 export async function ls(path: string): Promise<string[]> {
+  const m = resolveMount(path);
+  if (m) return m.mount.ls(m.relative);
+
   await assertIsDir(path);
   const keys = await db.getAllKeys("fs");
   const children: string[] = [];
@@ -158,6 +259,16 @@ export async function ls(path: string): Promise<string[]> {
     if (typeof key !== "string") continue;
     if (isDirectParent(path, key)) children.push(key);
   }
+
+  for (const mount of mounts) {
+    if (isDirectParent(path, mount.root)) {
+      if (children.includes(mount.root)) {
+        children.splice(children.indexOf(mount.root), 1);
+      }
+      children.push(mount.root);
+    }
+  }
+
   emitWatchAction(path, "read");
   return children.map(child => parsePath(child).at(-1)!);
 }
@@ -232,8 +343,10 @@ export async function unlink(path: string) {
   if (await isDir(path) && (await ls(path)).length > 0) {
     throw `Directory ${path} is not empty.`;
   }
-  await db.delete("fs", path);
   emitWatchAction(path, "delete");
+  const m = resolveMount(path);
+  if (m) return await m.mount.unlink(m.relative);
+  await db.delete("fs", path);
 }
 
 export function watchFile(
