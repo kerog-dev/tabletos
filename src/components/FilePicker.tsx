@@ -20,6 +20,19 @@ export function FilePicker({ setPath }: { setPath: (path: string) => void }) {
     setChildren(children.map((name, i) => ({ isDir: childrenAreDirs[i], name, path: `${cwd}/${name}` })));
   }
 
+  function goToParent() {
+    if (cwd === "") return;
+    const parent = fs.parent(cwd);
+    setCwd(parent === "/" ? "" : parent);
+  }
+
+  async function createAndSelectEmptyTextFile() {
+    const name = prompt("File name?");
+    if (!name) return;
+    await fs.writeFile(`${cwd}/${name}`, "");
+    setPath(`${cwd}/${name}`);
+  }
+
   useEffect(() => {
     update();
     const listener = () => update();
@@ -33,33 +46,21 @@ export function FilePicker({ setPath }: { setPath: (path: string) => void }) {
     <div>
       <h1>Select file</h1>
       <h2>Browsing: {cwd === "" ? "/" : cwd}</h2>
-      <button
-        onClick={() => {
-          if (cwd === "") return;
-          const parent = fs.parent(cwd);
-          setCwd(parent === "/" ? "" : parent);
-        }}
-      >
+      <button onClick={() => goToParent()}>
         ..
       </button>
       <br />
-      <button
-        onClick={async () => {
-          const name = prompt("File name?");
-          if (!name) return;
-          await fs.writeFile(`${cwd}/${name}`, "");
-          setPath(`${cwd}/${name}`);
-        }}
-      >
+      <button onClick={() => createAndSelectEmptyTextFile()}>
         Create and select empty text file
       </button>
       <br />
       <ul>
         {children.map(c => (
           <li key={c.path}>
-            {c.isDir
-              ? <button title={c.path} onClick={() => setCwd(c.path)}>{c.name}/</button>
-              : <button title={c.path} onClick={() => setPath(c.path)}>{c.name}</button>}
+            <button title={c.path} onClick={() => c.isDir ? setCwd(c.path) : setPath(c.path)}>
+              {c.name}
+              {c.isDir ? "/" : ""}
+            </button>
           </li>
         ))}
       </ul>

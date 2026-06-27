@@ -7,3 +7,14 @@
   overflow: scroll;
   resize: both;
 }
+
+.window-manager {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: 50%, 50%;
+}

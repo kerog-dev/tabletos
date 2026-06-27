@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Sdk } from "../../sdk.ts";
+import "./FileExplorer.css";
 
 const { fs: myFs, toast, Urgency, spawnWindow }: Sdk = (window as any).$;
 
@@ -57,21 +58,7 @@ function Node({ fs, c, setCwd }: { fs: FS; c: FileDesc; setCwd: (cwd: string) =>
   }
 
   const ctxMenu = (
-    <div
-      style={{
-        position: "fixed",
-        positionAnchor: "--ctx-anchor-" + anchorId,
-        top: "anchor(bottom)",
-        left: "anchor(right)",
-        margin: "0",
-        padding: "10px",
-        backgroundColor: "white",
-        color: "black",
-        width: "10%",
-        height: "max-content",
-        border: "5px solid black",
-      }}
-    >
+    <div className="ctx-menu" style={{ positionAnchor: "--ctx-anchor-" + anchorId }}>
       <ul>
         <li>
           <button onClick={() => openNode()}>Open</button>

@@ -8,6 +8,11 @@ export default function Frame({ args }: { args: [] | [string] }) {
   const [recent, setRecent] = useStorage<string[]>("frame.recent", []);
   const [value, setValue] = useState("");
 
+  function go() {
+    setRecent([...recent.filter(x => x !== value), value]);
+    setUri(value);
+  }
+
   if (!uri) {
     return (
       <div>
@@ -25,18 +30,10 @@ export default function Frame({ args }: { args: [] | [string] }) {
           value={value}
           onChange={e => setValue(e.target.value)}
           onKeyUp={(e) => {
-            if (e.code === "Enter") {
-              const input = e.target as HTMLInputElement;
-              setRecent([...recent.filter(x => x !== input.value), input.value]);
-              setUri(input.value);
-            }
+            if (e.code === "Enter") go();
           }}
         />
-        <button
-          onClick={() => {
-            setUri(value);
-          }}
-        >
+        <button onClick={() => go()}>
           Go
         </button>
       </div>

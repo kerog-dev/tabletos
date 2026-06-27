@@ -39,7 +39,7 @@ export default function ThreeDG() {
       <input
         style={{ position: "absolute", bottom: "0", right: "0", margin: "20px", zIndex: "999" }}
         type="text"
-        onBlur={e => setEquation(e.target.value)}
+        onChange={e => setEquation(e.target.value)}
       />
       <canvas
         style={{ width: "100cqmin", height: "100cqmin" }}

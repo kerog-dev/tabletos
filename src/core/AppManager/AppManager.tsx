@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { fetch } from "../../lib/net.ts";
 import { unloadApp } from "../../packages.ts";
 import type { Sdk } from "../../sdk.ts";
-import { toast } from "../../toast.tsx";
+import { toast, Urgency } from "../../toast.tsx";
 
 const { fs }: Sdk = (window as any).$;
 
@@ -43,20 +43,30 @@ export default function Installer() {
     install(name, zipBlob);
   }
 
+  async function update(name: string) {
+    try {
+      await uninstall(name, true);
+      await remoteInstall(name);
+      toast({ title: `Updated ${name} succesfully!` });
+    } catch (e) {
+      toast({ title: "Failed to update", desc: `Error: ${e}`, urgency: Urgency.Error });
+    }
+  }
+
+  function installFromFile() {
+    if (!installPackageNameRef.current || !installFileInputRef.current) return;
+    const file = installFileInputRef.current.files?.[0];
+    if (!file) throw "No file provided";
+    install(installPackageNameRef.current.value, file);
+  }
+
   return (
     <div>
       <input type="text" ref={installPackageNameRef} />
       <br />
       <input type="file" ref={installFileInputRef} />
       <br />
-      <button
-        onClick={() => {
-          if (!installPackageNameRef.current || !installFileInputRef.current) return;
-          const file = installFileInputRef.current.files?.[0];
-          if (!file) throw "No file provided";
-          install(installPackageNameRef.current.value, file);
-        }}
-      >
+      <button onClick={() => installFromFile()}>
         Install
       </button>
       <hr />
@@ -73,14 +83,7 @@ export default function Installer() {
                   ? (
                     <>
                       Installed, <button onClick={() => uninstall(p)}>Uninstall</button>,{" "}
-                      <button
-                        onClick={() => {
-                          uninstall(p, true).then(() => remoteInstall(p)).then(() =>
-                            toast({ title: "Updated successfully!" })
-                          )
-                            .catch((reason) => toast({ title: "Failed to update", desc: "Reason: " + reason }));
-                        }}
-                      >
+                      <button onClick={() => update(p)}>
                         Update
                       </button>
                     </>

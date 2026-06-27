@@ -57,16 +57,9 @@ export default function WindowManager() {
 
   return (
     <div
+      className="window-manager"
       style={{
-        margin: "0",
-        padding: "0",
-        width: "100vw",
-        height: "100vh",
-        position: "relative",
         backgroundImage: wallpaperUrl ? `url(${wallpaperUrl})` : undefined,
-        backgroundSize: "cover",
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "50%, 50%",
       }}
     >
       <Taskbar

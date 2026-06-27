@@ -27,7 +27,7 @@ document.head.appendChild(script);
 
   return (
     <div style={{ width: "100%", height: "100%" }}>
-      <iframe style={{ width: "100%", height: "100%" }} src={uri} />
+      <iframe style={{ width: "100%", height: "100%" }} src={uri} sandbox="allow-scripts allow-same-origin" />
     </div>
   );
 }

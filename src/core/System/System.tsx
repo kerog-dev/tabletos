@@ -77,7 +77,8 @@ export default function System() {
         </button>
       </div>
       <div>
-        Set wallpaper <input type="file" accept="image/*" ref={wallpaperInputRef} />
+        Set wallpaper:<br />
+        <input type="file" accept="image/*" ref={wallpaperInputRef} />
         <button
           onClick={() => {
             if (!wallpaperInputRef.current || wallpaperInputRef.current.files?.length !== 1) return;
@@ -86,6 +87,7 @@ export default function System() {
         >
           Set wallpaper
         </button>
+        <br />
         Or set from URL:
         <input type="text" ref={wallpaperUrlInputRef} />
         <button
@@ -98,7 +100,8 @@ export default function System() {
         >
           Set wallpaper
         </button>
-        You might need to refresh to apply wallpaper change.
+        <br />
+        You need to refresh to apply wallpaper change.
         <br />
         Set window transparency (%):
         <input type="number" ref={windowTransparencyInputRef} />
