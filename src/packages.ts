@@ -215,8 +215,8 @@ class ServiceManager {
     }
   }
 
-  get(name: string): object | null {
-    return this.startedServices.find(s => s.service.info.name === name)?.started.exposed ?? null;
+  get<T extends object>(name: string): T | null {
+    return this.startedServices.find(s => s.service.info.name === name)?.started.exposed as T | null ?? null;
   }
 
   isRunning(name: string): boolean {

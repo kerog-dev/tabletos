@@ -60,14 +60,15 @@ function Node({ fs, c, setCwd }: { fs: FS; c: FileDesc; setCwd: (cwd: string) =>
       style={{
         position: "fixed",
         positionAnchor: "--ctx-anchor",
-        top: "bottom(anchor)",
-        left: "right(anchor)",
+        top: "anchor(bottom)",
+        left: "anchor(right)",
         margin: "0",
         padding: "10px",
         backgroundColor: "white",
         color: "black",
         width: "10%",
         height: "max-content",
+        border: "5px solid black",
       }}
     >
       <ul>

@@ -59,9 +59,11 @@ function getFileType(path: string): SupportedType {
 
 function renderFile(type: SupportedType, blobUrl: string, path: string) {
   const style = {
-    width: "100%",
-    height: "100%",
-    objectFit: "contain",
+    style: {
+      width: "100%",
+      height: "100%",
+      objectFit: "contain" as any,
+    },
   };
   switch (type) {
     case "image":
