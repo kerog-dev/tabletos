@@ -107,11 +107,13 @@ export default function FileExplorer({ args }: { args: [] | [FS] }) {
   const [children, setChildren] = useState<FileDesc[]>([]);
 
   const uploadRef = useRef<HTMLInputElement | null>(null);
+  const getUrlRef = useRef<HTMLInputElement | null>(null);
 
   async function upload() {
     const file = uploadRef.current?.files?.[0];
     if (!file) return;
     const name = prompt("File name?");
+    if (!name) return;
     const text = confirm("Is this a text file? OK for yes, Cancel for no");
     await fs.writeFile(cwd + "/" + name, text ? await file.text() : file);
   }
@@ -121,6 +123,14 @@ export default function FileExplorer({ args }: { args: [] | [FS] }) {
     const childrenPathes = children.map(c => `${cwd}/${c}`);
     const childrenAreDirs = await Promise.all(childrenPathes.map(fs.isDir));
     setChildren(children.map((name, i) => ({ isDir: childrenAreDirs[i], name, path: `${cwd}/${name}` })));
+  }
+
+  async function getUrl() {
+    const filename = prompt("File name?");
+    if (!filename || !getUrlRef.current) return;
+    const res = await fetch(getUrlRef.current.value);
+    const blob = await res.blob();
+    await fs.writeFile(`${cwd}/${filename}`, blob);
   }
 
   useEffect(() => {
@@ -147,6 +157,9 @@ export default function FileExplorer({ args }: { args: [] | [FS] }) {
       <br />
       <input type="file" ref={uploadRef} />
       <button onClick={() => upload()}>Upload file into this directory</button>
+      <br />
+      <input type="text" ref={getUrlRef} />
+      <button onClick={() => getUrl()}>Get url</button>
       <ul>
         {children.map(c => (
           <li key={c.path}>
