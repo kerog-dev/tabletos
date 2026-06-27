@@ -1,5 +1,6 @@
 import os
 import socket
+import hashlib
 from pathlib import Path
 from starlette.applications import Starlette
 from starlette.requests import Request
@@ -12,6 +13,14 @@ import uvicorn
 
 PACKAGES_DIR = Path(__file__).resolve().parents[1] / "dist" / "packages"
 PORT = 8086
+
+
+def compute_hash(package: str) -> str:
+    sha256 = hashlib.sha256()
+    with open(PACKAGES_DIR / package, "rb") as f:
+        while chunk := f.read(65536):
+            sha256.update(chunk)
+    return sha256.hexdigest()
 
 
 def get_local_ip() -> str:
@@ -29,11 +38,18 @@ async def available_packages(request: Request):
     return JSONResponse(apps)
 
 
+async def package_hash(request: Request):
+    name = request.path_params["name"]
+    h = compute_hash(name)
+    return PlainTextResponse(h)
+
+
 app = Starlette(
     routes=[
         Route("/health", health),
         Route("/available-packages", available_packages),
         Mount("/packages", StaticFiles(directory=PACKAGES_DIR)),
+        Route("/package-hashes/{name}", package_hash),
     ],
     middleware=[
         Middleware(CORSMiddleware, allow_origins=["*"]),

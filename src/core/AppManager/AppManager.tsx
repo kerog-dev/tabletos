@@ -1,3 +1,4 @@
+import { sha256 } from "js-sha256";
 import { useEffect, useRef, useState } from "react";
 import { fetch } from "../../lib/net.ts";
 import { unloadApp } from "../../packages.ts";
@@ -6,9 +7,16 @@ import { toast, Urgency } from "../../toast.tsx";
 
 const { fs }: Sdk = (window as any).$;
 
+async function hashBlob(blob: Blob): Promise<string> {
+  return sha256(await blob.arrayBuffer());
+}
+
 export default function Installer() {
   const packageDirListing = fs.useDirListing("/packages");
   const [remotePackages, setRemotePackages] = useState<string[] | null>(null);
+
+  const [remoteHashes, setRemoteHashes] = useState<Record<string, string>>({});
+  const [localHashes, setLocalHashes] = useState<Record<string, string>>({});
 
   const installPackageNameRef = useRef<HTMLInputElement | null>(null);
   const installFileInputRef = useRef<HTMLInputElement | null>(null);
@@ -18,6 +26,28 @@ export default function Installer() {
   useEffect(() => {
     fetch("http://server/available-packages").then(res => res.json()).then(json => setRemotePackages(json));
   }, []);
+
+  useEffect(() => {
+    if (!remotePackages) return;
+    Promise.all(
+      remotePackages.map(async name => {
+        const hash = await fetch(`http://server/package-hashes/${name}.zip`).then(r => r.text());
+        return [name, hash] as const;
+      }),
+    ).then(entries => setRemoteHashes(Object.fromEntries(entries)));
+  }, [remotePackages]);
+
+  useEffect(() => {
+    if (!packageDirListing) return;
+    Promise.all(
+      packageDirListing
+        .filter(f => f.endsWith(".zip"))
+        .map(async filename => {
+          const blob = await fs.readBlobFile(`/packages/${filename}`);
+          return [filename.replace(".zip", ""), await hashBlob(blob)] as const;
+        }),
+    ).then(entries => setLocalHashes(Object.fromEntries(entries)));
+  }, [packageDirListing]);
 
   async function install(name: string, zipBlob: Blob) {
     if (!(await fs.isDir("/packages"))) await fs.mkdir("/packages");
@@ -71,7 +101,11 @@ export default function Installer() {
                 {p} ({packageDirListing?.includes(p + ".zip")
                   ? (
                     <>
-                      Installed, <button onClick={() => uninstall(p)}>Uninstall</button>,{" "}
+                      {localHashes[p] === remoteHashes[p]
+                        ? "Up to date"
+                        : remoteHashes[p]
+                        ? "Update available"
+                        : "Installed"}, <button onClick={() => uninstall(p)}>Uninstall</button>,{" "}
                       <button onClick={() => update(p)}>
                         Update
                       </button>
