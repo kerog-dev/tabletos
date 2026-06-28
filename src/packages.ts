@@ -220,29 +220,36 @@ async function loadPackageService(packageName: string, scriptBlob: Blob) {
   packageServiceNameMapping[packageName] = module.default.info.name;
 }
 
-function loadPackage(name: string): Promise<void> {
-  return fs.readBlobFile(`/packages/${name}.zip`).then(zipBlob => zipBlob.arrayBuffer()).then(zipBuf =>
-    new Promise<Record<string, Uint8Array<ArrayBuffer>>>((res, rej) => {
-      unzip(new Uint8Array(zipBuf), {}, (err, data) => {
-        if (err) {
-          return rej(err);
-        }
-        res(data);
-      });
-    })
-  ).then(data => {
-    const promises = [];
-    if (data[name + ".js"]) promises.push(loadAppFromScript(name, new TextDecoder().decode(data[name + ".js"])));
-    if (data["service.js"]) {
-      promises.push(loadPackageService(name, new Blob([data["service.js"]], { type: "text/javascript" })));
-    }
-    return Promise.all(promises);
-  }).then(() => console.log(`Loaded packages successfully!`)).catch(reason =>
-    console.error(`Error loading packages: ${reason}`)
-  );
+export async function loadPackageBlob(name: string, zipBlob: Blob) {
+  const zipBuf = await zipBlob.arrayBuffer();
+  const data = await new Promise<Record<string, Uint8Array<ArrayBuffer>>>((res, rej) => {
+    unzip(new Uint8Array(zipBuf), {}, (err, data) => {
+      if (err) {
+        return rej(err);
+      }
+      res(data);
+    });
+  });
+  const promises = [];
+  if (data[name + ".js"]) promises.push(loadAppFromScript(name, new TextDecoder().decode(data[name + ".js"])));
+  if (data["service.js"]) {
+    promises.push(loadPackageService(name, new Blob([data["service.js"]], { type: "text/javascript" })));
+  }
+
+  await Promise.all(promises);
+  return console.log(`Loaded package successfully: ${name}`);
 }
 
-async function unloadPackage(name: string) {
+async function loadPackage(name: string): Promise<void> {
+  try {
+    const zipBlob = await fs.readBlobFile(`/packages/${name}.zip`);
+    await loadPackageBlob(name, zipBlob);
+  } catch (reason) {
+    return console.error(`Error loading package ${name}: ${reason}`);
+  }
+}
+
+export async function unloadPackage(name: string) {
   if (packageServiceNameMapping[name]) sv.unload(packageServiceNameMapping[name]);
   unloadApp(name);
 }

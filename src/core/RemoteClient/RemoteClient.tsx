@@ -25,7 +25,7 @@ export default function RemoteClient() {
 
   const evalScriptRef = useRef<HTMLTextAreaElement | null>(null);
 
-  const uninstallAppNameRef = useRef<HTMLInputElement | null>(null);
+  const uninstallPackageNameRef = useRef<HTMLInputElement | null>(null);
 
   const [screenSrc, setScreenSrc] = useState<string | null>(null);
 
@@ -150,10 +150,10 @@ export default function RemoteClient() {
       });}
   }
 
-  async function unloadApp(uninstall = false) {
-    if (!uninstallAppNameRef.current || !object.current) return;
-    const name = uninstallAppNameRef.current.value;
-    await object.current[uninstall ? "uninstallApp" : "unloadApp"](name);
+  async function unloadPackage(uninstall = false) {
+    if (!uninstallPackageNameRef.current || !object.current) return;
+    const name = uninstallPackageNameRef.current.value;
+    await object.current[uninstall ? "uninstallPackage" : "unloadPackage"](name);
   }
 
   function toggleScreenRefresh() {
@@ -183,12 +183,12 @@ export default function RemoteClient() {
       <textarea ref={evalScriptRef}></textarea>
       <button onClick={() => evalScript()}>Evaluate</button>
       <br />
-      <span>TODO: load or install script from local path or remote path</span>
+      <span>TODO: load or install package from local path or remote path</span>
       <br />
-      <input type="text" placeholder="App name" ref={uninstallAppNameRef} />
+      <input type="text" placeholder="Package name" ref={uninstallPackageNameRef} />
       <br />
-      <button onClick={() => unloadApp()}>Unload app</button>
-      <button onClick={() => unloadApp(true)}>Uninstall app</button>
+      <button onClick={() => unloadPackage()}>Unload package</button>
+      <button onClick={() => unloadPackage(true)}>Uninstall package</button>
       <br />
       <img style={{ width: "100%" }} src={screenSrc ?? undefined} />
       <br />

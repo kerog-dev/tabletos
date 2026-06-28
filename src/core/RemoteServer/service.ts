@@ -1,17 +1,16 @@
-import { type Service } from "../../packages.ts";
-import { loadAppFromScript, unloadApp } from "../../packages.ts";
+import { loadPackageBlob, type Service, unloadPackage } from "../../packages.ts";
 import type { Sdk } from "../../sdk.ts";
-import { blobToJsonString, compress, jsonStringToBlob } from "../../utils.ts";
+import { blobToJsonString, jsonStringToBlob } from "../../utils.ts";
 
 export interface RemoteServerObject {
   fs: Sdk["fs"];
   spawnWindow: Sdk["spawnWindow"];
   toast: Sdk["toast"];
   eval: (script: string) => { ok: true; result: any } | { ok: false; error: unknown };
-  loadAppFromScript: (name: string, script: string, install?: boolean) => Promise<void>;
-  loadAppFromFs: (name: string, path: string, install?: boolean) => Promise<void>;
-  unloadApp: (name: string) => void;
-  uninstallApp: (name: string) => Promise<void>;
+  loadPackageFromBlob: (name: string, blob: Blob, install?: boolean) => Promise<void>;
+  loadPackageFromFs: (name: string, path: string, install?: boolean) => Promise<void>;
+  unloadPackage: (name: string) => void;
+  uninstallPackage: (name: string) => Promise<void>;
   screenshot: () => Promise<string>;
   readBlob: (path: string) => Promise<string>;
   writeBlob: (path: string, encoded: string) => Promise<void>;
@@ -35,31 +34,32 @@ const service: Service = {
           return { ok: false, error: e };
         }
       },
-      async loadAppFromScript(name, script, install = false) {
-        await loadApp(name, script, install);
+      async loadPackageFromBlob(name, blob, install = false) {
+        try {
+          await loadPackageBlob(name, blob);
+        } catch (e) {}
+        if (install) {
+          try {
+            await fs.writeFile(`/packages/${name}`, blob);
+          } catch (e) {}
+        }
       },
-      async loadAppFromFs(name, path, install = false) {
-        await loadApp(name, await fs.readTextFile(path), install);
+      async loadPackageFromFs(name, path, install = false) {
+        await this.loadPackageFromBlob(name, await fs.readBlobFile(path), install);
       },
-      async uninstallApp(name) {
-        await fs.unlink(`/apps/${name}.js.gz`);
-        unloadApp(name);
+      async uninstallPackage(name) {
+        try {
+          await fs.unlink(`/packages/${name}.zip`);
+        } catch (e) {}
+        try {
+          this.unloadPackage(name);
+        } catch (e) {}
       },
-      unloadApp(name) {
-        unloadApp(name);
-      },
+      unloadPackage,
       screenshot: async () => await blobToJsonString(await screenshot(0.3)),
       readBlob: async path => await blobToJsonString(await fs.readBlobFile(path)),
       writeBlob: async (path, encoded) => await fs.writeFile(path, jsonStringToBlob(encoded)),
     };
-
-    async function loadApp(name: string, script: string, install: boolean) {
-      if (name.includes(".") || name.includes("/")) throw "Name mustn't contain dot or slash";
-      if (install) {
-        await fs.writeFile(`/apps/${name}.js.gz`, await compress(new Blob([script], { type: "text/javascript" })));
-      }
-      await loadAppFromScript(name, script);
-    }
 
     conn.exposeObject(object, "remoteserver");
     return {
