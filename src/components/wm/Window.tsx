@@ -7,10 +7,11 @@ import { type App } from "../../packages.ts";
 import { toast } from "../../toast.tsx";
 import { sleep } from "../../utils.ts";
 import ErrorBoundary from "../ErrorBoundary.tsx";
+import { dragger } from "./drag.ts";
 import { WindowContext } from "./WindowContext.tsx";
 import { windowTransparency } from "./WindowManager.tsx";
 
-function AppWindow(
+function WindowContent(
   { app, hidden = false, args }: {
     app: App;
     hidden?: boolean;
@@ -66,7 +67,6 @@ export function Window(
   const windowEl = useRef<HTMLDivElement | null>(null);
   const windowBarEl = useRef<HTMLDivElement | null>(null);
   const lastHeightRef = useRef<number | null>(null);
-  const draggedRef = useRef<boolean>(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [floatRect, setFloatRect] = useState({ x: 0, y: 0, width: 0, height: 0 });
   const isMountedRef = useRef<boolean>(false);
@@ -81,7 +81,7 @@ export function Window(
         y: windowEl.current.offsetTop,
       });
       windowEl.current.style.width = "unset";
-      windowEl.current.style.height = "unset";
+      windowEl.current.style.height = "98vh";
       windowEl.current.style.inset = "5px";
     } else {
       windowEl.current.style.inset = "unset";
@@ -106,7 +106,7 @@ export function Window(
   }, [minimized]);
 
   async function startResize() {
-    toast({ title: "Resizing window! Press somewhere to expand the window to that point." });
+    toast({ title: "Resizing window!", desc: "Press somewhere to expand the window to that point." });
     await sleep(100);
     window.addEventListener("mouseup", e => {
       if (!windowEl.current) return;
@@ -145,76 +145,18 @@ export function Window(
   }
 
   useEffect(() => {
-    if (!windowEl.current || !windowBarEl.current) return;
-
     updatePos(() => initialPos);
     updateSize(() => initialSize);
-
-    let lastTouch: Touch | null = null;
-
-    const touchStartListener = () => {
-      if (fullscreen) return;
-      draggedRef.current = true;
-    };
-    const touchEndListener = () => {
-      lastTouch = null;
-      draggedRef.current = false;
-    };
-    const touchMoveListener = (e: TouchEvent) => {
-      if (!windowEl.current || !draggedRef.current || fullscreen) return;
-      e.preventDefault();
-      const touch = e.touches[0];
-      if (lastTouch) {
-        const movementX = touch.clientX - lastTouch.clientX;
-        const movementY = touch.clientY - lastTouch.clientY;
-        updatePos(([ox, oy]) => [ox + movementX, oy + movementY]);
-      }
-      lastTouch = touch;
-    };
-
-    const downListener = (e: MouseEvent) => {
-      if (draggedRef.current || fullscreen) return;
-      e.preventDefault();
-      draggedRef.current = true;
-    };
-    const upListener = () => {
-      draggedRef.current = false;
-    };
-    const moveListener = (e: MouseEvent) => {
-      if (!windowEl.current || !draggedRef.current || fullscreen) return;
-      updatePos(([ox, oy]) => [ox + e.movementX, oy + e.movementY]);
-    };
-
-    const pairs = [
-      [
-        windowBarEl.current,
-        "mousedown",
-        downListener,
-      ],
-      [
-        document.body,
-        "mouseup",
-        upListener,
-      ],
-      [
-        document.body,
-        "mousemove",
-        moveListener,
-      ],
-      [windowBarEl.current, "touchstart", touchStartListener],
-      [document.body, "touchend", touchEndListener],
-      [document.body, "touchmove", touchMoveListener],
-    ] as const;
-    pairs.forEach(([target, evName, listener]) => {
-      target.addEventListener(evName, listener as EventListener);
-    });
-    return () =>
-      pairs.forEach(([target, evName, listener]) => {
-        target.removeEventListener(evName, listener as EventListener);
-      });
   }, []);
 
-  const hexTransparency = (((100 - windowTransparency) / 100) * 255).toString(16).padStart(2, "0");
+  useEffect(() => {
+    if (!windowEl.current || !windowBarEl.current) return;
+    const d = dragger(windowEl.current, windowBarEl.current, () => !fullscreen);
+    d.onMove(([cx, cy]) => updatePos(([ox, oy]) => [ox + cx, oy + cy]));
+    return () => d.destroy();
+  }, [fullscreen]);
+
+  const hexOpacity = (((100 - windowTransparency) / 100) * 255).toString(16).padStart(2, "0");
 
   const windowCtx = {
     move({ x, y, absolute = true }: { x: number; y: number; absolute?: boolean }) {
@@ -232,8 +174,7 @@ export function Window(
       className="window-container"
       style={{
         zIndex: fullscreen ? "10000" : z,
-        backgroundColor: fullscreen ? "#ffffff" : `#ffffff${hexTransparency}`,
-        height: fullscreen ? "98vh" : undefined,
+        backgroundColor: `#ffffff${!fullscreen ? hexOpacity : ""}`,
       }}
       ref={windowEl}
       onClick={() => bringToTop()}
@@ -264,7 +205,7 @@ export function Window(
         </div>
       </div>
       <WindowContext.Provider value={windowCtx}>
-        <AppWindow app={app} hidden={minimized} args={args} />
+        <WindowContent app={app} hidden={minimized} args={args} />
       </WindowContext.Provider>
     </div>
   );
