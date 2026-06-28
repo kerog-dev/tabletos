@@ -7,6 +7,7 @@ import { type App } from "../../packages.ts";
 import { toast } from "../../toast.tsx";
 import { sleep } from "../../utils.ts";
 import ErrorBoundary from "../ErrorBoundary.tsx";
+import { WindowContext } from "./WindowContext.tsx";
 import { windowTransparency } from "./WindowManager.tsx";
 
 function AppWindow(
@@ -49,7 +50,7 @@ function AppWindow(
 }
 
 export function Window(
-  { app, initialPos, initialSize, minimized, toggleMinimized, z, kill, bringToTop, args }: {
+  { app, initialPos, initialSize, minimized, toggleMinimized, z, kill, bringToTop, args, getWindowAreaSize }: {
     app: App;
     initialPos: [number, number];
     initialSize: [number, number];
@@ -59,6 +60,7 @@ export function Window(
     minimized: boolean;
     toggleMinimized: () => void;
     args: any[];
+    getWindowAreaSize: () => [number, number];
   },
 ) {
   const windowEl = useRef<HTMLDivElement | null>(null);
@@ -83,10 +85,8 @@ export function Window(
       windowEl.current.style.inset = "5px";
     } else {
       windowEl.current.style.inset = "unset";
-      windowEl.current.style.width = floatRect.width + "px";
-      windowEl.current.style.height = floatRect.height + "px";
-      windowEl.current.style.left = floatRect.x + "px";
-      windowEl.current.style.top = floatRect.y + "px";
+      updateSize(() => [floatRect.width, floatRect.height]);
+      updatePos(() => [floatRect.x, floatRect.y]);
       bringToTop();
     }
   }, [fullscreen]);
@@ -119,64 +119,70 @@ export function Window(
     }, { once: true });
   }
 
+  function getPos(): [number, number] {
+    return [windowEl.current?.offsetLeft ?? 0, windowEl.current?.offsetTop ?? 0];
+  }
+
+  function getSize(): [number, number] {
+    return [windowEl.current?.clientWidth ?? 0, windowEl.current?.clientHeight ?? 0];
+  }
+
+  function updatePos(updater: (old: [number, number]) => [number, number]) {
+    if (!windowEl.current) return;
+    const [x, y] = updater(getPos());
+    const clamp = (pos: number, max: number, winsize: number) => Math.min(max - winsize, Math.max(pos, 0));
+    const areaSize = getWindowAreaSize();
+    windowEl.current.style.left = clamp(x, areaSize[0], windowEl.current.clientWidth) + "px";
+    windowEl.current.style.top = clamp(y, areaSize[1], windowEl.current.clientHeight) + "px";
+  }
+
+  function updateSize(updater: (old: [number, number]) => [number, number]) {
+    if (!windowEl.current) return;
+    const [w, h] = updater(getSize());
+    const clamp = (dim: number) => Math.max(dim, 50);
+    windowEl.current.style.width = clamp(w) + "px";
+    windowEl.current.style.height = clamp(h) + "px";
+  }
+
   useEffect(() => {
     if (!windowEl.current || !windowBarEl.current) return;
 
-    windowEl.current.style.width = initialSize[0] + "px";
-    windowEl.current.style.height = initialSize[1] + "px";
-    windowEl.current.style.left = initialPos[0] + "px";
-    windowEl.current.style.top = initialPos[1] + "px";
-
-    const clampPos = () => {
-      if (!windowEl.current) return;
-      if (windowEl.current.offsetTop + windowEl.current.clientHeight + 5 > window.innerHeight) {
-        windowEl.current.style.top = (window.innerHeight - windowEl.current.clientHeight - 5) + "px";
-      }
-      if (windowEl.current.offsetLeft + windowEl.current.clientWidth + 5 > window.innerWidth) {
-        windowEl.current.style.left = (window.innerWidth - windowEl.current.clientWidth - 5) + "px";
-      }
-      windowEl.current.style.top = Math.max(0, windowEl.current.offsetTop) + "px";
-      windowEl.current.style.left = Math.max(0, windowEl.current.offsetLeft) + "px";
-    };
+    updatePos(() => initialPos);
+    updateSize(() => initialSize);
 
     let lastTouch: Touch | null = null;
 
     const touchStartListener = () => {
+      if (fullscreen) return;
       draggedRef.current = true;
-      clampPos();
     };
     const touchEndListener = () => {
       lastTouch = null;
       draggedRef.current = false;
-      clampPos();
     };
     const touchMoveListener = (e: TouchEvent) => {
-      if (!windowEl.current || !draggedRef.current) return;
+      if (!windowEl.current || !draggedRef.current || fullscreen) return;
       e.preventDefault();
       const touch = e.touches[0];
       if (lastTouch) {
         const movementX = touch.clientX - lastTouch.clientX;
         const movementY = touch.clientY - lastTouch.clientY;
-        windowEl.current.style.left = (windowEl.current.offsetLeft + movementX) + "px";
-        windowEl.current.style.top = (windowEl.current.offsetTop + movementY) + "px";
+        updatePos(([ox, oy]) => [ox + movementX, oy + movementY]);
       }
       lastTouch = touch;
     };
 
     const downListener = (e: MouseEvent) => {
-      if (draggedRef.current) return;
+      if (draggedRef.current || fullscreen) return;
       e.preventDefault();
       draggedRef.current = true;
     };
     const upListener = () => {
       draggedRef.current = false;
-      clampPos();
     };
     const moveListener = (e: MouseEvent) => {
-      if (!windowEl.current || !draggedRef.current) return;
-      windowEl.current.style.left = (windowEl.current.offsetLeft + e.movementX) + "px";
-      windowEl.current.style.top = (windowEl.current.offsetTop + e.movementY) + "px";
-      clampPos();
+      if (!windowEl.current || !draggedRef.current || fullscreen) return;
+      updatePos(([ox, oy]) => [ox + e.movementX, oy + e.movementY]);
     };
 
     const pairs = [
@@ -210,12 +216,24 @@ export function Window(
 
   const hexTransparency = (((100 - windowTransparency) / 100) * 255).toString(16).padStart(2, "0");
 
+  const windowCtx = {
+    move({ x, y, absolute = true }: { x: number; y: number; absolute?: boolean }) {
+      updatePos(([ox, oy]) => [absolute ? x : ox + x, absolute ? y : oy + y]);
+    },
+    resize({ w, h, absolute = true }: { w: number; h: number; absolute?: boolean }) {
+      updateSize(([ow, oh]) => [absolute ? w : ow + w, absolute ? h : oh + h]);
+    },
+    pos: getPos,
+    size: getSize,
+  };
+
   return (
     <div
       className="window-container"
       style={{
         zIndex: fullscreen ? "10000" : z,
         backgroundColor: fullscreen ? "#ffffff" : `#ffffff${hexTransparency}`,
+        height: fullscreen ? "98vh" : undefined,
       }}
       ref={windowEl}
       onClick={() => bringToTop()}
@@ -245,7 +263,9 @@ export function Window(
             ))}
         </div>
       </div>
-      <AppWindow app={app} hidden={minimized} args={args} />
+      <WindowContext.Provider value={windowCtx}>
+        <AppWindow app={app} hidden={minimized} args={args} />
+      </WindowContext.Provider>
     </div>
   );
 }

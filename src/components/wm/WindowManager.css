@@ -18,3 +18,16 @@
   background-repeat: no-repeat;
   background-position: 50%, 50%;
 }
+
+.window-area {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 88vh;
+  position: relative;
+  pointer-events: none;
+}
+
+.window-area > * {
+  pointer-events: auto;
+}

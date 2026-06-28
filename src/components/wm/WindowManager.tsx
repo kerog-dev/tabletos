@@ -23,6 +23,7 @@ export default function WindowManager() {
   const [windows, setWindows] = useState<WindowDesc[]>([]);
   const curZ = useRef(0);
   const curId = useRef(0);
+  const windowAreaRef = useRef<HTMLDivElement | null>(null);
 
   function spawnWindow(
     app: App,
@@ -70,20 +71,26 @@ export default function WindowManager() {
         kill={killWindow}
       />
       <Shortcuts spawnWindow={spawnWindow} />
-      {windows.map((w) => (
-        <Window
-          key={w.id}
-          app={w.app}
-          initialPos={w.initialPos}
-          initialSize={w.initialSize}
-          z={w.z}
-          kill={() => killWindow(w.id)}
-          bringToTop={() => modifyWindow(w => ({ ...w, z: ++curZ.current }), w.id)}
-          minimized={w.minimized}
-          toggleMinimized={() => modifyWindow(w => ({ ...w, minimized: !w.minimized }), w.id)}
-          args={w.args}
-        />
-      ))}
+      <div className="window-area" ref={windowAreaRef}>
+        {windows.map((w) => (
+          <Window
+            key={w.id}
+            app={w.app}
+            initialPos={w.initialPos}
+            initialSize={w.initialSize}
+            z={w.z}
+            kill={() => killWindow(w.id)}
+            bringToTop={() => modifyWindow(w => ({ ...w, z: ++curZ.current }), w.id)}
+            minimized={w.minimized}
+            toggleMinimized={() => modifyWindow(w => ({ ...w, minimized: !w.minimized }), w.id)}
+            args={w.args}
+            getWindowAreaSize={() => [
+              windowAreaRef.current!.clientWidth,
+              windowAreaRef.current!.clientHeight,
+            ]}
+          />
+        ))}
+      </div>
     </div>
   );
 }
