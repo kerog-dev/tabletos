@@ -90,7 +90,7 @@ await Promise.all(
 
     const entries: Record<string, Uint8Array> = Object.fromEntries(
       await Promise.all(
-        files.map(async f => [f.slice(pkgDir.length + 1), await readFile(f)]),
+        files.map(async f => [f.slice(pkgDir.length + 1), [await readFile(f), { mtime: new Date("1980-01-01") }]]),
       ),
     );
 
