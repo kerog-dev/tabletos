@@ -1,4 +1,4 @@
-export function dragger(el: HTMLElement, dragStartEl: HTMLElement, canDrag: () => boolean) {
+export function dragger(element: HTMLElement, canDrag: () => boolean) {
   const handlers: Record<"start" | "stop" | "move", ((...args: any) => void)[]> = {
     start: [],
     stop: [],
@@ -46,7 +46,7 @@ export function dragger(el: HTMLElement, dragStartEl: HTMLElement, canDrag: () =
 
   const pairs = [
     [
-      dragStartEl,
+      element,
       "mousedown",
       downListener,
     ],
@@ -60,7 +60,7 @@ export function dragger(el: HTMLElement, dragStartEl: HTMLElement, canDrag: () =
       "mousemove",
       moveListener,
     ],
-    [dragStartEl, "touchstart", touchStartListener],
+    [element, "touchstart", touchStartListener],
     [document.body, "touchend", touchEndListener],
     [document.body, "touchmove", touchMoveListener],
   ] as const;

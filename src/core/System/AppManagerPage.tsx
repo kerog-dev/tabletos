@@ -1,5 +1,6 @@
 import { sha256 } from "js-sha256";
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "../../components/Router.tsx";
 import { fetch } from "../../lib/net.ts";
 import { unloadApp } from "../../packages.ts";
 import type { Sdk } from "../../sdk.ts";
@@ -11,7 +12,8 @@ async function hashBlob(blob: Blob): Promise<string> {
   return sha256(await blob.arrayBuffer());
 }
 
-export default function Installer() {
+export function AppManagerPage() {
+  const router = useRouter();
   const packageDirListing = fs.useDirListing("/packages");
   const [remotePackages, setRemotePackages] = useState<string[] | null>(null);
 
@@ -92,6 +94,8 @@ export default function Installer() {
 
   return (
     <div>
+      <h1>App manager</h1>
+      <button onClick={() => router.navigate("Home")}>Back</button>
       <h2>Install package from server</h2>
       {remotePackages
         ? (

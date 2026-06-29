@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useRouter } from "../../components/Router.tsx";
 import type { ServiceInfo } from "../../packages.ts";
 import type { Sdk } from "../../sdk.ts";
 
@@ -24,6 +25,14 @@ function Service({ s }: { s: ServiceInfo }) {
   );
 }
 
-export default function ServiceManager() {
-  return <div>{services.map(s => <Service key={s.name} s={s} />)}</div>;
+export function ServiceManagerPage() {
+  const router = useRouter();
+
+  return (
+    <div>
+      <button onClick={() => router.navigate("Home")}>Back</button>
+      <br />
+      {services.map(s => <Service key={s.name} s={s} />)}
+    </div>
+  );
 }

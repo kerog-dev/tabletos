@@ -1,9 +1,11 @@
-import { useRef } from "react";
+import type { JSX } from "react";
+import { Router, RouterProvider, useRouter } from "../../components/Router.tsx";
 import { setTray } from "../../components/wm/tray.ts";
-import type { Sdk } from "../../sdk.ts";
+import { AppearanceSettingsPage } from "./AppearanceSettingsPage.tsx";
+import { AppManagerPage } from "./AppManagerPage.tsx";
+import { ServiceManagerPage } from "./ServiceManagerPage.tsx";
+import { StoragePage } from "./StoragePage.tsx";
 import "./System.css";
-
-const { fs, storage }: Sdk = (window as any).$;
 
 setInterval(() => {
   setTray({
@@ -16,59 +18,37 @@ setInterval(() => {
   });
 }, 500);
 
-export default function System() {
-  const wallpaperInputRef = useRef<HTMLInputElement | null>(null);
-  const wallpaperUrlInputRef = useRef<HTMLInputElement | null>(null);
-  const windowTransparencyInputRef = useRef<HTMLInputElement | null>(null);
+const pages: Record<string, JSX.Element> = {
+  "Home": <HomePage />,
+  "AppearanceSettings": <AppearanceSettingsPage />,
+  "Storage": <StoragePage />,
+  "ServiceManager": <ServiceManagerPage />,
+  "AppManager": <AppManagerPage />,
+};
+
+function HomePage() {
+  const router = useRouter();
 
   return (
     <div>
-      <h1>System operations</h1>
-      <div>
-        <section>
-          <h2>Set wallpaper</h2>
-          <input type="file" accept="image/*" ref={wallpaperInputRef} />
-          <button
-            onClick={() => {
-              if (!wallpaperInputRef.current || wallpaperInputRef.current.files?.length !== 1) return;
-              fs.writeFile("/wallpaper.img", wallpaperInputRef.current.files[0]);
-            }}
-          >
-            Set wallpaper
-          </button>
-          <br />
-          Or set from URL:
-          <input type="text" ref={wallpaperUrlInputRef} />
-          <button
-            onClick={async () => {
-              const url = wallpaperUrlInputRef.current?.value ?? "";
-              const res = await fetch(url);
-              const blob = await res.blob();
-              fs.writeFile("/wallpaper.img", blob);
-            }}
-          >
-            Set wallpaper
-          </button>
-          <br />
-          You need to refresh to apply wallpaper change.
-        </section>
-        <section>
-          <h2>Set window transparency</h2>
-          <input type="number" ref={windowTransparencyInputRef} />%
-          <button
-            onClick={() => {
-              if (!windowTransparencyInputRef.current) return;
-              const value = Math.max(
-                0,
-                Math.min(100, Math.round(windowTransparencyInputRef.current.value as unknown as number)),
-              );
-              storage.windowTransparency = value;
-            }}
-          >
-            Set
-          </button>
-        </section>
-      </div>
+      Welcome to the system settings app.
+      <ul>
+        {Object.keys(pages).filter(p => p !== "Home").map(p => (
+          <li key={p}>
+            <button onClick={() => router.navigate(p)}>{p}</button>
+          </li>
+        ))}
+      </ul>
     </div>
+  );
+}
+
+export default function System() {
+  return (
+    <RouterProvider initialPage="Home">
+      <Router
+        pages={pages}
+      />
+    </RouterProvider>
   );
 }

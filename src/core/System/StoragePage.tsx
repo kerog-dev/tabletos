@@ -1,3 +1,4 @@
+import { useRouter } from "../../components/Router.tsx";
 import storage from "../../lib/storage.ts";
 
 function deleteNode(path: string) {
@@ -52,9 +53,13 @@ function StorageExplorerNode({
   );
 }
 
-export default function Storage() {
+export function StoragePage() {
+  const router = useRouter();
+
   return (
     <div id="storage-explorer">
+      <button onClick={() => router.navigate("Home")}>Back</button>
+      <br />
       <StorageExplorerNode
         nodeKey="<root>"
         nodeValue={storage}

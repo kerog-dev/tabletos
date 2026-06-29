@@ -151,7 +151,7 @@ export function Window(
 
   useEffect(() => {
     if (!windowEl.current || !windowBarEl.current) return;
-    const d = dragger(windowEl.current, windowBarEl.current, () => !fullscreen);
+    const d = dragger(windowBarEl.current, () => !fullscreen);
     d.onMove(([cx, cy]) => updatePos(([ox, oy]) => [ox + cx, oy + cy]));
     return () => d.destroy();
   }, [fullscreen]);
