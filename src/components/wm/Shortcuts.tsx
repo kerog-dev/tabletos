@@ -16,8 +16,8 @@ interface AppTarget {
 
 interface ScriptTarget {
   targetType: "script";
-  isPath: boolean;
-  script: string;
+  path?: string;
+  script?: string;
 }
 
 type ShortcutDesc = ShortcutShared & (AppTarget | ScriptTarget);
@@ -53,11 +53,12 @@ function Shortcut({ s, spawnWindow }: { s: ShortcutDesc; spawnWindow: (app: App)
           }
         }
 
-        if (s.isPath) {
-          readTextFile(s.script).then(script => {
+        if (s.path) {
+          readTextFile(s.path).then(script => {
             runScript(script);
           });
-        } else runScript(s.script);
+        } else if (s.script) runScript(s.script);
+        else toast({ title: "Script shortcut with no path or script property.", urgency: Urgency.Error });
         break;
     }
   }
