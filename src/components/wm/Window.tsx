@@ -216,14 +216,16 @@ export function Window(
       >
         {app.name}
         <div>
-          {[
-            [fullscreenIcon, () => setFullscreen(f => !f)],
-            ...(fullscreen ? [] : [[resizeIcon, startResize], [minimizeIcon, toggleMinimized]]),
-            [closeIcon, kill],
-          ]
-            .map(([icon, cb], i) => (
+          {([
+            [fullscreenIcon, () => setFullscreen(f => !f), "Fullscreen"],
+            ...(fullscreen ? [] : [[resizeIcon, startResize, "Resize"], [minimizeIcon, toggleMinimized, "Minimize"]]),
+            [closeIcon, kill, "Close"],
+          ] as ([string, () => void, string][]))
+            .map(([icon, cb, fallback], i) => (
               <button key={i} onClick={() => (cb as () => void)()}>
-                <img style={{ width: "100%", height: "100%", imageRendering: "pixelated" }} src={icon as string} />
+                {icon
+                  ? <img style={{ width: "100%", height: "100%", imageRendering: "pixelated" }} src={icon as string} />
+                  : <span>{fallback}</span>}
               </button>
             ))}
         </div>
