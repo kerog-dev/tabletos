@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { ContextMenu } from "../../components/ContextMenu.tsx";
 import type { Sdk } from "../../sdk.ts";
-import "./FileExplorer.css";
 
 const { fs, toast, Urgency, spawnWindow }: Sdk = (window as any).$;
 
@@ -12,7 +12,7 @@ interface FileDesc {
 
 function Node({ c, setCwd }: { c: FileDesc; setCwd: (cwd: string) => void }) {
   const [ctxMenuOpen, setCtxMenuOpen] = useState(false);
-  const anchorId = useMemo(() => Math.floor(Math.random() * 10000), []);
+  const ctxParentRef = useRef<HTMLDivElement | null>(null);
 
   function deleteNode() {
     if (confirm("Are you sure you want to delete " + c.path + "?")) {
@@ -55,46 +55,41 @@ function Node({ c, setCwd }: { c: FileDesc; setCwd: (cwd: string) => void }) {
     });
   }
 
-  const ctxMenu = (
-    <div className="ctx-menu" style={{ positionAnchor: "--ctx-anchor-" + anchorId }}>
-      <ul>
-        <li>
-          <button onClick={() => openNode()}>Open</button>
-        </li>
-        <li>
-          <button onClick={() => deleteNode()}>Delete</button>
-        </li>
-        <li>
-          <button onClick={() => moveNode()}>Move</button>
-        </li>
-        <li>
-          <button onClick={() => renameNode()}>Rename</button>
-        </li>
-        <li>
-          <button onClick={() => downloadNode()}>Download</button>
-        </li>
-      </ul>
-      <button
-        onClick={() => setCtxMenuOpen(false)}
-        style={{ position: "absolute", top: "0", right: "0", aspectRatio: "1 / 1", color: "red" }}
-      >
-        X
-      </button>
-    </div>
-  );
-
   return (
     <div
-      style={{ anchorName: "--ctx-anchor-" + anchorId }}
       onContextMenu={(e) => {
         e.preventDefault();
         setCtxMenuOpen(true);
       }}
     >
       {c.isDir
-        ? <button title={c.path} onClick={() => setCwd(c.path)}>{c.name}</button>
-        : <span title={c.path}>{c.name}</span>}
-      {ctxMenuOpen && ctxMenu}
+        ? <button title={c.path} onClick={() => setCwd(c.path)} ref={ctxParentRef}>{c.name}</button>
+        : <span title={c.path} ref={ctxParentRef}>{c.name}</span>}
+      <ContextMenu parent={ctxParentRef} open={ctxMenuOpen}>
+        <ul>
+          <li>
+            <button onClick={() => openNode()}>Open</button>
+          </li>
+          <li>
+            <button onClick={() => deleteNode()}>Delete</button>
+          </li>
+          <li>
+            <button onClick={() => moveNode()}>Move</button>
+          </li>
+          <li>
+            <button onClick={() => renameNode()}>Rename</button>
+          </li>
+          <li>
+            <button onClick={() => downloadNode()}>Download</button>
+          </li>
+        </ul>
+        <button
+          onClick={() => setCtxMenuOpen(false)}
+          style={{ position: "absolute", top: "0", right: "0", aspectRatio: "1 / 1", color: "red" }}
+        >
+          X
+        </button>
+      </ContextMenu>
     </div>
   );
 }

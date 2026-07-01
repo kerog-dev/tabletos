@@ -6,6 +6,7 @@ import resizeIcon from "vfs:/vendor/icons/resize.png?url";
 import { type App } from "../../packages.ts";
 import { toast } from "../../toast.tsx";
 import { sleep } from "../../utils.ts";
+import { ContextMenu } from "../ContextMenu.tsx";
 import ErrorBoundary from "../ErrorBoundary.tsx";
 import { dragger } from "./drag.ts";
 import { WindowContext } from "./WindowContext.tsx";
@@ -70,6 +71,7 @@ export function Window(
   const [fullscreen, setFullscreen] = useState(false);
   const [floatRect, setFloatRect] = useState({ x: 0, y: 0, width: 0, height: 0 });
   const isMountedRef = useRef<boolean>(false);
+  const [ctxPos, setCtxPos] = useState<[number, number] | null>(null);
 
   useEffect(() => {
     if (!windowEl.current) return;
@@ -179,6 +181,23 @@ export function Window(
       ref={windowEl}
       onClick={() => bringToTop()}
     >
+      <ContextMenu
+        open={ctxPos !== null}
+        position={ctxPos ?? undefined}
+        setOpen={(open) => {
+          if (!open) setCtxPos(null);
+        }}
+      >
+        <button style={{ position: "absolute", top: 0, right: 0 }} onClick={() => setCtxPos(null)}>X</button>
+        <button onClick={() => setFullscreen(f => !f)}>Fullscreen</button>
+        <br />
+        <button onClick={() => startResize()}>Resize</button>
+        <br />
+        <button onClick={() => toggleMinimized()}>Minimize</button>
+        <br />
+        <button onClick={() => kill()}>Close</button>
+        <br />
+      </ContextMenu>
       <div
         ref={windowBarEl}
         style={{
@@ -189,6 +208,11 @@ export function Window(
           borderBottom: "1px solid blue",
           padding: "5px",
         }}
+        onContextMenu={e => {
+          setCtxPos([e.clientX, e.clientY]);
+          e.preventDefault();
+        }}
+        onClick={() => setCtxPos(null)}
       >
         {app.name}
         <div>
