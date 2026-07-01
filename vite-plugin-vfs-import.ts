@@ -23,10 +23,10 @@ export default function vfsImport() {
       if (query === "url") {
         return `const blob = ${
           readScript(fsPath)
-        }; const exported = blob === undefined ? undefined : URL.createObjectURL(blob); export default exported;`;
+        }; export default blob === undefined ? undefined : URL.createObjectURL(blob);`;
       }
 
-      return `export default ${readScript(fsPath)}');`;
+      return `export default ${readScript(fsPath)};`;
     },
   };
 }

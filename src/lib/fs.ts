@@ -11,7 +11,7 @@ interface Watcher {
   listener: WatchListener;
 }
 
-interface Mount {
+export interface Mount {
   root: string;
   stat(path: string): Promise<"file" | "dir" | null> | "file" | "dir" | null;
   read(path: string): Promise<string | Blob> | string | Blob;

@@ -196,6 +196,20 @@ class ServiceManager {
     return this.startedServices.some(s => s.service.info.name === name);
   }
 
+  useRunning(name: string): boolean {
+    const [running, setRunning] = useState(() => this.isRunning(name));
+
+    useEffect(() => {
+      const listener = (running: boolean) => {
+        setRunning(running);
+      };
+      this.onRunningStateChanged([name], listener);
+      return () => this.removeRunningStateChangeListener(listener);
+    }, []);
+
+    return running;
+  }
+
   onRunningStateChanged(targets: string[] | undefined, listener: (running: boolean, name: string) => void) {
     this.runChangeListeners.push([targets, listener]);
   }
@@ -215,7 +229,7 @@ const packageServiceNameMapping: Partial<Record<string, string>> = {};
 
 async function loadPackageService(packageName: string, scriptBlob: Blob) {
   const url = URL.createObjectURL(scriptBlob);
-  const module: { default: Service } = await import(url);
+  const module: { default: Service } = await import(/* @vite-ignore */ url);
   await sv.load(module.default, module.default.info.autostart);
   packageServiceNameMapping[packageName] = module.default.info.name;
 }
