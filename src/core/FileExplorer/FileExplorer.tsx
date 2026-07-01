@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { ContextMenu } from "../../components/ContextMenu.tsx";
 import type { Sdk } from "../../sdk.ts";
+import "./FileExplorer.css";
+import fileIcon from "vfs:/vendor/icons/file.png?url";
+import folderIcon from "vfs:/vendor/icons/folder.png?url";
 
 const { fs, toast, Urgency, spawnWindow }: Sdk = (window as any).$;
 
@@ -12,7 +15,7 @@ interface FileDesc {
 
 function Node({ c, setCwd }: { c: FileDesc; setCwd: (cwd: string) => void }) {
   const [ctxMenuOpen, setCtxMenuOpen] = useState(false);
-  const ctxParentRef = useRef<HTMLDivElement | null>(null);
+  const ctxParentRef = useRef<HTMLElement | null>(null);
 
   function deleteNode() {
     if (confirm("Are you sure you want to delete " + c.path + "?")) {
@@ -55,16 +58,23 @@ function Node({ c, setCwd }: { c: FileDesc; setCwd: (cwd: string) => void }) {
     });
   }
 
+  function onDoubleClick() {
+    if (c.isDir) setCwd(c.path);
+    else openNode();
+  }
+
   return (
     <div
+      className="listing-item"
       onContextMenu={(e) => {
         e.preventDefault();
         setCtxMenuOpen(true);
       }}
+      onDoubleClick={onDoubleClick}
+      title={c.path}
     >
-      {c.isDir
-        ? <button title={c.path} onClick={() => setCwd(c.path)} ref={ctxParentRef}>{c.name}</button>
-        : <span title={c.path} ref={ctxParentRef}>{c.name}</span>}
+      <img className="item-icon" src={c.isDir ? folderIcon : fileIcon} />
+      <span className="item-caption" ref={ctxParentRef}>{c.name}</span>
       <ContextMenu parent={ctxParentRef} open={ctxMenuOpen}>
         <ul>
           <li>
@@ -153,13 +163,9 @@ export default function FileExplorer({ args }: { args: [] | [string] }) {
       <br />
       <input type="text" ref={getUrlRef} />
       <button onClick={() => getUrl()}>Get url</button>
-      <ul>
-        {children.map(c => (
-          <li key={c.path}>
-            <Node c={c} setCwd={setCwd} />
-          </li>
-        ))}
-      </ul>
+      <div className="listing-items">
+        {children.map(c => <Node key={c.path} c={c} setCwd={setCwd} />)}
+      </div>
     </div>
   );
 }
