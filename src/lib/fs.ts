@@ -404,6 +404,27 @@ export function useTextFile(path: string | null) {
   return content;
 }
 
+export function useFile(path: string | null) {
+  const [content, setContent] = useState<string | Blob | null>(null);
+
+  useEffect(() => {
+    if (!path) {
+      setContent(null);
+      return;
+    }
+    const listener = async () => {
+      setContent(await pathExists(path) ? await readFile(path) : null);
+    };
+    listener();
+    watchFile(path, listener);
+    return () => {
+      unwatch(listener);
+    };
+  }, [path]);
+
+  return content;
+}
+
 export function useBlobFileUrl(path: string | null) {
   const [url, setUrl] = useState<string | null>(null);
 
@@ -414,7 +435,11 @@ export function useBlobFileUrl(path: string | null) {
     }
     let curUrl: string;
     const listener = async () => {
-      setUrl(await pathExists(path) ? curUrl = URL.createObjectURL(await readBlobFile(path)) : null);
+      try {
+        setUrl(await pathExists(path) ? curUrl = URL.createObjectURL(await readBlobFile(path)) : null);
+      } catch {
+        setUrl(null);
+      }
     };
     listener();
     watchFile(path, listener);

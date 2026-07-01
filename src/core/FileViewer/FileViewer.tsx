@@ -85,13 +85,18 @@ function renderFile(type: SupportedType, blobUrl: string, path: string) {
 
 export default function FileViewer({ args }: { args: [string | undefined] }) {
   const [path, setPath] = useState<string | null>(args[0] ?? null);
+  const file = fs.useFile(path);
   const blobUrl = fs.useBlobFileUrl(path);
 
   if (path === null) return <FilePicker setPath={setPath} />;
 
   return (
     <div style={{ width: "100%", height: "100%" }}>
-      {blobUrl ? renderFile(getFileType(path), blobUrl, path) : <p>Loading...</p>}
+      {blobUrl
+        ? renderFile(getFileType(path), blobUrl, path)
+        : typeof file === "string"
+        ? <pre style={{ width: "100%", height: "100%" }}>{file}</pre>
+        : <p>Loading...</p>}
     </div>
   );
 }
