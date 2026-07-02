@@ -188,43 +188,43 @@ async function assertPathExists(path: string) {
 export async function mkdir(path: string) {
   await assertIsDir(parent(path));
   if (await pathExists(path)) throw `Path ${path} already exists.`;
-  emitWatchAction(path, "create");
   const m = resolveMount(path);
-  if (m) return await m.mount.mkdir(m.relative);
-  await db.put("fs", { type: "dir" }, path);
+  if (m) await m.mount.mkdir(m.relative);
+  else await db.put("fs", { type: "dir" }, path);
+  emitWatchAction(path, "create");
 }
 
 export async function writeFile(path: string, content: string | Blob) {
   await assertIsDir(parent(path));
   if (await isDir(path)) throw `Path ${path} is a directory, can't write to it.`;
   const existed = await pathExists(path);
-  emitWatchAction(path, existed ? "write" : "create");
   const m = resolveMount(path);
-  if (m) return await m.mount.write(m.relative, content);
-  await db.put("fs", { type: "file", content }, path);
+  if (m) await m.mount.write(m.relative, content);
+  else await db.put("fs", { type: "file", content }, path);
+  emitWatchAction(path, existed ? "write" : "create");
 }
 
 export async function appendBlobFile(path: string, appended: Uint8Array<ArrayBuffer> | Blob) {
   await assertIsDir(parent(path));
   if (await isDir(path)) throw `Path ${path} is a directory, can't write to it.`;
-  emitWatchAction(path, "write");
   const m = resolveMount(path);
   if (m) {
     const blob = appended instanceof Blob ? appended : new Blob([appended]);
-    if (m.mount.appendBlob) return await m.mount.appendBlob(m.relative, blob);
+    if (m.mount.appendBlob) await m.mount.appendBlob(m.relative, blob);
     else {
       const content = await m.mount.read(m.relative);
       if (!(content instanceof Blob)) throw "Not a blob file!";
       await m.mount.write(m.relative, new Blob([content, blob]));
-      return;
     }
+  } else {
+    const tx = db.transaction("fs", "readwrite");
+    const fsStore = tx.objectStore("fs");
+    const entry = await fsStore.get(path);
+    const newBlob = new Blob([entry.content as Blob, appended]);
+    await fsStore.put({ type: "file", content: newBlob }, path);
+    tx.commit();
   }
-  const tx = db.transaction("fs", "readwrite");
-  const fsStore = tx.objectStore("fs");
-  const entry = await fsStore.get(path);
-  const newBlob = new Blob([entry.content as Blob, appended]);
-  await fsStore.put({ type: "file", content: newBlob }, path);
-  tx.commit();
+  emitWatchAction(path, "write");
 }
 
 export async function readFile(path: string): Promise<string | Blob> {
@@ -343,10 +343,10 @@ export async function unlink(path: string) {
   if (await isDir(path) && (await ls(path)).length > 0) {
     throw `Directory ${path} is not empty.`;
   }
-  emitWatchAction(path, "delete");
   const m = resolveMount(path);
-  if (m) return await m.mount.unlink(m.relative);
-  await db.delete("fs", path);
+  if (m) await m.mount.unlink(m.relative);
+  else await db.delete("fs", path);
+  emitWatchAction(path, "delete");
 }
 
 export function watchFile(

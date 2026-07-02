@@ -249,6 +249,7 @@ export async function loadPackageBlob(name: string, zipBlob: Blob) {
     });
   });
   const promises = [];
+
   if (data[name + ".js"]) promises.push(loadAppFromScript(name, new TextDecoder().decode(data[name + ".js"])));
   if (data["service.js"]) {
     promises.push(loadPackageService(name, new Blob([data["service.js"]], { type: "text/javascript" })));
