@@ -6,7 +6,7 @@ import fullscreenIcon from "vfs:/vendor/icons/fullscreen.png?url";
 import startIcon from "vfs:/vendor/icons/start.png?url";
 import { useBlobFileUrl } from "../../lib/fs.ts";
 import { Toasts } from "../../toast.tsx";
-import { toggleTrayOpen, useTrayDescs } from "./tray.ts";
+import { setTrayOpen, useTrayDescs } from "./tray.ts";
 import type { WindowDesc } from "./WindowManager.tsx";
 
 export function Launcher(
@@ -124,9 +124,16 @@ export function Taskbar(
                 height={30}
                 src={(t.iconUrl || wallpaperBlobUrl) ?? ""}
                 title={t.name}
-                onClick={() => toggleTrayOpen(t.id)}
+                onClick={() => setTrayOpen(t.id, true)}
+                style={{ anchorName: `--tray-anchor-${t.id}` }}
               />
-              {t.open && <div className="tray-entry-popup">{/*t.show()*/ ""}meow</div>}
+              <div
+                className="tray-entry-popup"
+                style={{ display: t.open ? "unset" : "none", positionAnchor: `--tray-anchor-${t.id}` }}
+                onClick={() => setTrayOpen(t.id, false)}
+              >
+                <t.show />
+              </div>
             </div>
           ))}
         </div>

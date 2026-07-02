@@ -6,17 +6,24 @@ import { AppManagerPage } from "./AppManagerPage.tsx";
 import { ServiceManagerPage } from "./ServiceManagerPage.tsx";
 import { StoragePage } from "./StoragePage.tsx";
 import "./System.css";
+import type { Sdk } from "../../sdk.ts";
 
-setInterval(() => {
-  setTray({
-    id: "system",
-    name: "System",
-    iconUrl: "",
-    show() {
-      return <p>hi</p>;
-    },
-  });
-}, 500);
+const { sv }: Sdk = (window as any).$;
+
+setTray({
+  id: "system",
+  name: "System",
+  iconUrl: "",
+  show() {
+    const runningServices = sv.useRunningServices();
+    return (
+      <p>
+        services running: {runningServices.length}
+        <br />
+      </p>
+    );
+  },
+});
 
 const pages: Record<string, JSX.Element> = {
   "Home": <HomePage />,

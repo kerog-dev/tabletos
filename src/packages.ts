@@ -214,6 +214,20 @@ class ServiceManager {
     return running;
   }
 
+  useRunningServices(): string[] {
+    const [running, setRunning] = useState(() => this.startedServices.map(x => x.service.info.name));
+
+    useEffect(() => {
+      const listener = () => {
+        setRunning(this.startedServices.map(x => x.service.info.name));
+      };
+      this.onRunningStateChanged(undefined, listener);
+      return () => this.removeRunningStateChangeListener(listener);
+    }, []);
+
+    return running;
+  }
+
   onRunningStateChanged(targets: string[] | undefined, listener: (running: boolean, name: string) => void) {
     this.runChangeListeners.push([targets, listener]);
   }
