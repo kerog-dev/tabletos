@@ -39,7 +39,9 @@ const appModules = Object.entries(import.meta.glob("./core/*/*.tsx"))
   });
 
 const devPackageModules = import.meta.env.DEV
-  ? Object.entries(import.meta.glob("./packages/*/*.tsx"))
+  ? Object.entries(
+    Object.assign(import.meta.glob("./packages/*/*.tsx"), import.meta.glob("./private-packages/*/*.tsx")),
+  )
     .filter(([path]) => {
       const parts = path.split("/");
       const file = parts.at(-1)?.replace(".tsx", "");
@@ -99,7 +101,9 @@ export function useApps() {
 const coreServiceModules = Object.entries(import.meta.glob("./core/*/service.ts"));
 
 const devPackageServiceModules = import.meta.env.DEV
-  ? Object.entries(import.meta.glob("./packages/*/service.ts"))
+  ? Object.entries(
+    Object.assign(import.meta.glob("./packages/*/service.ts"), import.meta.glob("./private-packages/*/service.ts")),
+  )
   : [];
 
 class ServiceManager {

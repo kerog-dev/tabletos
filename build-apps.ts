@@ -15,8 +15,8 @@ const outDir = resolve(import.meta.dirname, "dist/packages");
 await rm(outDir, { recursive: true, force: true });
 await mkdir(outDir, { recursive: true });
 
-const packages = globSync("src/packages/*").map(f => {
-  const name = f.replace("src/packages/", "");
+const packages = [...globSync("src/packages/*"), ...globSync("src/private-packages/*")].map(f => {
+  const name = f.replace(/src\/(private\-)?packages\//, "");
   const dir = resolve(import.meta.dirname, f);
   return {
     name,

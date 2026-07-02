@@ -9,10 +9,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@vidstack/react": "^1.15.6",
     "atrament": "^5.1.0",
+    "cheerio": "^1.2.0",
     "chess.js": "^1.4.0",
     "fflate": "^0.8.3",
     "gchessboard": "^1.4.0",
+    "hls.js": "^1.6.16",
     "html2canvas": "^1.4.1",
     "idb": "^8.0.3",
     "js-sha256": "^0.11.1",
