@@ -23,6 +23,7 @@ HOP_BY_HOP_HEADERS = {
     "trailer",
     "transfer-encoding",
     "upgrade",
+    "access-control-allow-origin",
 }
 
 PACKAGES_DIR = Path(__file__).resolve().parents[1] / "dist" / "packages"

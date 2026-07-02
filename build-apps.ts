@@ -54,6 +54,11 @@ const appBuilds = packages
         reportCompressedSize: false,
       },
       configFile: false,
+      define: {
+        "process.env.NODE_ENV": JSON.stringify("production"),
+        process: JSON.stringify({ env: {} }),
+      },
+      mode: "production",
     })
   );
 
@@ -77,6 +82,11 @@ const serviceBuilds = packages
         reportCompressedSize: false,
       },
       configFile: false,
+      mode: "production",
+      define: {
+        "process.env.NODE_ENV": JSON.stringify("production"),
+        process: JSON.stringify({ env: {} }),
+      },
     })
   );
 

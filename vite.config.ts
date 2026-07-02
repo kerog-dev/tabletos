@@ -4,7 +4,7 @@ import { viteSingleFile } from "vite-plugin-singlefile";
 import vitePluginPackDir from "./vite-plugin-packdir.ts";
 import vitePluginVfsImport from "./vite-plugin-vfs-import.ts";
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [react(), viteSingleFile(), vitePluginPackDir("vendor:vendor.zip", "./src/vendor"), vitePluginVfsImport()],
   server: {
     host: "127.0.0.1",
@@ -18,4 +18,8 @@ export default defineConfig({
     cssCodeSplit: false,
     minify: true,
   },
-});
+  define: {
+    "process.env.NODE_ENV": JSON.stringify(mode),
+    process: JSON.stringify({ env: {} }),
+  },
+}));
