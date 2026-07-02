@@ -1,5 +1,6 @@
 import type { WindowDesc } from "./components/wm/WindowManager.tsx";
 import * as fs from "./lib/fs.ts";
+import { fetch as afetch } from "./lib/net.ts";
 import type { RpcConnection } from "./lib/rpc.ts";
 import conn from "./lib/rpc.ts";
 import storage, { useStorage } from "./lib/storage.ts";
@@ -19,6 +20,7 @@ interface Sdk {
   spawnWindow: (w: Omit<Partial<WindowDesc>, "app" | "id" | "z"> & { app: string }) => void;
   sv: typeof sv;
   screenshot(quality?: number): Promise<Blob>;
+  afetch: typeof afetch;
 }
 
 const sdk: Sdk = {
@@ -39,6 +41,7 @@ const sdk: Sdk = {
   screenshot() {
     throw "ScreenshotService package not installed.";
   },
+  afetch,
 };
 
 (window as any).$ = sdk;
