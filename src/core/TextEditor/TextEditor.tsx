@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { FilePicker } from "../../components/FilePicker.tsx";
 import type { Sdk } from "../../sdk.ts";
+import "./TextEditor.css";
 
 const { fs }: Sdk = (window as any).$;
 
@@ -37,10 +38,16 @@ export default function TextEditor({ args }: { args: [] | [string] }) {
   if (text === null) return <p>Loading...</p>;
 
   return (
-    <div>
-      editing {path}
-      <button onClick={() => setPath(null)}>Back</button>
-      <textarea value={text} onChange={(e) => setText(e.target.value)} />
+    <div className="text-editor">
+      <div className="editor-toolbar">
+        <div>
+          {path}
+        </div>
+        <div>
+          <button onClick={() => setPath(null)}>Back</button>
+        </div>
+      </div>
+      <textarea className="editor-textarea" value={text} onChange={(e) => setText(e.target.value)} />
     </div>
   );
 }
