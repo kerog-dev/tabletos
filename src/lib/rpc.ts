@@ -1,161 +1,88 @@
-import type { Promisify } from "../utils.ts";
+import { type Promisify, randomId } from "../utils.ts";
 import * as contacts from "./contacts.ts";
 import deviceId from "./deviceid.ts";
-import { getServerAddr } from "./server.ts";
+import * as ws from "./ws.ts";
 
-export class RpcConnection {
-  private reconnects = -1;
-  private ws!: WebSocket;
-  private exposedObjects: Partial<Record<string, Record<string, any>>> = {};
+const name = "tabletos-" + deviceId;
 
-  constructor(private readonly address: string, readonly name: string) {
-    this.connect();
-  }
-
-  private connect() {
-    this.reconnects++;
-    if (this.reconnects >= 5) {
-      throw "Gave up after 5 reconnects";
-    }
-    const ws = new WebSocket(this.address);
-    ws.addEventListener("open", () => {
-      this.reconnects = 0;
-    });
-    ws.addEventListener("error", () => {
-      setTimeout(() => this.connect(), 3_000);
-      this.ws.close();
-    });
-    ws.addEventListener("message", (e) => {
-      const data = JSON.parse(e.data.toString());
-      if (data.type !== "rpc-call" || data.targetClient !== this.name) return;
-      delete data.type;
-      delete data.targetClient;
-      this.onWsMessage(data);
-    });
-    this.ws = ws;
-  }
-
-  private ready(): Promise<void> {
-    if (this.ws.readyState === WebSocket.OPEN) return Promise.resolve();
-    else if (this.ws.readyState === WebSocket.CONNECTING) {
-      return new Promise((res, rej) => {
-        this.ws.addEventListener("open", () => res());
-        this.ws.addEventListener("error", () => rej());
-      });
-    } else return Promise.reject();
-  }
-
-  private sendCall(
-    to: string,
-    { ref, target, payload, mid }: { ref: string; target: string; payload: any[]; mid: string },
-  ) {
-    this.ws.send(JSON.stringify({
-      type: "rpc-call",
-      ref,
-      targetClient: to,
-      target,
-      payload,
-      mid,
-    }));
-  }
-
-  private sendResponse({ mid, result, err }: { mid: string; result: any; err: any }) {
-    this.ws.send(JSON.stringify({ type: "rpc-response", mid, result, err }));
-  }
-
-  private onceListen(checker: (data: Record<string, any>) => boolean, handler: (data: Record<string, any>) => void) {
-    const listener = (e: MessageEvent) => {
-      const data = JSON.parse(e.data.toString());
-      const isIt = checker(data);
-      if (!isIt) return;
-      this.ws.removeEventListener("message", listener);
-      handler(data);
-    };
-    this.ws.addEventListener("message", listener);
-  }
-
-  async proxyObject<T>(
-    targetClient: string | contacts.Contact,
-    ref: string,
-  ): Promise<Promisify<T>> {
-    const targetId = typeof targetClient === "string" ? targetClient : targetClient.id;
-    const self = this;
-    await this.ready();
-
-    function makeNestedProxy(path: string[]): any {
-      const fn = function(...argArray: any[]) {
-        return new Promise((res, rej) => {
-          const mid = Math.floor(Math.random() * 0xf0000000).toString(16);
-          self.onceListen(
-            data => data.type === "rpc-response" && data.mid === mid,
-            data => {
-              if (data.err) rej(`Remote function errored: ${data.err}`);
-              else res(data.result);
-            },
-          );
-          self.sendCall(targetId, { ref, target: path.join("."), payload: argArray, mid });
-        });
-      };
-
-      return new Proxy(fn, {
-        get(_t, p) {
-          if (p === "then" || typeof p !== "string") return undefined;
-          return makeNestedProxy([...path, p]);
-        },
-      });
-    }
-
-    return new Proxy({}, {
-      get(_target, p) {
-        if (p === "then" || typeof p !== "string") return undefined;
-        return makeNestedProxy([p]);
-      },
-    }) as any;
-  }
-
-  exposeObject(object: Record<string, any>, ref: string) {
-    this.exposedObjects[ref] = object;
-  }
-
-  unexposeObject(ref: string) {
-    try {
-      delete this.exposedObjects[ref];
-    } catch {}
-  }
-
-  private async onWsMessage(data: Record<string, any>) {
-    const targetObjectName: string = data.ref;
-    const targetPath: string = data.target;
-    const targetPayload = data.payload;
-    const mid = data.mid;
-
-    const targetObject = this.exposedObjects[targetObjectName];
-    if (!targetObject) return;
-
-    const parts = targetPath.split(".");
-    let current: any = targetObject;
-    for (let i = 0; i < parts.length - 1; i++) {
-      current = current[parts[i]];
-      if (current == null) return;
-    }
-    const targetFunction = current[parts[parts.length - 1]];
-    if (typeof targetFunction !== "function") return;
-
-    let result: any | undefined;
-    let err: any | undefined;
-    try {
-      result = await targetFunction.call(current, ...targetPayload);
-    } catch (e) {
-      err = e instanceof Error ? { message: e.message, stack: e.stack } : e;
-    }
-    this.sendResponse({ mid, result, err });
-  }
-
-  close() {
-    this.ws.close();
-  }
+function encodeFnPath(targetClient: string, ref: string, path: string): string {
+  return `${targetClient}::${ref}::${path}`;
 }
 
-const address = (await getServerAddr())?.replace(":8086", ":8085") ?? "http://nowhere.invalid";
-const conn = new RpcConnection(address, "tabletos-" + deviceId);
+function decodeFnPath(fnPath: string): { targetClient: string; ref: string; path: string } {
+  const [targetClient, ref, ...rest] = fnPath.split("::");
+  return { targetClient, ref, path: rest.join("::") };
+}
+
+function call<T>(fnPath: string, args: any[]): Promise<T> {
+  const { targetClient, ref, path } = decodeFnPath(fnPath);
+  const mid = randomId(16);
+
+  return new Promise((res, rej) => {
+    const onResponse = (data: any) => {
+      if (data.mid !== mid) return;
+      ws.offMessage("rpc-response", onResponse);
+      if (data.err) rej(`Remote function errored: ${data.err}`);
+      else res(data.result);
+    };
+    ws.onMessage("rpc-response", onResponse);
+    ws.send("rpc-call", targetClient, { ref, target: path, payload: args, mid });
+  });
+}
+
+function proxyObject<T>(targetClient: string | contacts.Contact, ref: string): Promisify<T> {
+  const targetId = typeof targetClient === "string" ? targetClient : targetClient.id;
+
+  function makeNestedProxy(path: string[]): any {
+    const fn = (...args: any[]) => call(encodeFnPath(targetId, ref, path.join(".")), args);
+    return new Proxy(fn, {
+      get(_t, p) {
+        if (p === "then" || typeof p !== "string") return undefined;
+        return makeNestedProxy([...path, p]);
+      },
+    });
+  }
+
+  return new Proxy({}, {
+    get(_t, p) {
+      if (p === "then" || typeof p !== "string") return undefined;
+      return makeNestedProxy([p]);
+    },
+  }) as any;
+}
+
+const exposedObjects: Partial<Record<string, Record<string, any>>> = {};
+
+function exposeObject(object: Record<string, any>, ref: string) {
+  exposedObjects[ref] = object;
+}
+
+function unexposeObject(ref: string) {
+  delete exposedObjects[ref];
+}
+
+ws.onMessage("rpc-call", async (data: any, from: string) => {
+  const { ref, target, payload, mid } = data;
+  const targetObject = exposedObjects[ref];
+  if (!targetObject) return;
+
+  const parts = target.split(".");
+  let current: any = targetObject;
+  for (let i = 0; i < parts.length - 1; i++) {
+    current = current[parts[i]];
+    if (current == null) return;
+  }
+  const fn = current[parts[parts.length - 1]];
+  if (typeof fn !== "function") return;
+
+  let result: any, err: any;
+  try {
+    result = await fn.call(current, ...payload);
+  } catch (e) {
+    err = e instanceof Error ? { message: e.message, stack: e.stack } : e;
+  }
+  ws.send("rpc-response", from, { mid, result, err });
+});
+
+const conn = { name, call, proxyObject, exposeObject, unexposeObject };
 export default conn;

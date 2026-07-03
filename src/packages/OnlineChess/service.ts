@@ -101,11 +101,9 @@ const service: Service = {
         if (gameInfos[gameId]?.hostClientId !== myId) throw "Game doesn't exist or this server is not the host.";
         const info: GameInfo = gameInfos[gameId];
         applyMove("b", info, move);
-        sdk.conn.proxyObject<OnlineChessServerObject>(info.opponentClientId, "onlinechess").then(server =>
-          server.updateListener(info).then(() =>
-            console.log(`[Chess Server Service]: successfully notified opponent of successful move!`)
-          )
-        );
+        sdk.conn.call<void>(`${info.opponentClientId}::onlinechess::updateListener`, [info]).then(() => {
+          console.log(`[Chess Server Service]: successfully notified opponent of successful move!`);
+        });
       },
       updateListener(info) {
         gameInfos[info.gameId] = info;
@@ -119,8 +117,7 @@ const service: Service = {
     function updateGames() {
       Object.values(gameInfos).forEach(async g => {
         if (g.hostClientId === myId) return;
-        const object = await sdk.conn.proxyObject<OnlineChessServerObject>(g.hostClientId, "onlinechess");
-        const info = await object.getGameInfo(g.gameId);
+        const info = await sdk.conn.call<GameInfo | null>(`${g.hostClientId}::onlinechess::getGameInfo`, [g.gameId]);
         if (!info) return;
         gameInfos[info.gameId] = info;
         onInfoUpdated();
@@ -151,8 +148,10 @@ const service: Service = {
         return gameList;
       },
       async startGameWith(clientId) {
-        const object = await sdk.conn.proxyObject<OnlineChessServerObject>(clientId, "onlinechess");
-        const info = await object.startGame({ opponentClientId: myId, opponentName: myName });
+        const info = await sdk.conn.call<GameInfo>(`${clientId}::onlinechess::startGame`, [{
+          opponentClientId: myId,
+          opponentName: myName,
+        }]);
         gameInfos[info.gameId] = info;
         onInfoUpdated();
         await saveGameInfos(gameInfos);
@@ -167,15 +166,12 @@ const service: Service = {
         const info = gameInfos[gameId];
         if (info.hostClientId === myId) {
           applyMove("w", info, move);
-          sdk.conn.proxyObject<OnlineChessServerObject>(info.opponentClientId, "onlinechess").then(server =>
-            server.updateListener(info).then(() =>
-              console.log(`[Chess Server Service]: successfully notified host of successful move!`)
-            )
-          );
+          sdk.conn.call<void>(`${info.opponentClientId}::onlinechess::updateListener`, [info]).then(() => {
+            console.log(`[Chess Server Service]: successfully notified host of successful move!`);
+          });
           await saveGameInfos(gameInfos);
         } else {
-          const object = await sdk.conn.proxyObject<OnlineChessServerObject>(info.hostClientId, "onlinechess");
-          await object.makeMove(gameId, move);
+          await sdk.conn.call<void>(`${info.hostClientId}::onlinechess::makeMove`, [gameId, move]);
         }
       },
     };

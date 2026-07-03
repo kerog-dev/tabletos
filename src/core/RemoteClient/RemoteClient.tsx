@@ -44,9 +44,7 @@ export default function RemoteClient() {
       object.current = null;
       return;
     }
-    conn.proxyObject<RemoteServerObject>(clientId, "remoteserver").then(proxied => object.current = proxied).catch(e =>
-      console.error("failed to proxy RemoteServerObject", e)
-    );
+    object.current = conn.proxyObject<RemoteServerObject>(clientId, "remoteserver");
   }, [clientId]);
 
   useEffect(() => {

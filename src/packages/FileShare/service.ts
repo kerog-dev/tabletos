@@ -97,7 +97,7 @@ const service: Service = {
     const control: Control = {
       async sendFile({ blob, targetClient, filename, onError, onProgress, onFinished }) {
         try {
-          const proxy = await conn.proxyObject<RpcObject>(targetClient, "fileshare");
+          const proxy = conn.proxyObject<RpcObject>(targetClient, "fileshare");
           const buffer = new Uint8Array(await blob.arrayBuffer());
           const size = buffer.length;
 

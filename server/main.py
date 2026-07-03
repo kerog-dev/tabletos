@@ -1,3 +1,4 @@
+from starlette.websockets import WebSocket
 import os
 import socket
 import hashlib
@@ -7,7 +8,7 @@ from pathlib import Path
 from starlette.applications import Starlette
 from starlette.requests import Request
 from starlette.responses import JSONResponse, PlainTextResponse, StreamingResponse
-from starlette.routing import Mount, Route
+from starlette.routing import Mount, Route, WebSocketRoute
 from starlette.staticfiles import StaticFiles
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
@@ -122,6 +123,46 @@ async def proxy(request: Request):
     return response
 
 
+ws_clients: dict[str, WebSocket] = {}
+
+
+async def websocket_handler(ws: WebSocket):
+    name: str | None = None
+    await ws.accept()
+    try:
+        async for message in ws.iter_json():
+            if not name:
+                if message.type == "set_name":
+                    if message.name == "*all*":
+                        continue
+                    name = message.name
+                    ws_clients[name] = ws
+                continue
+            if message.type != "message":
+                continue
+            if isinstance(message.to, list):
+                targets = message.to
+            elif message.to == "*all*":
+                targets = list(ws_clients.keys())
+            else:
+                targets = [message.to]
+
+            for target_name in targets:
+                target = ws_clients.get(target_name)
+                if target is not None:
+                    await target.send_json(
+                        {
+                            "type": "message",
+                            "from": name,
+                            "subtype": message.subtype,
+                            "data": message.data,
+                        }
+                    )
+    finally:
+        if name is not None:
+            del ws_clients[name]
+
+
 app = Starlette(
     routes=[
         Route("/health", health),
@@ -129,6 +170,7 @@ app = Starlette(
         Mount("/packages", StaticFiles(directory=PACKAGES_DIR)),
         Route("/package-hashes/{name}", package_hash),
         Route("/proxy", proxy, methods=["POST"]),
+        WebSocketRoute("/ws", websocket_handler),
     ],
     middleware=[
         Middleware(
