@@ -67,6 +67,12 @@ const serviceBuilds = packages
   .map(({ name, dir }) =>
     build({
       plugins: [vitePluginVfsImport()],
+      resolve: {
+        alias: {
+          "react/jsx-runtime": resolve(import.meta.dirname, "app-shims/jsx-runtime-shim.ts"),
+          "react": resolve(import.meta.dirname, "app-shims/react-shim.ts"),
+        },
+      },
       build: {
         outDir: resolve(outDir, name),
         lib: { entry: `${dir}/service.ts`, formats: ["es"] },

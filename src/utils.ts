@@ -39,3 +39,11 @@ export function jsonStringToBlob(json: string): Blob {
   }
   return new Blob([bytes], { type });
 }
+
+export function randomId(length = 8): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(Math.ceil(length / 2)));
+  return [...bytes]
+    .map(b => b.toString(16).padStart(2, "0"))
+    .join("")
+    .slice(0, length);
+}
