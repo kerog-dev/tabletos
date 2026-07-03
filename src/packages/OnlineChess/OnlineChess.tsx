@@ -10,18 +10,20 @@ const { sv, conn: { name: connName } }: Sdk = (window as any).$;
 
 const serviceName = "Online Chess Server Service";
 
+function getStatus(chess: Chess): string {
+  const side = chess.turn() === "w" ? "White" : "Black";
+  if (chess.isCheckmate()) return `${side === "White" ? "Black" : "White"} wins by checkmate.`;
+  if (chess.isStalemate() || chess.isDraw()) return `Draw.`;
+  if (chess.inCheck()) return `${side} in check.`;
+  return `${side} to move.`;
+}
+
 function Board({ gameId, exposed }: { gameId: string; exposed: Controller }) {
   const games = exposed.useGameList();
   const game = games.find(g => g.gameId === gameId);
   const boardRef = useRef<any>(null);
-
-  // function syncStatus() {
-  //   const side = gameId.turn() === "w" ? "White" : "Black";
-  //   if (gameId.isCheckmate()) setStatus(`${side === "White" ? "Black" : "White"} wins by checkmate`);
-  //   else if (gameId.isStalemate() || gameId.isDraw()) setStatus("Draw");
-  //   else if (gameId.inCheck()) setStatus(`${side} in check`);
-  //   else setStatus(`${side} to move`);
-  // }
+  const chess = !game ? null : new Chess(game.fen);
+  const status = !chess ? null : getStatus(chess);
 
   useEffect(() => {
     const board = boardRef.current;
@@ -42,19 +44,11 @@ function Board({ gameId, exposed }: { gameId: string; exposed: Controller }) {
       }
     };
 
-    //   const onMoveFinished = () => {
-    //     board.fen = gameId.fen();
-    //     board.turn = gameId.turn() === "w" ? "white" : "black";
-    //     syncStatus();
-    //   };
-
     board.addEventListener("movestart", onMoveStart);
     board.addEventListener("moveend", onMoveEnd);
-    //   board.addEventListener("movefinished", onMoveFinished);
     return () => {
       board.removeEventListener("movestart", onMoveStart);
       board.removeEventListener("moveend", onMoveEnd);
-      //     board.removeEventListener("movefinished", onMoveFinished);
     };
   }, [game, exposed]);
 
@@ -75,20 +69,22 @@ function Board({ gameId, exposed }: { gameId: string; exposed: Controller }) {
       <GChessboard
         ref={boardRef}
         fen={game.fen}
-        turn={game.turn}
+        turn={chess?.turn() === "w" ? "white" : "black"}
         orientation={game.hostClientId === connName ? "white" : "black"}
-        interactive={game.turn === (game.hostClientId === connName ? "w" : "b")}
+        interactive={chess?.turn() === (game.hostClientId === connName ? "w" : "b")}
         style={{ width: "90cqmin", aspectRatio: "1/1" }}
       />
       <p
         style={{
           marginTop: 8,
           fontSize: 13,
-          // color: status.includes("wins") || status.includes("Draw") ? "#e55" : "#222",
+          color: status?.includes("wins") || status?.includes("Draw") ? "#e55" : "#222",
+          textAlign: "center",
         }}
       >
         {game.hostName} vs {game.opponentName}
-        {/*status*/}
+        <br />
+        {status}
       </p>
     </div>
   );

@@ -3,6 +3,7 @@ import { Router, RouterProvider, useRouter } from "../../components/Router.tsx";
 import { setTray } from "../../components/wm/tray.ts";
 import { AppearanceSettingsPage } from "./AppearanceSettingsPage.tsx";
 import { AppManagerPage } from "./AppManagerPage.tsx";
+import DeviceNamePage from "./DeviceNamePage.tsx";
 import { ServiceManagerPage } from "./ServiceManagerPage.tsx";
 import { StoragePage } from "./StoragePage.tsx";
 import "./System.css";
@@ -27,10 +28,11 @@ setTray({
 
 const pages: Record<string, JSX.Element> = {
   "Home": <HomePage />,
-  "AppearanceSettings": <AppearanceSettingsPage />,
+  "Appearance Settings": <AppearanceSettingsPage />,
   "Storage": <StoragePage />,
-  "ServiceManager": <ServiceManagerPage />,
-  "AppManager": <AppManagerPage />,
+  "Service Manager": <ServiceManagerPage />,
+  "App Manager": <AppManagerPage />,
+  "Device Name": <DeviceNamePage />,
 };
 
 function HomePage() {

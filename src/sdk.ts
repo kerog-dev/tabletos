@@ -1,4 +1,6 @@
 import type { WindowDesc } from "./components/wm/WindowManager.tsx";
+import deviceId from "./lib/deviceid.ts";
+import deviceName from "./lib/devicename.ts";
 import * as fs from "./lib/fs.ts";
 import { fetch as afetch } from "./lib/net.ts";
 import type { RpcConnection } from "./lib/rpc.ts";
@@ -21,6 +23,8 @@ interface Sdk {
   sv: typeof sv;
   screenshot(quality?: number): Promise<Blob>;
   afetch: typeof afetch;
+  deviceId: string;
+  deviceName: string;
 }
 
 const sdk: Sdk = {
@@ -42,6 +46,8 @@ const sdk: Sdk = {
     throw "ScreenshotService package not installed.";
   },
   afetch,
+  deviceId,
+  deviceName,
 };
 
 (window as any).$ = sdk;
