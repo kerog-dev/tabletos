@@ -1,7 +1,7 @@
 import { Chess } from "chess.js";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { Service } from "../../packages.ts";
-import { randomId } from "../../utils.ts";
+import { createListenerSet, randomId } from "../../utils.ts";
 
 interface GameStartRequest {
   opponentName: string;
@@ -34,7 +34,6 @@ export interface Controller {
 const service: Service = {
   info: {
     name: "Online Chess Server Service",
-    dependencies: [],
     autostart: false,
   },
   async start(sdk) {
@@ -58,14 +57,9 @@ const service: Service = {
 
     const gameInfos: Record<string, GameInfo> = await loadGameInfos();
 
-    let infoUpdateListeners: (() => void)[] = [];
+    const infoUpdateListeners = createListenerSet<[]>();
 
-    const onInfoUpdated = () =>
-      infoUpdateListeners.forEach(l => {
-        try {
-          l();
-        } catch {}
-      });
+    const onInfoUpdated = () => infoUpdateListeners.emit();
 
     function applyMove(turn: "w" | "b", info: GameInfo, move: { from: string; to: string; promotion: string }) {
       const chess = new Chess(info.fen);
@@ -132,18 +126,7 @@ const service: Service = {
       useGameList(): GameInfo[] {
         const [gameList, setGameList] = useState<GameInfo[]>([]);
 
-        useEffect(() => {
-          const listener = () => {
-            setGameList(Object.values(gameInfos));
-          };
-
-          listener();
-          infoUpdateListeners.push(listener);
-
-          return () => {
-            infoUpdateListeners.splice(infoUpdateListeners.indexOf(listener), 1);
-          };
-        }, []);
+        infoUpdateListeners.use(() => setGameList(Object.values(gameInfos)), true, []);
 
         return gameList;
       },

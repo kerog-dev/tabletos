@@ -35,10 +35,8 @@ function call<T>(fnPath: string, args: any[]): Promise<T> {
 }
 
 function proxyObject<T>(targetClient: string, ref: string): Promisify<T> {
-  const targetId = typeof targetClient === "string" ? targetClient : targetClient.id;
-
   function makeNestedProxy(path: string[]): any {
-    const fn = (...args: any[]) => call(encodeFnPath(targetId, ref, path.join(".")), args);
+    const fn = (...args: any[]) => call(encodeFnPath(targetClient, ref, path.join(".")), args);
     return new Proxy(fn, {
       get(_t, p) {
         if (p === "then" || typeof p !== "string") return undefined;

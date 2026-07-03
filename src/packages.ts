@@ -2,6 +2,7 @@ import { unzip } from "fflate";
 import { lazy, useEffect, useState } from "react";
 import * as fs from "./lib/fs.ts";
 import type { Sdk } from "./sdk.ts";
+import { createListenerObject, createListenerSet } from "./utils.ts";
 
 interface AppComponentParams {
   args: any[];
@@ -59,8 +60,8 @@ export const apps: App[] = [...appModules, ...devPackageModules].map(([path, imp
   };
 });
 
-const appChangeListeners: (() => void)[] = [];
-const appsChanged = () => appChangeListeners.forEach(l => l());
+const appChangeListeners = createListenerSet<[]>();
+const appsChanged = () => appChangeListeners.emit();
 
 export async function loadAppFromScript(name: string, script: string) {
   if (apps.some(app => app.name === name)) throw "App with that name is already loaded!";
@@ -84,7 +85,7 @@ export function unloadApp(name: string) {
 }
 
 function onAppsChanged(listener: () => void) {
-  appChangeListeners.push(listener);
+  appChangeListeners.add(listener);
 }
 
 export function useApps() {
@@ -110,7 +111,7 @@ class ServiceManager {
 
   private services: Service[] = [];
   private startedServices: { started: StartedService; service: Service }[] = [];
-  private runChangeListeners: [string[] | undefined, ((running: boolean, name: string) => void)][] = [];
+  private runChangeListeners = createListenerObject<string[] | undefined, [boolean, string]>();
 
   private constructor() {
     this.init().catch(reason => console.error(`Failed to start services: ${reason}`));
@@ -140,14 +141,7 @@ class ServiceManager {
 
   private notifyListeners(running: boolean, targets: string[]) {
     for (const target of targets) {
-      for (const [svcs, listener] of this.runChangeListeners) {
-        if (svcs && !svcs.includes(target)) continue;
-        try {
-          listener(running, target);
-        } catch (e) {
-          console.error(`Error running service state change listener (target: ${target}): ${e}`);
-        }
-      }
+      this.runChangeListeners.emit((s) => s === undefined ? true : s.includes(target), running, target);
     }
   }
 
@@ -228,11 +222,11 @@ class ServiceManager {
   }
 
   onRunningStateChanged(targets: string[] | undefined, listener: (running: boolean, name: string) => void) {
-    this.runChangeListeners.push([targets, listener]);
+    this.runChangeListeners.add(targets, listener);
   }
 
   removeRunningStateChangeListener(listener: (running: boolean, name: string) => void) {
-    this.runChangeListeners.splice(this.runChangeListeners.findIndex(e => e[1] === listener), 1);
+    this.runChangeListeners.remove(listener);
   }
 
   list(): ServiceInfo[] {

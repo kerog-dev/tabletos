@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { useRouter } from "../../components/Router.tsx";
 import type { ServiceInfo } from "../../packages.ts";
 import type { Sdk } from "../../sdk.ts";
@@ -8,13 +7,7 @@ const { sv }: Sdk = (window as any).$;
 const services = sv.list();
 
 function Service({ s }: { s: ServiceInfo }) {
-  const [running, setRunning] = useState(() => sv.isRunning(s.name));
-
-  useEffect(() => {
-    const listener = (running: boolean) => setRunning(running);
-    sv.onRunningStateChanged([s.name], listener);
-    return () => sv.removeRunningStateChangeListener(listener);
-  }, []);
+  const running = sv.useRunning(s.name);
 
   return (
     <div>

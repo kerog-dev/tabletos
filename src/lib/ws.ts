@@ -59,7 +59,7 @@ async function connect() {
   ws = newWs;
 }
 
-await connect();
+connect();
 
 export function send(type: string, to: string | string[] | "*all*", data: any) {
   if (gaveUp) return;

@@ -2,7 +2,7 @@ import html2canvas from "html2canvas";
 import type { Service } from "../../packages.ts";
 
 const service: Service = {
-  info: { name: "Screenshot Service", dependencies: [], autostart: true },
+  info: { name: "Screenshot Service", autostart: true },
   start() {
     async function screenshot(quality = 0.92) {
       const canvas = await html2canvas(document.body, {
