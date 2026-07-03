@@ -62,7 +62,6 @@ function isComplete(transfer: Transfer): boolean {
 const service: Service = {
   info: {
     name: "File Sharing Service",
-    dependencies: [],
     autostart: false, // maybe change?
   },
   async start({ fs, getAppDir, conn }) {

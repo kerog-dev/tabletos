@@ -8,7 +8,6 @@ async function hashBlob(blob: Blob): Promise<string> {
 const service: Service = {
   info: {
     name: "Auto-update Service",
-    dependencies: [],
     autostart: true,
   },
   start({ fs, afetch: fetch, toast, Urgency }) {

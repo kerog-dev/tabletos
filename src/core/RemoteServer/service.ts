@@ -19,7 +19,6 @@ export interface RemoteServerObject {
 const service: Service = {
   info: {
     name: "Remote Server Service",
-    dependencies: [],
     autostart: false,
   },
   start({ fs, spawnWindow, toast, conn, screenshot }) {

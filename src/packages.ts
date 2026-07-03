@@ -15,7 +15,6 @@ export interface App {
 
 export interface ServiceInfo {
   name: string;
-  dependencies: string[];
   autostart: boolean;
 }
 

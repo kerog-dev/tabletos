@@ -124,7 +124,6 @@ const mount: Mount = {
 const service: Service = {
   info: {
     name: "Babel Infinite Filesystem Service",
-    dependencies: [],
     autostart: false,
   },
   start(sdk) {

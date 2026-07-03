@@ -1,5 +1,4 @@
 import { type Promisify, randomId } from "../utils.ts";
-import * as contacts from "./contacts.ts";
 import deviceId from "./deviceid.ts";
 import * as ws from "./ws.ts";
 
@@ -35,7 +34,7 @@ function call<T>(fnPath: string, args: any[]): Promise<T> {
   });
 }
 
-function proxyObject<T>(targetClient: string | contacts.Contact, ref: string): Promisify<T> {
+function proxyObject<T>(targetClient: string, ref: string): Promisify<T> {
   const targetId = typeof targetClient === "string" ? targetClient : targetClient.id;
 
   function makeNestedProxy(path: string[]): any {
