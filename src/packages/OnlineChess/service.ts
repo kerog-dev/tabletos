@@ -69,7 +69,7 @@ const service: Service = {
 
     function applyMove(turn: "w" | "b", info: GameInfo, move: { from: string; to: string; promotion: string }) {
       const chess = new Chess(info.fen);
-      if (chess.turn() !== turn) return;
+      if (chess.turn() !== turn) throw "Incorrect turn";
       chess.move(move);
       info.fen = chess.fen();
       onInfoUpdated();

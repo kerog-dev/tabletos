@@ -132,20 +132,20 @@ async def websocket_handler(ws: WebSocket):
     try:
         async for message in ws.iter_json():
             if not name:
-                if message.type == "set_name":
-                    if message.name == "*all*":
+                if message["type"] == "set_name":
+                    if message["name"] == "*all*":
                         continue
-                    name = message.name
+                    name = message["name"]
                     ws_clients[name] = ws
                 continue
-            if message.type != "message":
+            if message["type"] != "message":
                 continue
-            if isinstance(message.to, list):
-                targets = message.to
-            elif message.to == "*all*":
+            if isinstance(message["to"], list):
+                targets = message["to"]
+            elif message["to"] == "*all*":
                 targets = list(ws_clients.keys())
             else:
-                targets = [message.to]
+                targets = [message["to"]]
 
             for target_name in targets:
                 target = ws_clients.get(target_name)
@@ -154,8 +154,8 @@ async def websocket_handler(ws: WebSocket):
                         {
                             "type": "message",
                             "from": name,
-                            "subtype": message.subtype,
-                            "data": message.data,
+                            "subtype": message["subtype"],
+                            "data": message["data"],
                         }
                     )
     finally:

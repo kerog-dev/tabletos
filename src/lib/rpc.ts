@@ -19,9 +19,14 @@ function call<T>(fnPath: string, args: any[]): Promise<T> {
   const mid = randomId(16);
 
   return new Promise((res, rej) => {
+    const id = setTimeout(() => {
+      ws.offMessage("rpc-response", onResponse);
+      rej();
+    }, 20_000);
     const onResponse = (data: any) => {
       if (data.mid !== mid) return;
       ws.offMessage("rpc-response", onResponse);
+      clearTimeout(id);
       if (data.err) rej(`Remote function errored: ${data.err}`);
       else res(data.result);
     };
