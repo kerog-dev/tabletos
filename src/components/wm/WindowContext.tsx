@@ -6,6 +6,7 @@ export const WindowContext = createContext<
     resize: ({ w, h, absolute }: { w: number; h: number; absolute?: boolean }) => void;
     pos(): [number, number];
     size(): [number, number];
+    kill(): void;
   } | null
 >(null);
 

@@ -170,6 +170,7 @@ export function Window(
     },
     pos: getPos,
     size: getSize,
+    kill,
   };
 
   return (

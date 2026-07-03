@@ -1,13 +1,16 @@
 import { Chess } from "chess.js";
 import { useEffect, useRef, useState } from "react";
 import "gchessboard";
+import { useWindow } from "../../components/wm/WindowContext";
 
 const GChessboard = "g-chess-board" as any;
 
+let game = new Chess();
+
 export default function ChessApp() {
   const boardRef = useRef<any>(null);
-  const [game] = useState(() => new Chess());
   const [status, setStatus] = useState("White to move");
+  const appWindow = useWindow();
 
   function syncStatus() {
     const side = game.turn() === "w" ? "White" : "Black";
@@ -62,7 +65,7 @@ export default function ChessApp() {
     >
       <GChessboard
         ref={boardRef}
-        fen="start"
+        fen={game.fen()}
         interactive
         style={{ width: "90cqmin", aspectRatio: "1/1" }}
       />
@@ -71,9 +74,21 @@ export default function ChessApp() {
           marginTop: 8,
           fontSize: 13,
           color: status.includes("wins") || status.includes("Draw") ? "#e55" : "#222",
+          textAlign: "center",
         }}
       >
         {status}
+        <br />
+        <button
+          onClick={() => {
+            if (confirm("Are you sure?")) {
+              game = new Chess();
+              appWindow?.kill();
+            }
+          }}
+        >
+          Restart
+        </button>
       </p>
     </div>
   );
