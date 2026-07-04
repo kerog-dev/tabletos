@@ -159,7 +159,7 @@ async def websocket_handler(ws: WebSocket):
                         }
                     )
     finally:
-        if name is not None:
+        if name is not None and ws_clients.get(name) is ws:
             del ws_clients[name]
 
 
