@@ -2,7 +2,7 @@ import type { Service } from "../../packages.ts";
 
 interface RpcObject {
   startTransfer(from: string, file: string, size: number, contentType: string): void;
-  addChunk(from: string, file: string, range: [number, number], chunk: string): void;
+  addChunk(from: string, file: string, chunkI: number, chunk: string): void;
 }
 
 interface Transfer {
@@ -10,7 +10,8 @@ interface Transfer {
   file: string;
   bytes: Uint8Array<ArrayBuffer>;
   size: number;
-  ranges: [number, number][]; // sorted, merged, non-overlapping
+  chunks: number;
+  chunksReceived: Set<number>;
   contentType: string;
 }
 
@@ -38,25 +39,8 @@ function bytesToBinaryString(bytes: Uint8Array): string {
   return out;
 }
 
-function markRange(transfer: Transfer, start: number, end: number) {
-  transfer.ranges.push([start, end]);
-  transfer.ranges.sort((a, b) => a[0] - b[0]);
-  const merged: [number, number][] = [];
-  for (const [s, e] of transfer.ranges) {
-    const last = merged[merged.length - 1];
-    if (last && s <= last[1]) {
-      last[1] = Math.max(last[1], e);
-    } else {
-      merged.push([s, e]);
-    }
-  }
-  transfer.ranges = merged;
-}
-
 function isComplete(transfer: Transfer): boolean {
-  return transfer.ranges.length === 1
-    && transfer.ranges[0][0] === 0
-    && transfer.ranges[0][1] === transfer.size;
+  return transfer.chunksReceived.size === transfer.chunks;
 }
 
 const service: Service = {
@@ -70,16 +54,24 @@ const service: Service = {
 
     const object: RpcObject = {
       async startTransfer(from, file, size, contentType) {
-        transfers.push({ from, file, bytes: new Uint8Array(size), size, ranges: [], contentType });
+        transfers.push({
+          from,
+          file,
+          bytes: new Uint8Array(size),
+          size,
+          chunks: Math.ceil(size / CHUNK_SIZE),
+          chunksReceived: new Set(),
+          contentType,
+        });
         if (!(await fs.isDir(`${appDir}/${from}`))) await fs.mkdir(`${appDir}/${from}`);
       },
-      addChunk(from, file, range, chunk) {
+      addChunk(from, file, chunkI, chunk) {
         const transfer = transfers.find(t => t.from === from && t.file === file);
         if (!transfer) return;
 
         const bytes = Uint8Array.from(chunk, c => c.charCodeAt(0));
-        transfer.bytes.set(bytes, range[0]);
-        markRange(transfer, range[0], range[1]);
+        transfer.chunksReceived.add(chunkI);
+        transfer.bytes.set(bytes, chunkI * CHUNK_SIZE);
 
         if (isComplete(transfer)) {
           transfers.splice(transfers.indexOf(transfer), 1);
@@ -102,10 +94,13 @@ const service: Service = {
 
           await proxy.startTransfer(conn.name, filename, size, blob.type);
 
-          for (let start = 0; start < size; start += CHUNK_SIZE) {
-            const end = Math.min(start + CHUNK_SIZE, size);
+          const chunks = Math.ceil(size / CHUNK_SIZE);
+
+          for (let chunkI = 0; chunkI < chunks; chunkI += 1) {
+            const start = chunkI * CHUNK_SIZE;
+            const end = (chunkI + 1) * CHUNK_SIZE;
             const chunkStr = bytesToBinaryString(buffer.subarray(start, end));
-            await proxy.addChunk(conn.name, filename, [start, end], chunkStr);
+            await proxy.addChunk(conn.name, filename, chunkI, chunkStr);
             onProgress(Math.round((end / size) * 100));
           }
         } catch (err) {
