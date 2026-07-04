@@ -181,7 +181,7 @@ export default function RemoteClient() {
       <textarea ref={evalScriptRef}></textarea>
       <button onClick={() => evalScript()}>Evaluate</button>
       <br />
-      <span>TODO: load or install package from local path or remote path</span>
+      <span>TODO: load or install package from local path or remote path or url</span>
       <br />
       <input type="text" placeholder="Package name" ref={uninstallPackageNameRef} />
       <br />

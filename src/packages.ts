@@ -189,6 +189,19 @@ class ServiceManager {
     return this.startedServices.find(s => s.service.info.name === name)?.started.exposed as T | null ?? null;
   }
 
+  use<T extends object>(name: string): T | null {
+    const [exposed, setExposed] = useState<T | null>(() => this.get<T>(name));
+    useEffect(() => {
+      setExposed(this.get<T>(name));
+      const listener = () => {
+        setExposed(this.get<T>(name));
+      };
+      this.onRunningStateChanged([name], listener);
+      return () => this.removeRunningStateChangeListener(listener);
+    }, [name]);
+    return exposed;
+  }
+
   isRunning(name: string): boolean {
     return this.startedServices.some(s => s.service.info.name === name);
   }

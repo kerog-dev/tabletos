@@ -87,6 +87,7 @@ export default function FileShare() {
       {sourceMode === "local"
         ? (
           <input
+            key={"local-file-select"}
             type="file"
             onChange={(e) => {
               const f = e.target.files?.[0] ?? null;
@@ -97,6 +98,7 @@ export default function FileShare() {
         )
         : (
           <input
+            key={"virtual-file-select"}
             type="text"
             placeholder="/path/in/virtual/fs"
             value={virtualPath}

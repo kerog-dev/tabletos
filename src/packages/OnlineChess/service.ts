@@ -1,7 +1,6 @@
 import { Chess } from "chess.js";
-import { useState } from "react";
 import type { Service } from "../../packages.ts";
-import { createListenerSet, randomId } from "../../utils.ts";
+import { randomId } from "../../utils.ts";
 
 interface GameStartRequest {
   opponentName: string;
@@ -31,43 +30,28 @@ export interface Controller {
   doMove(gameId: string, move: string): Promise<void>;
 }
 
+interface DB {
+  games: Record<string, GameInfo>;
+}
+
 const service: Service = {
   info: {
     name: "Online Chess Server Service",
     autostart: false,
   },
   async start(sdk) {
-    async function loadGameInfos(): Promise<Record<string, GameInfo>> {
-      try {
-        return JSON.parse(await sdk.fs.readTextFile("/chess.json"));
-      } catch {
-        if (!(await sdk.fs.pathExists("/chess.json"))) {
-          await sdk.fs.writeFile("/chess.json", "{}");
-        }
-        return {};
-      }
-    }
-
-    async function saveGameInfos(gameInfos: Record<string, GameInfo>) {
-      await sdk.fs.writeFile("/chess.json", JSON.stringify(gameInfos));
-    }
+    const db = await sdk.jsonDB<DB>("/chess.json");
+    db.object.games ??= {};
 
     const myId = sdk.conn.name;
     const myName = sdk.deviceName;
 
-    const gameInfos: Record<string, GameInfo> = await loadGameInfos();
-
-    const infoUpdateListeners = createListenerSet<[]>();
-
-    const onInfoUpdated = () => infoUpdateListeners.emit();
-
-    function applyMove(turn: "w" | "b", info: GameInfo, move: { from: string; to: string; promotion: string }) {
+    function applyMove(turn: "w" | "b", gameId: string, move: { from: string; to: string; promotion: string }) {
+      const info = db.object.games[gameId];
       const chess = new Chess(info.fen);
       if (chess.turn() !== turn) throw "Incorrect turn";
       chess.move(move);
       info.fen = chess.fen();
-      onInfoUpdated();
-      saveGameInfos(gameInfos);
     }
 
     const object: OnlineChessServerObject = {
@@ -81,63 +65,60 @@ const service: Service = {
           // starting position
           fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
         };
-        gameInfos[info.gameId] = info;
-        onInfoUpdated();
-        saveGameInfos(gameInfos);
+        db.object.games[info.gameId] = info;
         return info;
       },
       getGameInfo(gameId) {
-        const info: GameInfo | undefined = gameInfos[gameId];
+        const info: GameInfo | undefined = db.object.games[gameId];
         if (!info || info.hostClientId !== myId) return null;
         return info;
       },
       makeMove(gameId, move) {
-        if (gameInfos[gameId]?.hostClientId !== myId) throw "Game doesn't exist or this server is not the host.";
-        const info: GameInfo = gameInfos[gameId];
-        applyMove("b", info, move);
+        const info: GameInfo | undefined = db.object.games[gameId];
+        if (!info || info?.hostClientId !== myId) throw "Game doesn't exist or this server is not the host.";
+        applyMove("b", info.gameId, move);
         sdk.conn.call<void>(`${info.opponentClientId}::onlinechess::updateListener`, [info]).then(() => {
           console.log(`[Chess Server Service]: successfully notified opponent of successful move!`);
         });
       },
       updateListener(info) {
-        gameInfos[info.gameId] = info;
-        onInfoUpdated();
-        saveGameInfos(gameInfos);
+        db.object.games[info.gameId] = info;
       },
     };
 
     sdk.conn.exposeObject(object, "onlinechess");
 
-    function updateGames() {
-      Object.values(gameInfos).forEach(async g => {
-        if (g.hostClientId === myId) return;
-        const info = await sdk.conn.call<GameInfo | null>(`${g.hostClientId}::onlinechess::getGameInfo`, [g.gameId]);
-        if (!info) return;
-        gameInfos[info.gameId] = info;
-        onInfoUpdated();
-        saveGameInfos(gameInfos);
-      });
+    async function updateGames() {
+      const promises = [];
+
+      for (const gameId in db.object.games) {
+        promises.push(
+          (async () => {
+            const g = db.object.games[gameId];
+            if (g.hostClientId === myId) return;
+            const info = await sdk.conn.call<GameInfo | null>(`${g.hostClientId}::onlinechess::getGameInfo`, [
+              g.gameId,
+            ]);
+            if (!info) return;
+            db.object.games[info.gameId] = info;
+          })(),
+        );
+      }
+
+      await Promise.allSettled(promises);
     }
 
     updateGames();
 
     const controller: Controller = {
       object,
-      useGameList(): GameInfo[] {
-        const [gameList, setGameList] = useState<GameInfo[]>([]);
-
-        infoUpdateListeners.use(() => setGameList(Object.values(gameInfos)), true, []);
-
-        return gameList;
-      },
+      useGameList: () => Object.values(db.use("games")),
       async startGameWith(clientId) {
         const info = await sdk.conn.call<GameInfo>(`${clientId}::onlinechess::startGame`, [{
           opponentClientId: myId,
           opponentName: myName,
         }]);
-        gameInfos[info.gameId] = info;
-        onInfoUpdated();
-        await saveGameInfos(gameInfos);
+        db.object.games[info.gameId] = info;
       },
       async doMove(gameId, moveIn) {
         const parsedMove = JSON.parse(moveIn);
@@ -146,13 +127,12 @@ const service: Service = {
           to: parsedMove[1],
           promotion: "q",
         };
-        const info = gameInfos[gameId];
+        const info = db.object.games[gameId];
         if (info.hostClientId === myId) {
-          applyMove("w", info, move);
+          applyMove("w", info.gameId, move);
           sdk.conn.call<void>(`${info.opponentClientId}::onlinechess::updateListener`, [info]).then(() => {
             console.log(`[Chess Server Service]: successfully notified host of successful move!`);
           });
-          await saveGameInfos(gameInfos);
         } else {
           await sdk.conn.call<void>(`${info.hostClientId}::onlinechess::makeMove`, [gameId, move]);
         }
