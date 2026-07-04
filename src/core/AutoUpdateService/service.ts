@@ -12,6 +12,7 @@ const service: Service = {
   },
   start({ fs, afetch: fetch, toast, Urgency }) {
     async function check() {
+      if (!(await fs.isDir("/packages"))) return;
       const packageDirListing = await fs.ls("/packages");
       const availablePackages: string[] = await (await fetch("http://server/available-packages")).json();
       let remoteHashes: Record<string, string> = {};

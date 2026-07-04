@@ -3,12 +3,8 @@ import storage from "./storage.ts";
 async function ping(ip: string): Promise<boolean> {
   try {
     const res = await fetch(`http://${ip}:8086/health`, { signal: AbortSignal.timeout(3000) });
-    if (!res.ok) {
-      console.log(`${ip} failed: not ok`);
-    }
     return res.ok && (await res.text()).toLowerCase().includes("tabletos");
   } catch {
-    console.log(`${ip} failed: error`);
     return false;
   }
 }
@@ -27,7 +23,7 @@ async function discovery() {
       if (result) found.push(ip);
     })
   ));
-  console.log(`discovery: found: ${found.join(", ")}`);
+  console.log(`discovery: found: ${found.length > 0 ? found.join(", ") : "no servers"}`);
   storage.serverIp = found[0] ?? null;
   lastPing = found.length > 0 ? Date.now() : 0;
 }
