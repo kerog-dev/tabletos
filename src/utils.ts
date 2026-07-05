@@ -106,3 +106,9 @@ export function createListenerObject<Specifier extends any, Args extends any[]>(
       }, []),
   };
 }
+
+export function formatTime(time: number | Date): string {
+  const date = typeof time === "number" ? new Date(time) : time;
+
+  return date.toLocaleString();
+}

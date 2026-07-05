@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import type { Controller, DBMessage, MessagePart } from "./service.ts";
 import "./Chat.css";
 import { sdk } from "../../getsdk.ts";
+import { formatTime } from "../../utils.ts";
 
 const { sv } = sdk();
 
@@ -29,7 +30,7 @@ function MessagePart({ p }: { p: MessagePart }) {
 function Message({ m }: { m: DBMessage }) {
   return (
     <div className={"message " + (m.me ? "from-me" : "from-other")}>
-      <div className="message-ts">{(new Date(m.ts)).toLocaleDateString()} {(new Date(m.ts)).toLocaleTimeString()}</div>
+      <div className="message-ts">{formatTime(m.ts)}</div>
       <div className="message-content">
         {m.parts.map(p => <MessagePart p={p} />)}
       </div>
@@ -72,8 +73,7 @@ function ChatAppReady({ exposed }: { exposed: Controller }) {
           && (
             <>
               <div className="chat-topbar">
-                started at {(new Date(chat.startedAt)).toLocaleDateString()}{" "}
-                {(new Date(chat.startedAt)).toLocaleTimeString()}
+                started at {formatTime(chat.startedAt)}
               </div>
               <div className="chat-messages">{chat.messages.map(m => <Message key={m.ts} m={m} />)}</div>
               <div className="chat-send">

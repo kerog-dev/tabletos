@@ -51,6 +51,33 @@ function cloneValue(value: any): any {
 }
 
 const proxyCache = new WeakMap<object, any>();
+const rawByProxy = new WeakMap<object, any>();
+
+function deepUnwrap(value: any): any {
+  if (typeof value !== "object" || value === null) return value;
+
+  const raw = rawByProxy.get(value);
+  if (raw !== undefined) return raw;
+
+  if (Array.isArray(value)) {
+    let changed = false;
+    const result = value.map((el) => {
+      const u = deepUnwrap(el);
+      if (u !== el) changed = true;
+      return u;
+    });
+    return changed ? result : value;
+  }
+
+  let changed = false;
+  const result: any = {};
+  for (const key of Object.keys(value)) {
+    const u = deepUnwrap(value[key]);
+    if (u !== value[key]) changed = true;
+    result[key] = u;
+  }
+  return changed ? result : value;
+}
 
 function makeReactive<T extends object>(
   target: T,
@@ -72,7 +99,7 @@ function makeReactive<T extends object>(
       return value;
     },
     set(obj, prop, value, receiver) {
-      const result = Reflect.set(obj, prop, value, receiver);
+      const result = Reflect.set(obj, prop, deepUnwrap(value), receiver);
       const changedPath = path === "" ? String(prop) : `${path}.${String(prop)}`;
       notifyChange(changedPath);
       return result;
@@ -86,6 +113,7 @@ function makeReactive<T extends object>(
   });
 
   proxyCache.set(target, proxy);
+  rawByProxy.set(proxy, target);
   return proxy;
 }
 
@@ -154,7 +182,7 @@ export async function createDatabase<T extends object = Record<string, any>>(
       return getPath(raw, keyPath);
     },
     set(keyPath: string, value: any) {
-      setPath(raw, keyPath, value);
+      setPath(raw, keyPath, deepUnwrap(value));
       notifyChange(keyPath);
     },
     use,

@@ -8,9 +8,6 @@ export default defineConfig(({ mode }) => ({
   plugins: [react(), viteSingleFile(), vitePluginPackDir("vendor:vendor.zip", "./src/vendor"), vitePluginVfsImport()],
   server: {
     host: "127.0.0.1",
-    proxy: {
-      "/_relay_": { target: "ws://192.168.1.31:8085", ws: true },
-    },
   },
   build: {
     target: ["chrome103", "edge146", "firefox140", "opera127", "safari18.5"],
