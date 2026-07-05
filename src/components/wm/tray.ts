@@ -3,7 +3,7 @@ import { create } from "zustand";
 export interface TrayDesc {
   id: string;
   name: string;
-  iconUrl: string;
+  iconUrl?: string;
   show(): React.ReactNode;
   open: boolean;
 }

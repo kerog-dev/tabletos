@@ -6,7 +6,6 @@ import { toast, Urgency } from "../../toast.tsx";
 
 interface ShortcutShared {
   name: string;
-  iconFile: string | null;
 }
 
 interface AppTarget {
@@ -33,8 +32,16 @@ async function loadAdditionalShortcuts(): Promise<ShortcutDesc[]> {
 
 const additionalShortcuts = await loadAdditionalShortcuts();
 
+function getIconSrc(s: ShortcutDesc): string | null {
+  if (s.targetType !== "app") return null;
+  const app: App | undefined = typeof s.app === "string" ? apps.find(app => app.name === s.app) : s.app;
+  if (!app) return null;
+  return app.iconUrl ?? null;
+}
+
 function Shortcut({ s, spawnWindow }: { s: ShortcutDesc; spawnWindow: (app: App) => void }) {
-  const src = s.iconFile ? useBlobFileUrl(s.iconFile) : undefined;
+  const noIconUrl = useBlobFileUrl("/vendor/icons/noicon.png");
+  const src = getIconSrc(s) ?? noIconUrl;
 
   function open() {
     switch (s.targetType) {

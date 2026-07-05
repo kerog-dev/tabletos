@@ -10,6 +10,7 @@ interface AppComponentParams {
 
 export interface App {
   name: string;
+  iconUrl?: string;
   component: React.LazyExoticComponent<React.FC<AppComponentParams>>;
   isCore: boolean;
 }
@@ -38,6 +39,16 @@ const appModules = Object.entries(import.meta.glob("./core/*/*.tsx"))
     return file === folder;
   });
 
+const appIconModules = Object.entries(
+  import.meta.glob("./core/*/icon.*", { eager: true, query: "?url" }) as Record<string, { default: string }>,
+);
+const appIcons = Object.fromEntries(
+  appIconModules.map(([path, { default: url }]): [string, string] => [
+    path.split("/").at(-2)!,
+    url,
+  ]),
+);
+
 const devPackageModules = import.meta.env.DEV
   ? Object.entries(
     Object.assign(import.meta.glob("./packages/*/*.tsx"), import.meta.glob("./private-packages/*/*.tsx")),
@@ -55,6 +66,7 @@ export const apps: App[] = [...appModules, ...devPackageModules].map(([path, imp
 
   return {
     name,
+    iconUrl: appIcons[name],
     component: lazy(importFunc as () => Promise<{ default: React.FC<AppComponentParams> }>),
     isCore: true,
   };

@@ -78,7 +78,7 @@ export function Taskbar(
   const [launcherOpen, setLauncherOpen] = useState(false);
   const [contextMenuOpens, setContextMenuOpens] = useState(() => Object.fromEntries(windows.map(w => [w.id, false])));
   const trayDescs = useTrayDescs();
-  const wallpaperBlobUrl = useBlobFileUrl("/wallpaper.img");
+  const noIconUrl = useBlobFileUrl("/vendor/icons/noicon.png");
 
   useEffect(() => {
     const old = contextMenuOpens;
@@ -122,7 +122,7 @@ export function Taskbar(
                 className="tray-entry-image"
                 width={30}
                 height={30}
-                src={(t.iconUrl || wallpaperBlobUrl) ?? ""}
+                src={t.iconUrl ?? noIconUrl ?? ""}
                 title={t.name}
                 onClick={() => setTrayOpen(t.id, true)}
                 style={{ anchorName: `--tray-anchor-${t.id}` }}

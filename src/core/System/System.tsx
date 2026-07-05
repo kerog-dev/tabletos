@@ -13,7 +13,6 @@ const { sv }: Sdk = (window as any).$;
 setTray({
   id: "system",
   name: "System",
-  iconUrl: "",
   show() {
     const runningServices = sv.useRunningServices();
     return (
