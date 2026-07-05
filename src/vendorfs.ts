@@ -1,9 +1,9 @@
 import { unzip } from "fflate";
 import vendorZip from "vendor:vendor.zip";
-import type { Sdk } from "./sdk.ts";
+import { sdk } from "./getsdk.ts";
 
 await (window as any).$ready;
-const { fs }: Sdk = (window as any).$;
+const { fs } = sdk();
 
 const bytes = Uint8Array.from(atob(vendorZip), c => c.charCodeAt(0));
 const files: Record<string, Uint8Array<ArrayBuffer>> = await new Promise((res, rej) =>

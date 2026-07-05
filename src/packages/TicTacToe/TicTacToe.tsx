@@ -1,8 +1,8 @@
 import { useState } from "react";
-import type { Sdk } from "../../sdk.ts";
 import "./TicTacToe.css";
+import { sdk } from "../../getsdk.ts";
 
-const { toast }: Sdk = (window as any).$;
+const { toast } = sdk();
 
 enum TileState {
   Empty = " ",

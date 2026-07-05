@@ -1,8 +1,8 @@
 import { useRef, useState } from "react";
-import type { Sdk } from "../../sdk.ts";
 import "./Notes.css";
+import { sdk } from "../../getsdk.ts";
 
-const { fs, getAppDir }: Sdk = (window as any).$;
+const { fs, getAppDir } = sdk();
 
 const appDir = await getAppDir("Notes");
 const notesDir = `${appDir}/notes`;

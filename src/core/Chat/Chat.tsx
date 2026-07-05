@@ -1,9 +1,9 @@
 import { useRef, useState } from "react";
-import type { Sdk } from "../../sdk.ts";
 import type { Controller, DBMessage, MessagePart } from "./service.ts";
 import "./Chat.css";
+import { sdk } from "../../getsdk.ts";
 
-const { sv }: Sdk = (window as any).$;
+const { sv } = sdk();
 
 const serviceName = "Chat Service";
 

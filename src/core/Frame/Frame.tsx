@@ -1,11 +1,11 @@
 import { useState } from "react";
-import type { Sdk } from "../../sdk.ts";
+import { sdk } from "../../getsdk.ts";
 
 interface DB {
   recent: string[];
 }
 
-const { jsonDB, getAppDir }: Sdk = (window as any).$;
+const { jsonDB, getAppDir } = sdk();
 
 const appDir = await getAppDir("Frame");
 const db = await jsonDB<DB>(`${appDir}/db.json`);

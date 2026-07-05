@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import "gchessboard";
 import { Chess } from "chess.js";
-import type { Sdk } from "../../sdk.ts";
+import { sdk } from "../../getsdk.ts";
 import type { Controller } from "./service.ts";
 
 const GChessboard = "g-chess-board" as any;
 
-const { sv, conn: { name: connName } }: Sdk = (window as any).$;
+const { sv, conn: { name: connName } } = sdk();
 
 const serviceName = "Online Chess Server Service";
 

@@ -1,8 +1,8 @@
 import { useState } from "react";
-import type { Sdk } from "../../sdk.ts";
+import { sdk } from "../../getsdk.ts";
 import { type Control } from "./service.ts";
 
-const { sv, conn: { name: connName }, fs }: Sdk = (window as any).$;
+const { sv, conn: { name: connName }, fs } = sdk();
 
 const serviceName = "File Sharing Service";
 

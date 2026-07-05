@@ -1,9 +1,9 @@
 import { parser } from "mathjs";
 import { useRef, useState } from "react";
 import "./Calculator.css";
-import type { Sdk } from "../../sdk.ts";
+import { sdk } from "../../getsdk.ts";
 
-const { toast, Urgency }: Sdk = (window as any).$;
+const { toast, Urgency } = sdk();
 
 export default function Calculator() {
   const [input, setInput] = useState("");

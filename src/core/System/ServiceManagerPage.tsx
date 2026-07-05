@@ -1,8 +1,8 @@
 import { useRouter } from "../../components/Router.tsx";
+import { sdk } from "../../getsdk.ts";
 import type { ServiceInfo } from "../../packages.ts";
-import type { Sdk } from "../../sdk.ts";
 
-const { sv }: Sdk = (window as any).$;
+const { sv } = sdk();
 
 const services = sv.list();
 

@@ -1,12 +1,12 @@
 import { sha256 } from "js-sha256";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "../../components/Router.tsx";
+import { sdk } from "../../getsdk.ts";
 import { fetch } from "../../lib/net.ts";
 import { unloadApp } from "../../packages.ts";
-import type { Sdk } from "../../sdk.ts";
 import { toast, Urgency } from "../../toast.tsx";
 
-const { fs }: Sdk = (window as any).$;
+const { fs } = sdk();
 
 async function hashBlob(blob: Blob): Promise<string> {
   return sha256(await blob.arrayBuffer());

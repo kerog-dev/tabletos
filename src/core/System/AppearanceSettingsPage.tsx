@@ -1,10 +1,10 @@
 import { useRef } from "react";
-import type { Sdk } from "../../sdk.ts";
 import "./System.css";
 import { useRouter } from "../../components/Router.tsx";
 import { setWindowTransparency } from "../../components/wm/wmdb.ts";
+import { sdk } from "../../getsdk.ts";
 
-const { fs }: Sdk = (window as any).$;
+const { fs } = sdk();
 
 export function AppearanceSettingsPage() {
   const router = useRouter();

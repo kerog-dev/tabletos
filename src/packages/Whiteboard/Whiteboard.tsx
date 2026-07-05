@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import type { Sdk } from "../../sdk.ts";
+import { sdk } from "../../getsdk.ts";
 const { default: Atrament } = await import("atrament" as any);
 
-const { fs, getAppDir }: Sdk = (window as any).$;
+const { fs, getAppDir } = sdk();
 const appDir = await getAppDir("Whiteboard");
 
 if (!(await fs.isDir(`${appDir}/whiteboards`))) await fs.mkdir(`${appDir}/whiteboards`);

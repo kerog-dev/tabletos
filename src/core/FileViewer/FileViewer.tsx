@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { FilePicker } from "../../components/FilePicker.tsx";
-import type { Sdk } from "../../sdk.ts";
+import { sdk } from "../../getsdk.ts";
 
-const { fs }: Sdk = (window as any).$;
+const { fs } = sdk();
 
 type SupportedType = "image" | "video" | "audio" | "document" | "script" | "unknown";
 

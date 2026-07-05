@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { FilePicker } from "../../components/FilePicker.tsx";
-import type { Sdk } from "../../sdk.ts";
 import "./TextEditor.css";
+import { sdk } from "../../getsdk.ts";
 
-const { fs }: Sdk = (window as any).$;
+const { fs } = sdk();
 
 export default function TextEditor({ args }: { args: [] | [string] }) {
   const [path, setPath] = useState<string | null>(args[0] ?? null);

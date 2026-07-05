@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import type { Sdk } from "../sdk.ts";
+import { sdk } from "../getsdk.ts";
 
-const { fs }: Sdk = (window as any).$;
+const { fs } = sdk();
 
 interface FileDesc {
   isDir: boolean;

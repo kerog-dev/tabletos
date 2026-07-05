@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import type { Sdk } from "../../sdk.ts";
+import { sdk } from "../../getsdk.ts";
 import { Urgency } from "../../toast.tsx";
 import { blobToJsonString, jsonStringToBlob, type Promisify } from "../../utils.ts";
 import { type RemoteServerObject } from "../RemoteServer/service.ts";
 
-const { conn, spawnWindow, fs, toast, getAppDir }: Sdk = (window as any).$;
+const { conn, spawnWindow, fs, toast, getAppDir } = sdk();
 const appDir = await getAppDir("RemoteClient");
 
 if (!(await fs.isDir(`${appDir}/mirrors`))) await fs.mkdir(`${appDir}/mirrors`);

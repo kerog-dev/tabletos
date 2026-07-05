@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { ContextMenu } from "../../components/ContextMenu.tsx";
-import type { Sdk } from "../../sdk.ts";
 import "./FileExplorer.css";
 import fileIcon from "vfs:/vendor/icons/file.png?url";
 import folderIcon from "vfs:/vendor/icons/folder.png?url";
+import { sdk } from "../../getsdk.ts";
 
-const { fs, toast, Urgency, spawnWindow }: Sdk = (window as any).$;
+const { fs, toast, Urgency, spawnWindow } = sdk();
 
 interface FileDesc {
   isDir: boolean;

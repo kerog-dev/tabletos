@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useRouter } from "../../components/Router.tsx";
-import type { Sdk } from "../../sdk.ts";
+import { sdk } from "../../getsdk.ts";
 
-const { fs }: Sdk = (window as any).$;
+const { fs } = sdk();
 
 export default function DeviceNamePage() {
   const router = useRouter();
