@@ -3,19 +3,8 @@ import { type App, apps } from "../../packages.ts";
 import { Taskbar } from "./Taskbar.tsx";
 import { Window } from "./Window.tsx";
 import "./WindowManager.css";
-import { createDatabase } from "../../jsondb.ts";
 import * as fs from "../../lib/fs.ts";
 import { Shortcuts } from "./Shortcuts.tsx";
-
-interface DB {
-  windowTransparency: number;
-}
-
-const db = await createDatabase<DB>("/wm.json");
-
-db.object.windowTransparency ??= 0;
-
-export { db as wmDb };
 
 export interface WindowDesc {
   id: number;

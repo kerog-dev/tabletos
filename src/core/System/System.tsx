@@ -6,9 +6,9 @@ import { AppManagerPage } from "./AppManagerPage.tsx";
 import DeviceNamePage from "./DeviceNamePage.tsx";
 import { ServiceManagerPage } from "./ServiceManagerPage.tsx";
 import "./System.css";
-import type { Sdk } from "../../sdk.ts";
+import { sdk } from "../../getsdk.ts";
 
-const { sv }: Sdk = (window as any).$;
+const { sv } = sdk();
 
 setTray({
   id: "system",

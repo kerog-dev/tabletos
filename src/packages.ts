@@ -131,8 +131,21 @@ class ServiceManager {
 
   async init() {
     await this.loadServices();
-    await sv.start(sv.list().filter(s => s.autostart).map(s => s.name));
+    const infos = this.list();
+    const autostarts = await this.autostarts(infos);
+    await sv.start(infos.filter(s => autostarts[s.name]).map(s => s.name));
     console.log("Started services successfully!");
+  }
+
+  private async autostarts(services: ServiceInfo[]): Promise<Record<string, boolean>> {
+    let json: Record<string, boolean>;
+    try {
+      json = JSON.parse(await fs.readTextFile("/services.json"));
+    } catch {
+      json = {};
+      await fs.writeFile("/services.json", "{}");
+    }
+    return Object.fromEntries(services.map(s => [s.name, json[s.name] ?? s.autostart]));
   }
 
   private async loadServices() {

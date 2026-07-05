@@ -2,7 +2,7 @@ import { useRef } from "react";
 import type { Sdk } from "../../sdk.ts";
 import "./System.css";
 import { useRouter } from "../../components/Router.tsx";
-import { wmDb } from "../../components/wm/WindowManager.tsx";
+import { setWindowTransparency } from "../../components/wm/wmdb.ts";
 
 const { fs }: Sdk = (window as any).$;
 
@@ -54,7 +54,7 @@ export function AppearanceSettingsPage() {
                 0,
                 Math.min(100, Math.round(windowTransparencyInputRef.current.value as unknown as number)),
               );
-              wmDb.object.windowTransparency = value;
+              setWindowTransparency(value);
             }}
           >
             Set
