@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import type { Sdk } from "./sdk.ts";
+import * as fs from "./lib/fs.ts";
 
 interface Database<T extends object = any> {
   object: T;
   get(path: string): any;
   set(path: string, value: any): void;
-  use(path: string): any;
+  use<T extends any = any>(path: string): T;
 }
 
 function debounce<F extends (...args: any[]) => void>(fn: F, ms: number): F {
@@ -93,9 +93,6 @@ export async function createDatabase<T extends object = Record<string, any>>(
   path: string,
   debounceMs = 200,
 ): Promise<Database<T>> {
-  await (window as any).$ready;
-  const { fs }: Sdk = (window as any).$;
-
   let raw: T;
   try {
     const content = await fs.readTextFile(path);
@@ -137,7 +134,7 @@ export async function createDatabase<T extends object = Record<string, any>>(
 
   const proxy = makeReactive(raw, "", notifyChange);
 
-  function use(keyPath: string): any {
+  function use<T extends any = any>(keyPath: string): T {
     const [value, setValue] = useState(() => cloneValue(getPath(raw, keyPath)));
 
     useEffect(() => {

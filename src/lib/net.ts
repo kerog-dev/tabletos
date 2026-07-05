@@ -1,9 +1,4 @@
-import { getServerAddr } from "./server.ts";
-import storage from "./storage.ts";
-
-function proxyRequired() {
-  return storage.proxyRequired ?? false;
-}
+import { getServerAddr, proxyRequired } from "./server.ts";
 
 function shouldProxy(target: string) {
   if (target.includes("192.168.") || target.includes("localhost") || target.includes("127.0.0.")) return false;

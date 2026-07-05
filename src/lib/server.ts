@@ -1,4 +1,18 @@
-import storage from "./storage.ts";
+import { createDatabase } from "../jsondb.ts";
+
+interface DB {
+  serverIp: string | null;
+  proxyRequired: boolean;
+}
+
+const db = await createDatabase<DB>("/net.json");
+
+db.object.proxyRequired ??= false;
+db.object.serverIp ??= null;
+
+export function proxyRequired() {
+  return db.object.proxyRequired;
+}
 
 async function ping(ip: string): Promise<boolean> {
   try {
@@ -24,24 +38,24 @@ async function discovery() {
     })
   ));
   console.log(`discovery: found: ${found.length > 0 ? found.join(", ") : "no servers"}`);
-  storage.serverIp = found[0] ?? null;
+  db.object.serverIp = found[0] ?? null;
   lastPing = found.length > 0 ? Date.now() : 0;
 }
 
 async function getIp(): Promise<string | null> {
   const now = Date.now();
-  if (!storage.serverIp) await discovery();
+  if (!db.object.serverIp) await discovery();
   else if (now - lastPing > 5 * 60 * 1_000) {
-    const result = await ping(storage.serverIp ?? "");
+    const result = await ping(db.object.serverIp ?? "");
     if (result) {
       lastPing = now;
     } else {
       lastPing = 0;
       await discovery();
-      return storage.serverIp ?? null;
+      return db.object.serverIp ?? null;
     }
   }
-  return storage.serverIp ?? null;
+  return db.object.serverIp ?? null;
 }
 
 export async function getServerAddr(): Promise<string | null> {

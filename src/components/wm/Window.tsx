@@ -10,7 +10,7 @@ import { ContextMenu } from "../ContextMenu.tsx";
 import ErrorBoundary from "../ErrorBoundary.tsx";
 import { dragger } from "./drag.ts";
 import { WindowContext } from "./WindowContext.tsx";
-import { windowTransparency } from "./WindowManager.tsx";
+import { wmDb as db } from "./WindowManager.tsx";
 
 function WindowContent(
   { app, hidden = false, args }: {
@@ -72,6 +72,7 @@ export function Window(
   const [floatRect, setFloatRect] = useState({ x: 0, y: 0, width: 0, height: 0 });
   const isMountedRef = useRef<boolean>(false);
   const [ctxPos, setCtxPos] = useState<[number, number] | null>(null);
+  const windowTransparency = db.use<number>("windowTransparency");
 
   useEffect(() => {
     if (!windowEl.current) return;

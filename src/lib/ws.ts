@@ -11,7 +11,7 @@ const queue: string[] = [];
 async function connect() {
   const addr = await getServerAddr();
   if (!addr) return null;
-  const newWs = new WebSocket(`${addr}/ws`);
+  const newWs = new WebSocket(`${addr.replace("http:", "ws:")}/ws`);
 
   newWs.addEventListener("open", () => {
     retries = 0;

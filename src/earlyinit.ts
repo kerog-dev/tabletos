@@ -5,6 +5,7 @@ window.addEventListener("error", e => {
     alert(`Error: ${e.error}`);
   }
 });
+
 window.addEventListener("unhandledrejection", e => {
   alert(`Promise rejection: ${e.reason}`);
 });

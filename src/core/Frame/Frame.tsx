@@ -1,15 +1,28 @@
 import { useState } from "react";
 import type { Sdk } from "../../sdk.ts";
 
-const { useStorage }: Sdk = (window as any).$;
+interface DB {
+  recent: string[];
+}
+
+const { jsonDB, getAppDir }: Sdk = (window as any).$;
+
+const appDir = await getAppDir("Frame");
+const db = await jsonDB<DB>(`${appDir}/db.json`);
+
+db.object.recent ??= [];
 
 export default function Frame({ args }: { args: [] | [string] }) {
   const [uri, setUri] = useState<string | null>(args[0] ?? null);
-  const [recent, setRecent] = useStorage<string[]>("frame.recent", []);
+  const recent = db.use<string[]>("recent");
   const [value, setValue] = useState("");
 
   function go() {
-    setRecent([...recent.filter(x => x !== value), value]);
+    const i = db.object.recent.indexOf(value);
+    if (i !== -1) {
+      db.object.recent.splice(i, 1);
+    }
+    db.object.recent.push(value);
     setUri(value);
   }
 
@@ -22,7 +35,7 @@ export default function Frame({ args }: { args: [] | [string] }) {
           {recent.map(entry => <li key={entry} onClick={() => setUri(entry)}>{entry} (click to go)</li>)}
         </ul>
         <br />
-        <button onClick={() => setRecent([])}>clear recent</button>
+        <button onClick={() => db.object.recent = []}>clear recent</button>
         <br />
         enter URL:{" "}
         <input

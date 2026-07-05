@@ -5,7 +5,6 @@ import { AppearanceSettingsPage } from "./AppearanceSettingsPage.tsx";
 import { AppManagerPage } from "./AppManagerPage.tsx";
 import DeviceNamePage from "./DeviceNamePage.tsx";
 import { ServiceManagerPage } from "./ServiceManagerPage.tsx";
-import { StoragePage } from "./StoragePage.tsx";
 import "./System.css";
 import type { Sdk } from "../../sdk.ts";
 
@@ -29,7 +28,6 @@ setTray({
 const pages: Record<string, JSX.Element> = {
   "Home": <HomePage />,
   "Appearance Settings": <AppearanceSettingsPage />,
-  "Storage": <StoragePage />,
   "Service Manager": <ServiceManagerPage />,
   "App Manager": <AppManagerPage />,
   "Device Name": <DeviceNamePage />,

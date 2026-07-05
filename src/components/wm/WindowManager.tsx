@@ -3,11 +3,19 @@ import { type App, apps } from "../../packages.ts";
 import { Taskbar } from "./Taskbar.tsx";
 import { Window } from "./Window.tsx";
 import "./WindowManager.css";
-import wallpaperUrl from "vfs:/wallpaper.img?url";
-import storage from "../../lib/storage.ts";
+import { createDatabase } from "../../jsondb.ts";
+import * as fs from "../../lib/fs.ts";
 import { Shortcuts } from "./Shortcuts.tsx";
 
-export const windowTransparency = storage.windowTransparency ?? 0;
+interface DB {
+  windowTransparency: number;
+}
+
+const db = await createDatabase<DB>("/wm.json");
+
+db.object.windowTransparency ??= 0;
+
+export { db as wmDb };
 
 export interface WindowDesc {
   id: number;
@@ -24,6 +32,7 @@ export default function WindowManager() {
   const curZ = useRef(0);
   const curId = useRef(0);
   const windowAreaRef = useRef<HTMLDivElement | null>(null);
+  const wallpaperUrl = fs.useBlobFileUrl("/wallpaper.img");
 
   function spawnWindow(
     app: App,
