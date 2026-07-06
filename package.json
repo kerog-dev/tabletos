@@ -9,6 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@noble/ciphers": "^2.2.0",
+    "@noble/curves": "^2.2.0",
     "@vidstack/react": "^1.15.6",
     "atrament": "^5.1.0",
     "cheerio": "^1.2.0",

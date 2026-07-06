@@ -68,7 +68,7 @@ export function send(type: string, to: string | string[] | "*all*", data: any) {
   else queue.push(encoded);
 }
 
-type MessageListener = (data: any, from: string) => void;
+export type MessageListener = (data: any, from: string) => void;
 
 const listeners: Partial<Record<string, MessageListener[]>> = {};
 
