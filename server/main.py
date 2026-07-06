@@ -1,4 +1,5 @@
 from starlette.websockets import WebSocket
+from urllib.parse import urljoin
 import os
 import socket
 import hashlib
@@ -105,11 +106,14 @@ async def proxy(request: Request):
     except httpx.HTTPError as exc:
         return PlainTextResponse(f"Upstream request failed: {exc}", status_code=502)
 
-    response_headers = [
-        (k, v)
-        for k, v in upstream.headers.raw
-        if k.decode("latin-1").lower() not in HOP_BY_HOP_HEADERS
-    ]
+    response_headers = []
+    for k, v in upstream.headers.raw:
+        key = k.decode("latin-1")
+        if key.lower() in HOP_BY_HOP_HEADERS:
+            continue
+        if key.lower() == "location":
+            v = urljoin(target_url, v.decode("latin-1")).encode("latin-1")
+        response_headers.append((k, v))
 
     async def body_iter():
         try:
