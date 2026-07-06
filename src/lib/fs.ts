@@ -297,25 +297,19 @@ export async function move(from: string, to: string) {
     toMove.map(oldKey => to + oldKey.slice(from.length)),
   );
 
-  // Anything currently under `to` that won't be directly overwritten by the
-  // move gets wiped, so the destination ends up a replica of `from`'s
-  // subtree rather than a merge of the two.
-  const toNuke = allKeys.filter(
+  const toDelete = allKeys.filter(
     key => (key === to || key.startsWith(to + "/")) && !targetKeys.has(key),
   );
 
   const tx = db.transaction("fs", "readwrite", { durability: "strict" });
   const fsStore = tx.objectStore("fs");
 
-  // Read everything first — `from` and `to` can overlap (moving "/x/y" onto
-  // "/x"), so a source key can also be a nuke target. Reading before deleting
-  // avoids losing data in that case.
   const entries = new Map<string, unknown>();
   for (const oldKey of toMove) {
     entries.set(oldKey, await fsStore.get(oldKey));
   }
 
-  for (const key of toNuke) {
+  for (const key of toDelete) {
     await fsStore.delete(key);
   }
 
@@ -329,7 +323,7 @@ export async function move(from: string, to: string) {
 
   tx.commit();
 
-  for (const key of toNuke) {
+  for (const key of toDelete) {
     emitWatchAction(key, "delete");
   }
   for (const [oldKey, newKey] of renamed) {
@@ -338,15 +332,71 @@ export async function move(from: string, to: string) {
   }
 }
 
-export async function unlink(path: string) {
-  await assertPathExists(path);
-  if (await isDir(path) && (await ls(path)).length > 0) {
-    throw `Directory ${path} is not empty.`;
+async function listMountEntriesPostOrder(
+  m: Mount,
+  relPath: string,
+): Promise<{ path: string; type: "file" | "dir" }[]> {
+  const type = await m.stat(relPath);
+  if (type === "dir") {
+    const entries: { path: string; type: "file" | "dir" }[] = [];
+    for (const child of await m.ls(relPath)) {
+      const childPath = relPath === "/" ? "/" + child : relPath + "/" + child;
+      entries.push(...await listMountEntriesPostOrder(m, childPath));
+    }
+    entries.push({ path: relPath, type: "dir" });
+    return entries;
   }
+  return [{ path: relPath, type: "file" }];
+}
+
+async function unlinkMountRecursive(m: Mount, relPath: string) {
+  const entries = await listMountEntriesPostOrder(m, relPath);
+  for (const entry of entries) await m.unlink(entry.path);
+  return entries;
+}
+
+export async function unlink(path: string, { recursive = false }: { recursive?: boolean } = {}) {
+  await assertPathExists(path);
+
+  if (!recursive) {
+    if (await isDir(path) && (await ls(path)).length > 0) {
+      throw `Directory ${path} is not empty.`;
+    }
+    const m = resolveMount(path);
+    if (m) await m.mount.unlink(m.relative);
+    else await db.delete("fs", path);
+    emitWatchAction(path, "delete");
+    return;
+  }
+
   const m = resolveMount(path);
-  if (m) await m.mount.unlink(m.relative);
-  else await db.delete("fs", path);
-  emitWatchAction(path, "delete");
+  if (m) {
+    const entries = await unlinkMountRecursive(m.mount, m.relative);
+    for (const entry of entries) {
+      emitWatchAction(m.mount.root + (entry.path === "/" ? "" : entry.path), "delete");
+    }
+    return;
+  }
+
+  const realKeys = (await db.getAllKeys("fs"))
+    .filter((k): k is string => typeof k === "string" && (k === path || k.startsWith(path + "/")));
+
+  const tx = db.transaction("fs", "readwrite", { durability: "strict" });
+  const fsStore = tx.objectStore("fs");
+  for (const key of realKeys) await fsStore.delete(key);
+  tx.commit();
+
+  for (const key of [...realKeys].sort((a, b) => b.length - a.length)) {
+    emitWatchAction(key, "delete");
+  }
+
+  const nestedMounts = mounts.filter(mnt => mnt.root === path || mnt.root.startsWith(path + "/"));
+  for (const mnt of nestedMounts) {
+    const entries = await unlinkMountRecursive(mnt, "/");
+    for (const entry of entries) {
+      emitWatchAction(mnt.root + (entry.path === "/" ? "" : entry.path), "delete");
+    }
+  }
 }
 
 export function watchFile(
