@@ -59,7 +59,7 @@ async def lifespan(app: Starlette):
             max_keepalive_connections=50,
             keepalive_expiry=30.0,
         ),
-        follow_redirects=False,
+        follow_redirects=True,
     )
     try:
         yield
