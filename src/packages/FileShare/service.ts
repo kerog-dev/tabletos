@@ -87,21 +87,35 @@ const service: Service = {
 
     const control: Control = {
       async sendFile({ blob, targetClient, filename, onError, onProgress, onFinished }) {
+        const concurrency = 4;
         try {
           const proxy = conn.proxyObject<RpcObject>(targetClient, "fileshare");
           const buffer = new Uint8Array(await blob.arrayBuffer());
           const size = buffer.length;
-
           await proxy.startTransfer(conn.name, filename, size, blob.type);
 
           const chunks = Math.ceil(size / CHUNK_SIZE);
+          let bytesSent = 0;
 
-          for (let chunkI = 0; chunkI < chunks; chunkI += 1) {
+          async function sendChunk(chunkI: number) {
             const start = chunkI * CHUNK_SIZE;
-            const end = (chunkI + 1) * CHUNK_SIZE;
+            const end = Math.min(start + CHUNK_SIZE, size);
             const chunkStr = bytesToBinaryString(buffer.subarray(start, end));
             await proxy.addChunk(conn.name, filename, chunkI, chunkStr);
-            onProgress(Math.round((end / size) * 100));
+            bytesSent += end - start;
+            onProgress(Math.round((bytesSent / size) * 100));
+          }
+
+          let next = 0;
+          const inFlight = new Map<number, Promise<void>>();
+
+          while (next < chunks || inFlight.size > 0) {
+            while (inFlight.size < concurrency && next < chunks) {
+              const i = next++;
+              const p = sendChunk(i).finally(() => inFlight.delete(i));
+              inFlight.set(i, p);
+            }
+            await Promise.race(inFlight.values());
           }
         } catch (err) {
           onError(`Send failed: ${err}`);
