@@ -112,7 +112,7 @@ const service: Service = {
           parts,
         };
         db.object.chats[targetId]?.messages.push({ me: true, parts, ts: Date.now() });
-        await sdk.conn.call<void>(`${targetId}::chat::sendMessage`, [m]);
+        await sdk.conn.call<void>(`${targetId}::chat::sendMessage`, [m], true);
       },
       useChats() {
         return Object.entries(db.use("chats") as DB["chats"]).map(([id, c]: [string, DBChat]) => ({
@@ -131,7 +131,10 @@ const service: Service = {
       },
     };
 
-    sdk.conn.exposeObject(object, "chat");
+    sdk.conn.exposeObject(object, "chat", true, (path, args: SendMessageObject[], from) => {
+      if (path.path !== "sendMessage" || args.length !== 1 || args[0].fromId !== from) return false;
+      return true;
+    });
 
     return {
       exposed: controller,

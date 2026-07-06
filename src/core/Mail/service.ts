@@ -81,7 +81,10 @@ const service: Service = {
       },
     };
 
-    sdk.conn.exposeObject(object, "mail");
+    sdk.conn.exposeObject(object, "mail", true, (path, args: Mail[], from) => {
+      if (path.path !== "sendMail" || args.length !== 1 || false /* args[0].from !== from */) return false;
+      return false;
+    });
 
     const controller: Controller = {
       sendMail(req) {
@@ -125,7 +128,7 @@ const service: Service = {
         if (mail.delivery.length === mail.mail.to.length) continue;
         const toTry = mail.mail.to.filter(to => !mail.delivery.includes(to));
         for (const to of toTry) {
-          sdk.conn.call<void>(`${to}::mail::sendMail`, [mail.mail]).then(() => {
+          sdk.conn.call<void>(`${to}::mail::sendMail`, [mail.mail], true).then(() => {
             mail.delivery.push(to);
             sdk.toast({ title: `Delivered ${mail.mail.subject} to ${to}` });
           })
