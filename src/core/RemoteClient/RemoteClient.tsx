@@ -44,7 +44,7 @@ export default function RemoteClient() {
       object.current = null;
       return;
     }
-    object.current = conn.proxyObject<RemoteServerObject>(clientId, "remoteserver");
+    object.current = conn.proxyObject<RemoteServerObject>(clientId, "remoteserver", true);
   }, [clientId]);
 
   useEffect(() => {

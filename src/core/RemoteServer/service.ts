@@ -16,12 +16,21 @@ export interface RemoteServerObject {
   writeBlob: (path: string, encoded: string) => Promise<void>;
 }
 
+interface DB {
+  authorizedClients: string[];
+}
+
 const service: Service = {
   info: {
     name: "Remote Server Service",
-    autostart: false,
+    autostart: true,
   },
-  start({ fs, spawnWindow, toast, conn, screenshot }) {
+  async start({ fs, spawnWindow, toast, conn, screenshot, jsonDB, getAppDir }) {
+    const appDir = await getAppDir("RemoteServer");
+    const db = await jsonDB<DB>(`${appDir}/db.json`);
+
+    db.object.authorizedClients ??= [];
+
     const object: RemoteServerObject = {
       fs,
       spawnWindow,
@@ -60,7 +69,9 @@ const service: Service = {
       writeBlob: async (path, encoded) => await fs.writeFile(path, jsonStringToBlob(encoded)),
     };
 
-    conn.exposeObject(object, "remoteserver");
+    conn.exposeObject(object, "remoteserver", true, (_0, _1, from) => {
+      return db.object.authorizedClients.includes(from);
+    });
     return {
       stop() {
         conn.unexposeObject("remoteserver");
