@@ -4,12 +4,11 @@ import react from "@vitejs/plugin-react";
 import { zipSync } from "fflate";
 import { globSync } from "glob";
 import { existsSync } from "node:fs";
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { copyFile, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { extname, resolve } from "node:path";
 import { build } from "vite";
 import cssInjectedByJsPlugin from "vite-plugin-css-injected-by-js";
 import vitePluginVfsImport from "./vite-plugin-vfs-import.ts";
-
 const outDir = resolve(import.meta.dirname, "dist/packages");
 
 await rm(outDir, { recursive: true, force: true });
@@ -18,11 +17,15 @@ await mkdir(outDir, { recursive: true });
 const packages = [...globSync("src/packages/*"), ...globSync("src/private-packages/*")].map(f => {
   const name = f.replace(/src\/(private\-)?packages\//, "");
   const dir = resolve(import.meta.dirname, f);
+  const icons = globSync(`${dir}/icon.*`);
+  if (icons.length > 1) throw `More than one icon in app ${dir}`;
+
   return {
     name,
     dir,
     hasApp: existsSync(`${dir}/${name}.tsx`),
     hasService: existsSync(`${dir}/service.ts`),
+    icon: icons[0],
   };
 });
 
@@ -99,8 +102,14 @@ const serviceBuilds = packages
 await Promise.all([...appBuilds, ...serviceBuilds]);
 
 await Promise.all(
-  packages.map(async ({ name }) => {
+  packages.map(async ({ name, icon }) => {
     const pkgDir = resolve(outDir, name);
+
+    if (icon) {
+      await mkdir(pkgDir, { recursive: true });
+      await copyFile(icon, resolve(pkgDir, `icon${extname(icon)}`));
+    }
+
     const files = globSync(`${pkgDir}/**/*`, { nodir: true });
     if (files.length === 0) return;
 

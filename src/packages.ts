@@ -61,12 +61,26 @@ const devPackageModules = import.meta.env.DEV
     })
   : [];
 
+const devPackageIconModules = import.meta.env.DEV
+  ? Object.entries(
+    import.meta.glob("./packages/*/icon.*", { eager: true, query: "?url" }) as Record<string, { default: string }>,
+  )
+  : [];
+const devPackageIcons = import.meta.env.DEV
+  ? Object.fromEntries(
+    devPackageIconModules.map(([path, { default: url }]): [string, string] => [
+      path.split("/").at(-2)!,
+      url,
+    ]),
+  )
+  : {};
+
 export const apps: App[] = [...appModules, ...devPackageModules].map(([path, importFunc]) => {
   const name = path.split("/").at(-2)!;
 
   return {
     name,
-    iconUrl: appIcons[name],
+    iconUrl: appIcons[name] ?? devPackageIcons[name],
     component: lazy(importFunc as () => Promise<{ default: React.FC<AppComponentParams> }>),
     isCore: true,
   };
@@ -75,14 +89,14 @@ export const apps: App[] = [...appModules, ...devPackageModules].map(([path, imp
 const appChangeListeners = createListenerSet<[]>();
 const appsChanged = () => appChangeListeners.emit();
 
-export async function loadAppFromScript(name: string, script: string) {
+export async function loadAppFromScript(name: string, script: string, icon?: string) {
   if (apps.some(app => app.name === name)) throw "App with that name is already loaded!";
 
   const blob = new Blob([script], { type: "text/javascript" });
   const uri = URL.createObjectURL(blob);
 
   const mod = () => import(/* @vite-ignore */ uri);
-  const app: App = { name, component: lazy(mod), isCore: false };
+  const app: App = { name, component: lazy(mod), isCore: false, iconUrl: icon };
 
   apps.push(app);
   appsChanged();
@@ -295,7 +309,20 @@ export async function loadPackageBlob(name: string, zipBlob: Blob) {
   });
   const promises = [];
 
-  if (data[name + ".js"]) promises.push(loadAppFromScript(name, new TextDecoder().decode(data[name + ".js"])));
+  const iconMime: Record<string, string> = {
+    png: "image/png",
+    svg: "image/svg+xml",
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    webp: "image/webp",
+  };
+
+  const iconKey = Object.keys(data).find(k => k.startsWith("icon.") && !k.includes("/"));
+  const icon = iconKey
+    ? URL.createObjectURL(new Blob([data[iconKey]], { type: iconMime[iconKey.split(".").at(-1)!] }))
+    : undefined;
+
+  if (data[name + ".js"]) promises.push(loadAppFromScript(name, new TextDecoder().decode(data[name + ".js"]), icon));
   if (data["service.js"]) {
     promises.push(loadPackageService(name, new Blob([data["service.js"]], { type: "text/javascript" })));
   }
