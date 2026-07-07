@@ -44,6 +44,8 @@ function Mail(
       <p>
         Sent at: {formatTime(mail.sentAt)}
         <br />
+        From: {mail.from}
+        <br />
         To: {mail.to}
         <br />
         Id: {mail.id}

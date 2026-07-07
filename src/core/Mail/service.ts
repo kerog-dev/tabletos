@@ -17,6 +17,7 @@ interface Mail {
   id: string;
   sentAt: number;
   to: string[];
+  from: string;
   subject: string;
   content: MailPart[];
 }
@@ -35,6 +36,7 @@ interface MailInfo {
   id: string;
   sentAt: number;
   to: string[];
+  from: string;
   subject: string;
 }
 
@@ -81,15 +83,17 @@ const service: Service = {
       },
     };
 
-    sdk.conn.exposeObject(object, "mail", true, (path, args: Mail[], from) => {
-      if (path.path !== "sendMail" || args.length !== 1 || false /* args[0].from !== from */) return false;
-      return false;
-    });
+    sdk.conn.exposeObject(
+      object,
+      "mail",
+      true,
+      (path, args: Mail[], from) => path.path === "sendMail" && args[0].from === from,
+    );
 
     const controller: Controller = {
       sendMail(req) {
         const mail: DBOutboxMail = {
-          mail: { ...req, id: randomId(16), sentAt: Date.now() },
+          mail: { ...req, id: randomId(16), sentAt: Date.now(), from: sdk.conn.name },
           delivery: [],
         };
         db.object.outbox.push(mail);
@@ -103,12 +107,14 @@ const service: Service = {
               id: mail.mail.id,
               sentAt: mail.mail.sentAt,
               to: mail.mail.to,
+              from: mail.mail.from,
             })
             : ({
               subject: mail.subject,
               id: mail.id,
               sentAt: mail.sentAt,
               to: mail.to,
+              from: mail.from,
             })
         );
       },
