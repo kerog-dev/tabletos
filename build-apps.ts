@@ -42,7 +42,7 @@ const appBuilds = packages
       },
       build: {
         outDir: resolve(outDir, name),
-        assetsInlineLimit: 100_000_000,
+        assetsInlineLimit: Number.MAX_SAFE_INTEGER,
         cssCodeSplit: false,
         lib: { entry: `${dir}/${name}.tsx`, formats: ["es"] },
         minify: true,

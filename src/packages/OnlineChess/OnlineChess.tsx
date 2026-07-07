@@ -1,8 +1,11 @@
-import { useEffect, useRef, useState } from "react";
-import "gchessboard";
 import { Chess } from "chess.js";
+import { useEffect, useRef, useState } from "react";
 import { sdk } from "../../getsdk.ts";
 import type { Controller } from "./service.ts";
+
+if (!customElements.get("g-chess-board")) {
+  await import("gchessboard");
+}
 
 const GChessboard = "g-chess-board" as any;
 

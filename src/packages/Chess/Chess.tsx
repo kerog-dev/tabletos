@@ -1,7 +1,10 @@
 import { Chess } from "chess.js";
 import { useEffect, useRef, useState } from "react";
-import "gchessboard";
 import { useWindow } from "../../components/wm/WindowContext";
+
+if (!customElements.get("g-chess-board")) {
+  await import("gchessboard");
+}
 
 const GChessboard = "g-chess-board" as any;
 

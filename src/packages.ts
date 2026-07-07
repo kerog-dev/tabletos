@@ -342,7 +342,7 @@ async function loadPackage(name: string): Promise<void> {
 
 export async function unloadPackage(name: string) {
   if (packageServiceNameMapping[name]) sv.unload(packageServiceNameMapping[name]);
-  unloadApp(name);
+  if (apps.some(app => app.name === name)) unloadApp(name);
 }
 
 async function loadPackages() {

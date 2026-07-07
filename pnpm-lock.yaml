@@ -44,9 +44,15 @@ importers:
       idb:
         specifier: ^8.0.3
         version: 8.0.3
+      insane:
+        specifier: ^2.6.2
+        version: 2.6.2
       js-sha256:
         specifier: ^0.11.1
         version: 0.11.1
+      marked:
+        specifier: ^18.0.5
+        version: 18.0.5
       mathjs:
         specifier: ^15.2.0
         version: 15.2.0
@@ -60,6 +66,9 @@ importers:
         specifier: ^5.0.14
         version: 5.0.14(@types/react@19.2.15)(react@19.2.6)
     devDependencies:
+      '@types/insane':
+        specifier: ^1.0.0
+        version: 1.0.0
       '@types/node':
         specifier: ^24.12.4
         version: 24.12.4
@@ -399,6 +408,9 @@ packages:
   '@tybys/wasm-util@0.10.2':
     resolution: {integrity: sha512-RoBvJ2X0wuKlWFIjrwffGw1IqZHKQqzIchKaadZZfnNpsAYp2mM0h36JtPCjNDAHGgYez/15uMBpfGwchhiMgg==}
 
+  '@types/insane@1.0.0':
+    resolution: {integrity: sha512-9FNbmwdaQezEszc5B/w4kRSpMJMOVj+gX7CKSbBCFO4WPiUqKO3HJlUNXzjtus0w5tF2BOJoKTbyps/Envlg/Q==}
+
   '@types/node@24.12.4':
     resolution: {integrity: sha512-GUUEShf+PBCGW2KaXwcIt3Yk+e3pkKwWKb9GSyM9WQVE+ep2jzmHdGsHzu4wgcZy5fN9FBdVzjpBQsYlpfpgLA==}
 
@@ -433,6 +445,9 @@ packages:
   ansi-regex@6.2.2:
     resolution: {integrity: sha512-Bq3SmSpyFHaWjPk8If9yc6svM8c56dB5BAtW4Qbw5jHTwwXXcTLoRMkpDJp6VL0XzlWaCHTXrkFURMYmD0sLqg==}
     engines: {node: '>=12'}
+
+  assignment@2.0.0:
+    resolution: {integrity: sha512-naMULXjtgCs9SVUEtyvJNt68aF18em7/W+dhbR59kbz9cXWPEvUkCun2tqlgqRPSqZaKPpqLc5ZnwL8jVmJRvw==}
 
   atrament@5.1.0:
     resolution: {integrity: sha512-HCwK0o6pqtMN8yjBr3gUiOQKDsPomaz99HhUrWp2r+Lhb8j3uAklbbWlkYkKNiBW5S2OL0ohapWeiEddSG5Beg==}
@@ -560,6 +575,10 @@ packages:
     resolution: {integrity: sha512-sepffkT8stwnIYbsMBpoCHJuJM5l98FUF2AnE07hfvE0m/qp3R586hw4jF4uadbhvg1ooIdzuu7CsfD2jzCaNA==}
     engines: {node: '>=18'}
 
+  he@0.5.0:
+    resolution: {integrity: sha512-DoufbNNOFzwRPy8uecq+j+VCPQ+JyDelHTmSgygrA5TsR8Cbw4Qcir5sGtWiusB4BdT89nmlaVDhSJOqC/33vw==}
+    hasBin: true
+
   hls.js@1.6.16:
     resolution: {integrity: sha512-VSIRpLfRwlAAdGL4wiTucx2ScRipo0ed1FBatWkyt832jC4CReKstga6yIhYVwGu9LOBjuX9wzmRMeQdBJtzEA==}
 
@@ -576,6 +595,9 @@ packages:
 
   idb@8.0.3:
     resolution: {integrity: sha512-LtwtVyVYO5BqRvcsKuB2iUMnHwPVByPCXFXOpuU96IZPPoPN6xjOGxZQ74pgSVVLQWtUOYgyeL4GE98BY5D3wg==}
+
+  insane@2.6.2:
+    resolution: {integrity: sha512-BqEL1CJsjJi+/C/zKZxv31zs3r6zkLH5Nz1WMFb7UBX2KHY2yXDpbFTSEmNHzomBbGDysIfkTX55A0mQZ2CQiw==}
 
   is-number@7.0.0:
     resolution: {integrity: sha512-41Cifkg6e8TylSpdtTpeLVMqvSBEVzTttHvERD741+pnZ8ANv0004MRL43QKPDlK9cGvNp6NZWZUBlbGXYxxng==}
@@ -668,6 +690,11 @@ packages:
   lru-cache@11.5.1:
     resolution: {integrity: sha512-RPimw/7aMdv2oqRrxKwvZXcPfwBrn/JZ2xYcY9Hus/6LaS3VOAKVWKWgNLCFSiOm1ESXinjsDlidVU7JlnCN2A==}
     engines: {node: 20 || >=22}
+
+  marked@18.0.5:
+    resolution: {integrity: sha512-S6GcvALHg6K4ohtu4E7x0a1AqhAjp6cV8KhLSyN9qVapnzJkusVBxZRcIU9AeYsbe6P1hKDusSbEOzGyyuce6w==}
+    engines: {node: '>= 20'}
+    hasBin: true
 
   mathjs@15.2.0:
     resolution: {integrity: sha512-UAQzSVob9rNLdGpqcFMYmSu9dkuLYy7Lr2hBEQS5SHQdknA9VppJz3cy2KkpMzTODunad6V6cNv+5kOLsePLow==}
@@ -1074,6 +1101,8 @@ snapshots:
       tslib: 2.8.1
     optional: true
 
+  '@types/insane@1.0.0': {}
+
   '@types/node@24.12.4':
     dependencies:
       undici-types: 7.16.0
@@ -1099,6 +1128,8 @@ snapshots:
       vite: 8.0.14(@types/node@24.12.4)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4)
 
   ansi-regex@6.2.2: {}
+
+  assignment@2.0.0: {}
 
   atrament@5.1.0: {}
 
@@ -1252,6 +1283,8 @@ snapshots:
 
   globals@17.6.0: {}
 
+  he@0.5.0: {}
+
   hls.js@1.6.16: {}
 
   html2canvas@1.4.1:
@@ -1271,6 +1304,11 @@ snapshots:
       safer-buffer: 2.1.2
 
   idb@8.0.3: {}
+
+  insane@2.6.2:
+    dependencies:
+      assignment: 2.0.0
+      he: 0.5.0
 
   is-number@7.0.0: {}
 
@@ -1330,6 +1368,8 @@ snapshots:
       lightningcss-win32-x64-msvc: 1.32.0
 
   lru-cache@11.5.1: {}
+
+  marked@18.0.5: {}
 
   mathjs@15.2.0:
     dependencies:

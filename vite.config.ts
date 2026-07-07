@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     target: ["chrome103", "edge146", "firefox140", "opera127", "safari18.5"],
-    assetsInlineLimit: 100_000_000, // inline everything, including fonts/images
+    assetsInlineLimit: Number.MAX_SAFE_INTEGER, // inline everything, including fonts/images
     cssCodeSplit: false,
     minify: true,
   },

@@ -20,13 +20,16 @@
     "hls.js": "^1.6.16",
     "html2canvas": "^1.4.1",
     "idb": "^8.0.3",
+    "insane": "^2.6.2",
     "js-sha256": "^0.11.1",
+    "marked": "^18.0.5",
     "mathjs": "^15.2.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@types/insane": "^1.0.0",
     "@types/node": "^24.12.4",
     "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
