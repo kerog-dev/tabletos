@@ -21,7 +21,7 @@ function getStatus(chess: Chess): string {
   return `${side} to move.`;
 }
 
-function Board({ gameId, exposed }: { gameId: string; exposed: Controller }) {
+function Board({ gameId, exposed, back }: { gameId: string; exposed: Controller; back: () => void }) {
   const games = exposed.useGameList();
   const game = games.find(g => g.gameId === gameId);
   const boardRef = useRef<any>(null);
@@ -69,6 +69,7 @@ function Board({ gameId, exposed }: { gameId: string; exposed: Controller }) {
         containerType: "size",
       }}
     >
+      <button onClick={() => back()}>Back</button>
       <GChessboard
         ref={boardRef}
         fen={game.fen}
@@ -139,5 +140,5 @@ export default function OnlineChess() {
 
   if (!game) return <GameList exposed={exposed} setGame={setGame} />;
 
-  return <Board gameId={game} exposed={exposed} />;
+  return <Board gameId={game} exposed={exposed} back={() => setGame(null)} />;
 }

@@ -1,4 +1,5 @@
 import { loadPackageBlob, type Service, unloadPackage } from "../../packages.ts";
+import type { ScreenshotService } from "../../packages/ScreenshotService/service.ts";
 import type { Sdk } from "../../sdk.ts";
 import { blobToJsonString, jsonStringToBlob } from "../../utils.ts";
 
@@ -25,7 +26,7 @@ const service: Service = {
     name: "Remote Server Service",
     autostart: true,
   },
-  async start({ fs, spawnWindow, toast, conn, screenshot, jsonDB, getAppDir }) {
+  async start({ fs, spawnWindow, toast, conn, jsonDB, getAppDir, sv }) {
     const appDir = await getAppDir("RemoteServer");
     const db = await jsonDB<DB>(`${appDir}/db.json`);
 
@@ -64,7 +65,8 @@ const service: Service = {
         } catch (e) {}
       },
       unloadPackage,
-      screenshot: async () => await blobToJsonString(await screenshot(0.3)),
+      screenshot: async () =>
+        await blobToJsonString(await sv.get<ScreenshotService>("Screenshot Service").screenshot(0.3)),
       readBlob: async path => await blobToJsonString(await fs.readBlobFile(path)),
       writeBlob: async (path, encoded) => await fs.writeFile(path, jsonStringToBlob(encoded)),
     };

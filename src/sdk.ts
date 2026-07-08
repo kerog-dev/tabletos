@@ -19,7 +19,6 @@ interface Sdk {
   conn: typeof conn;
   spawnWindow: (w: Omit<Partial<WindowDesc>, "app" | "id" | "z"> & { app: string }) => void;
   sv: typeof sv;
-  screenshot(quality?: number): Promise<Blob>;
   afetch: typeof afetch;
   deviceId: string;
   deviceName: string;
@@ -40,9 +39,6 @@ const sdk: Sdk = {
   conn,
   spawnWindow: () => {},
   sv,
-  screenshot() {
-    throw "ScreenshotService package not installed.";
-  },
   afetch,
   deviceId,
   deviceName,

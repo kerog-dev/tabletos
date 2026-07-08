@@ -1,6 +1,10 @@
 import html2canvas from "html2canvas";
 import type { Service } from "../../packages.ts";
 
+export interface ScreenshotService {
+  screenshot(quality?: number): Promise<Blob>;
+}
+
 const service: Service = {
   info: { name: "Screenshot Service", autostart: true },
   start() {
@@ -26,10 +30,13 @@ const service: Service = {
       });
     }
 
-    (window as any).$.screenshot = screenshot;
+    const exposed: ScreenshotService = {
+      screenshot,
+    };
+
     return {
+      exposed,
       stop() {
-        delete (window as any).$.screenshot;
       },
     };
   },
