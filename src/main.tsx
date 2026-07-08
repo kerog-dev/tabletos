@@ -8,6 +8,7 @@ import React from "react";
 import * as JSXRuntime from "react/jsx-runtime";
 import favicon from "./assets/favicon.svg";
 import WindowManager from "./components/wm/WindowManager.tsx";
+import { loadPackages } from "./loader/loader.ts";
 import { toast, Urgency } from "./toast.tsx";
 
 Object.assign(window as any, {
@@ -22,6 +23,8 @@ window.addEventListener("error", (e) => {
     alert(String(e.error));
   }
 });
+
+loadPackages();
 
 const faviconEl = document.createElement("link");
 faviconEl.rel = "icon";

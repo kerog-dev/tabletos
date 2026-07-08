@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { type App, useApps } from "../../packages.ts";
+import { type App, useApps } from "../../loader/loader.ts";
 import "./Taskbar.css";
 import closeIcon from "vfs:/vendor/icons/close.png?url";
 import fullscreenIcon from "vfs:/vendor/icons/fullscreen.png?url";

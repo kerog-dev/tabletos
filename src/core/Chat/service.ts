@@ -1,5 +1,5 @@
 import deviceName from "../../lib/devicename.ts";
-import type { Service } from "../../packages.ts";
+import type { Service } from "../../loader/loader.ts";
 
 interface MessagePartText {
   type: "text";

@@ -1,5 +1,5 @@
 import type { Mount } from "../../lib/fs.ts";
-import type { Service } from "../../packages.ts";
+import type { Service } from "../../loader/loader.ts";
 
 const BABEL_MAX_NAME_LENGTH = 2n;
 const BABEL_ALPHABET_LENGTH = 74n;

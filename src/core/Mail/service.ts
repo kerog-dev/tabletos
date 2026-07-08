@@ -1,4 +1,4 @@
-import type { Service } from "../../packages.ts";
+import type { Service } from "../../loader/loader.ts";
 import { randomId } from "../../utils.ts";
 
 interface MailPartText {

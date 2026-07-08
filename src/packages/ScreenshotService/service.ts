@@ -1,5 +1,5 @@
 import html2canvas from "html2canvas";
-import type { Service } from "../../packages.ts";
+import type { Service } from "../../loader/loader.ts";
 
 export interface ScreenshotService {
   screenshot(quality?: number): Promise<Blob>;

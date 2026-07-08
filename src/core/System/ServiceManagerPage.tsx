@@ -1,6 +1,6 @@
 import { useRouter } from "../../components/Router.tsx";
 import { sdk } from "../../getsdk.ts";
-import type { ServiceInfo } from "../../packages.ts";
+import type { ServiceInfo } from "../../loader/loader.ts";
 
 const { sv } = sdk();
 

@@ -1,4 +1,4 @@
-import { loadPackageBlob, type Service, unloadPackage } from "../../packages.ts";
+import { loadPackageBlob, type Service, unloadPackage } from "../../loader/loader.ts";
 import type { ScreenshotService } from "../../packages/ScreenshotService/service.ts";
 import type { Sdk } from "../../sdk.ts";
 import { blobToJsonString, jsonStringToBlob } from "../../utils.ts";
@@ -65,8 +65,13 @@ const service: Service = {
         } catch (e) {}
       },
       unloadPackage,
-      screenshot: async () =>
-        await blobToJsonString(await sv.get<ScreenshotService>("Screenshot Service").screenshot(0.3)),
+      screenshot: async () => {
+        const svc = sv.get<ScreenshotService>("Screenshot Service");
+        if (!svc) throw "Screenshot Service not running.";
+        const screenshot = await svc.screenshot(0.3);
+        if (!screenshot) throw "Failed to get screenshot.";
+        return await blobToJsonString(screenshot);
+      },
       readBlob: async path => await blobToJsonString(await fs.readBlobFile(path)),
       writeBlob: async (path, encoded) => await fs.writeFile(path, jsonStringToBlob(encoded)),
     };

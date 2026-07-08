@@ -6,8 +6,7 @@ import * as fs from "./lib/fs.ts";
 import { fetch as afetch } from "./lib/net.ts";
 import conn from "./lib/rpc.ts";
 import * as ws from "./lib/ws.ts";
-import { useApps } from "./packages.ts";
-import { sv } from "./packages.ts";
+import { sv, useApps } from "./loader/loader.ts";
 import { toast, Urgency } from "./toast.tsx";
 
 interface Sdk {

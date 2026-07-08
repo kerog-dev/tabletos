@@ -1,5 +1,5 @@
 import { sha256 } from "js-sha256";
-import type { Service } from "../../packages.ts";
+import type { Service } from "../../loader/loader.ts";
 
 async function hashBlob(blob: Blob): Promise<string> {
   return sha256(await blob.arrayBuffer());

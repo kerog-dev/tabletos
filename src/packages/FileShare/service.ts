@@ -1,4 +1,4 @@
-import type { Service } from "../../packages.ts";
+import type { Service } from "../../loader/loader.ts";
 
 interface RpcObject {
   startTransfer(from: string, file: string, size: number, contentType: string): void;

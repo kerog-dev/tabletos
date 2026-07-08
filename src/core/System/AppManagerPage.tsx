@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "../../components/Router.tsx";
 import { sdk } from "../../getsdk.ts";
 import { fetch } from "../../lib/net.ts";
-import { unloadApp } from "../../packages.ts";
+import { unloadApp } from "../../loader/loader.ts";
 import { toast, Urgency } from "../../toast.tsx";
 
 const { fs } = sdk();
