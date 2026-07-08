@@ -7,6 +7,8 @@ export const WindowContext = createContext<
     pos(): [number, number];
     size(): [number, number];
     kill(): void;
+    setConfirmationRequired(required?: () => boolean): void;
+    setTitle(title: string | null): void;
   } | null
 >(null);
 

@@ -14,6 +14,7 @@ export interface WindowDesc {
   z: number;
   minimized: boolean;
   args: any[];
+  title?: string;
 }
 
 export default function WindowManager() {
@@ -73,19 +74,16 @@ export default function WindowManager() {
         {windows.map((w) => (
           <Window
             key={w.id}
-            app={w.app}
-            initialPos={w.initialPos}
-            initialSize={w.initialSize}
-            z={w.z}
             kill={() => killWindow(w.id)}
             bringToTop={() => modifyWindow(w => ({ ...w, z: ++curZ.current }), w.id)}
             minimized={w.minimized}
             toggleMinimized={() => modifyWindow(w => ({ ...w, minimized: !w.minimized }), w.id)}
-            args={w.args}
             getWindowAreaSize={() => [
               windowAreaRef.current!.clientWidth,
               windowAreaRef.current!.clientHeight,
             ]}
+            setTitle={title => modifyWindow(w => ({ ...w, title: title ?? undefined }), w.id)}
+            desc={w}
           />
         ))}
       </div>

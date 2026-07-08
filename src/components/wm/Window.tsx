@@ -10,6 +10,7 @@ import { ContextMenu } from "../ContextMenu.tsx";
 import ErrorBoundary from "../ErrorBoundary.tsx";
 import { dragger } from "./drag.ts";
 import { WindowContext } from "./WindowContext.tsx";
+import type { WindowDesc } from "./WindowManager.tsx";
 import { useWindowTransparency } from "./wmdb.ts";
 
 function WindowContent(
@@ -52,17 +53,22 @@ function WindowContent(
 }
 
 export function Window(
-  { app, initialPos, initialSize, minimized, toggleMinimized, z, kill, bringToTop, args, getWindowAreaSize }: {
-    app: App;
-    initialPos: [number, number];
-    initialSize: [number, number];
-    z: number;
+  {
+    desc,
+    minimized,
+    toggleMinimized,
+    kill: upstreamKill,
+    bringToTop,
+    getWindowAreaSize,
+    setTitle,
+  }: {
+    desc: WindowDesc;
     kill: () => void;
     bringToTop: () => void;
     minimized: boolean;
     toggleMinimized: () => void;
-    args: any[];
     getWindowAreaSize: () => [number, number];
+    setTitle: (title: string | null) => void;
   },
 ) {
   const windowEl = useRef<HTMLDivElement | null>(null);
@@ -73,6 +79,10 @@ export function Window(
   const isMountedRef = useRef<boolean>(false);
   const [ctxPos, setCtxPos] = useState<[number, number] | null>(null);
   const windowTransparency = useWindowTransparency();
+  const [confirmer, setConfirmer] = useState(() => () => true);
+  const kill = () => {
+    if (confirmer()) upstreamKill();
+  };
 
   useEffect(() => {
     if (!windowEl.current) return;
@@ -148,8 +158,8 @@ export function Window(
   }
 
   useEffect(() => {
-    updatePos(() => initialPos);
-    updateSize(() => initialSize);
+    updatePos(() => desc.initialPos);
+    updateSize(() => desc.initialSize);
   }, []);
 
   useEffect(() => {
@@ -172,13 +182,19 @@ export function Window(
     pos: getPos,
     size: getSize,
     kill,
+    setConfirmationRequired: (required?: () => boolean) => {
+      if (required) setConfirmer(() => required);
+    },
+    setTitle: (title: string | null) => {
+      setTitle(title);
+    },
   };
 
   return (
     <div
       className="window-container"
       style={{
-        zIndex: fullscreen ? "10000" : z,
+        zIndex: fullscreen ? "10000" : desc.z,
         backgroundColor: `#ffffff${!fullscreen ? hexOpacity : ""}`,
       }}
       ref={windowEl}
@@ -217,7 +233,7 @@ export function Window(
         }}
         onClick={() => setCtxPos(null)}
       >
-        {app.name}
+        <div>{desc.title ? `${desc.title} - ${desc.app.name}` : desc.app.name}</div>
         <div>
           {([
             [fullscreenIcon, () => setFullscreen(f => !f), "Fullscreen"],
@@ -234,7 +250,7 @@ export function Window(
         </div>
       </div>
       <WindowContext.Provider value={windowCtx}>
-        <WindowContent app={app} hidden={minimized} args={args} />
+        <WindowContent app={desc.app} hidden={minimized} args={desc.args} />
       </WindowContext.Provider>
     </div>
   );
