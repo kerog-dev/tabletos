@@ -3,15 +3,13 @@ import type { Service } from "../../loader/loader.ts";
 interface RpcObject {
   startTransfer(from: string, file: string, size: number, contentType: string): void;
   addChunk(from: string, file: string, chunkI: number, chunk: string): void;
+  finishTransfer(from: string, file: string, checksum: string): Promise<boolean>;
 }
 
 interface Transfer {
   from: string;
   file: string;
   bytes: Uint8Array<ArrayBuffer>;
-  size: number;
-  chunks: number;
-  chunksReceived: Set<number>;
   contentType: string;
 }
 
@@ -39,8 +37,23 @@ function bytesToBinaryString(bytes: Uint8Array): string {
   return out;
 }
 
-function isComplete(transfer: Transfer): boolean {
-  return transfer.chunksReceived.size === transfer.chunks;
+function calcCrc(data: Uint8Array<ArrayBuffer>): number {
+  const polynomial = 0xEDB88320;
+  let crc = 0xFFFFFFFF;
+
+  for (let i = 0; i < data.length; i++) {
+    crc ^= data[i];
+
+    for (let j = 0; j < 8; j++) {
+      crc = (crc >>> 1) ^ (crc & 1 ? polynomial : 0);
+    }
+  }
+
+  return crc ^ 0xFFFFFFFF;
+}
+
+function calcChecksum(data: Uint8Array<ArrayBuffer>): string {
+  return `${calcCrc(data.slice(0, 1024))}-${calcCrc(data.slice(-1024))}-${data.length}`;
 }
 
 const service: Service = {
@@ -58,9 +71,6 @@ const service: Service = {
           from,
           file,
           bytes: new Uint8Array(size),
-          size,
-          chunks: Math.ceil(size / CHUNK_SIZE),
-          chunksReceived: new Set(),
           contentType,
         });
         if (!(await fs.isDir(`${appDir}/${from}`))) await fs.mkdir(`${appDir}/${from}`);
@@ -70,16 +80,19 @@ const service: Service = {
         if (!transfer) return;
 
         const bytes = Uint8Array.from(chunk, c => c.charCodeAt(0));
-        transfer.chunksReceived.add(chunkI);
         transfer.bytes.set(bytes, chunkI * CHUNK_SIZE);
-
-        if (isComplete(transfer)) {
-          transfers.splice(transfers.indexOf(transfer), 1);
-          fs.writeFile(
-            `${appDir}/${transfer.from}/${transfer.file}`,
-            new Blob([transfer.bytes], { type: transfer.contentType }),
-          );
-        }
+      },
+      async finishTransfer(from, file, crc) {
+        const transfer = transfers.find(t => t.from === from && t.file === file);
+        if (!transfer) return false;
+        transfers.splice(transfers.indexOf(transfer), 1);
+        fs.writeFile(
+          `${appDir}/${transfer.from}/${transfer.file}`,
+          new Blob([transfer.bytes], { type: transfer.contentType }),
+        );
+        const fileCRC = calcChecksum(transfer.bytes);
+        if (crc !== fileCRC) return false;
+        return true;
       },
     };
 
@@ -117,6 +130,13 @@ const service: Service = {
             }
             await Promise.race(inFlight.values());
           }
+
+          const finishedOk = await proxy.finishTransfer(
+            conn.name,
+            filename,
+            calcChecksum(buffer),
+          );
+          if (!finishedOk) throw new Error("Did not finish ok");
         } catch (err) {
           onError(`Send failed: ${err}`);
         } finally {

@@ -1,3 +1,6 @@
+import { sha256 } from "js-sha256";
+import { sdk } from "./getsdk.ts";
+
 export const sleep = (ms: number) => new Promise(res => setTimeout(res, ms));
 
 export function debounce<F extends (...args: any[]) => void>(fn: F, ms: number): F {
@@ -96,4 +99,10 @@ export function formatTime(time: number | Date): string {
   const date = typeof time === "number" ? new Date(time) : time;
 
   return date.toLocaleString();
+}
+
+export async function hashFile(path: string) {
+  const { fs } = sdk();
+  const blob = await fs.readBlobFile(path);
+  return sha256(await blob.arrayBuffer());
 }

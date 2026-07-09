@@ -1,5 +1,5 @@
-import { sha256 } from "js-sha256";
 import type { Service } from "../../loader/loader.ts";
+import { hashFile } from "../../utils.ts";
 
 const service: Service = {
   info: {
@@ -18,11 +18,6 @@ const service: Service = {
       } catch (e) {
         toast({ title: `Failed to auto-update ${name}`, desc: `Error: ${e}`, urgency: Urgency.Error });
       }
-    }
-
-    async function hashFile(path: string) {
-      const blob = await fs.readBlobFile(path);
-      return sha256(await blob.arrayBuffer());
     }
 
     async function checkPackage(name: string) {
