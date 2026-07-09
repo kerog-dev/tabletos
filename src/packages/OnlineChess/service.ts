@@ -2,6 +2,8 @@ import { Chess } from "chess.js";
 import type { Service } from "../../loader/loader.ts";
 import { randomId } from "../../utils.ts";
 
+type Move = { from: string; to: string; promotion: string };
+
 interface GameStartRequest {
   opponentName: string;
   opponentClientId: string;
@@ -14,12 +16,13 @@ interface GameInfo {
   opponentClientId: string;
   gameId: string;
   fen: string;
+  moves: Move[];
 }
 
 interface OnlineChessServerObject {
   startGame(req: GameStartRequest): GameInfo;
   getGameInfo(gameId: string): GameInfo | null;
-  makeMove(gameId: string, move: { from: string; to: string; promotion: string }): void;
+  makeMove(gameId: string, move: Move): void;
   updateListener(info: GameInfo): void;
 }
 
@@ -52,6 +55,7 @@ const service: Service = {
       if (chess.turn() !== turn) throw "Incorrect turn";
       chess.move(move);
       info.fen = chess.fen();
+      info.moves.push(move);
     }
 
     const object: OnlineChessServerObject = {
@@ -64,6 +68,7 @@ const service: Service = {
           gameId: randomId(),
           // starting position
           fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+          moves: [],
         };
         db.object.games[info.gameId] = info;
         return info;

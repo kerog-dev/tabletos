@@ -27,6 +27,7 @@ function Board({ gameId, exposed, back }: { gameId: string; exposed: Controller;
   const boardRef = useRef<any>(null);
   const chess = !game ? null : new Chess(game.fen);
   const status = !chess ? null : getStatus(chess);
+  const [showLastMove, setShowLastMove] = useState(false);
 
   useEffect(() => {
     const board = boardRef.current;
@@ -47,13 +48,17 @@ function Board({ gameId, exposed, back }: { gameId: string; exposed: Controller;
       }
     };
 
+    if (game.moves.length > 0 && showLastMove) board.arrows = [game.moves.at(-1)!];
+
     board.addEventListener("movestart", onMoveStart);
     board.addEventListener("moveend", onMoveEnd);
     return () => {
+      board.arrows = [];
+
       board.removeEventListener("movestart", onMoveStart);
       board.removeEventListener("moveend", onMoveEnd);
     };
-  }, [game, exposed]);
+  }, [game, exposed, showLastMove]);
 
   if (!game) return <div>Loading game...</div>;
 
@@ -70,6 +75,15 @@ function Board({ gameId, exposed, back }: { gameId: string; exposed: Controller;
       }}
     >
       <button onClick={() => back()}>Back</button>
+      <div>
+        <input
+          type="checkbox"
+          id="onlinechess-show-last-move"
+          checked={showLastMove}
+          onChange={e => setShowLastMove(e.target.checked)}
+        />
+        <label htmlFor="onlinechess-show-last-move">Show Last Move</label>
+      </div>
       <GChessboard
         ref={boardRef}
         fen={game.fen}
