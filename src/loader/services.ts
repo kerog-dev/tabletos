@@ -30,7 +30,10 @@ class ServiceManager {
 
   private services: Service[] = [];
   private startedServices: { started: StartedService; service: Service }[] = [];
-  private runningStore = create<{ running: Record<string, object | undefined> }>(() => ({ running: {} }));
+  private runningStore = create<{ running: Record<string, object | undefined>; runningNames: string[] }>(() => ({
+    running: {},
+    runningNames: [],
+  }));
 
   private constructor() {
     this.init().catch(reason => console.error(`Failed to start services: ${reason}`));
@@ -74,6 +77,7 @@ class ServiceManager {
   private syncRunningStore() {
     this.runningStore.setState({
       running: Object.fromEntries(this.startedServices.map(s => [s.service.info.name, s.started.exposed])),
+      runningNames: this.startedServices.map(s => s.service.info.name),
     });
   }
 
@@ -134,7 +138,7 @@ class ServiceManager {
   }
 
   useRunningServices(): string[] {
-    return this.runningStore(s => Object.keys(s.running));
+    return this.runningStore(s => s.runningNames);
   }
 
   list(): ServiceInfo[] {
