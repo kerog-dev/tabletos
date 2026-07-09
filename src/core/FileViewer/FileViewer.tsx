@@ -92,6 +92,7 @@ export default function FileViewer({ args }: { args: [string | undefined] }) {
 
   return (
     <div style={{ width: "100%", height: "100%" }}>
+      <button onClick={() => setPath(null)}>Back</button>
       {blobUrl
         ? renderFile(getFileType(path), blobUrl, path)
         : typeof file === "string"
