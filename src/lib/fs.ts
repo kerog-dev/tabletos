@@ -399,20 +399,7 @@ export async function unlink(path: string, { recursive = false }: { recursive?: 
   }
 }
 
-export function watchFile(
-  path: string,
-  listener: WatchListener,
-  actions: WatchAction[] = ["write", "delete", "create"],
-) {
-  watchers.push({
-    path,
-    recursive: false,
-    actions,
-    listener,
-  });
-}
-
-export function watchDir(
+export function watch(
   path: string,
   listener: WatchListener,
   recursive = true,
@@ -433,98 +420,77 @@ export function unwatch(listener: WatchListener) {
   return true;
 }
 
-export function useTextFile(path: string | null) {
-  const [content, setContent] = useState<string | null>(null);
+function useResource<T>(
+  path: string | null,
+  read: (path: string) => Promise<T> | [Promise<T>, () => void],
+  recursive: boolean,
+  actions?: WatchAction[],
+): T | null {
+  const [value, setValue] = useState<T | null>(null);
 
   useEffect(() => {
     if (!path) {
-      setContent(null);
+      setValue(null);
       return;
     }
-    const listener = async () => {
-      setContent(await pathExists(path) ? await readTextFile(path) : null);
-    };
-    listener();
-    watchFile(path, listener);
-    return () => {
-      unwatch(listener);
-    };
-  }, [path]);
 
-  return content;
-}
-
-export function useFile(path: string | null) {
-  const [content, setContent] = useState<string | Blob | null>(null);
-
-  useEffect(() => {
-    if (!path) {
-      setContent(null);
-      return;
-    }
-    const listener = async () => {
-      setContent(await pathExists(path) ? await readFile(path) : null);
-    };
-    listener();
-    watchFile(path, listener);
-    return () => {
-      unwatch(listener);
-    };
-  }, [path]);
-
-  return content;
-}
-
-export function useBlobFileUrl(path: string | null) {
-  const [url, setUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (path === null) {
-      setUrl(null);
-      return;
-    }
-    let curUrl: string;
-    const listener = async () => {
+    let destroyer = () => {};
+    const listener = () => {
       try {
-        setUrl(await pathExists(path) ? curUrl = URL.createObjectURL(await readBlobFile(path)) : null);
+        destroyer();
+        const ret = read(path);
+        let promise;
+        let destroy;
+        if (ret instanceof Array) {
+          [promise, destroy] = ret;
+        } else {
+          promise = ret;
+          destroy = () => {};
+        }
+        promise.then(value => setValue(value)).catch(() => setValue(null));
+        destroyer = destroy;
       } catch {
-        setUrl(null);
+        setValue(null);
       }
     };
-    listener();
-    watchFile(path, listener);
-    return () => {
-      URL.revokeObjectURL(curUrl);
-      unwatch(listener);
-    };
-  }, [path]);
 
-  return url;
+    listener();
+    watch(path, listener, recursive, actions);
+
+    return () => {
+      unwatch(listener);
+      destroyer();
+    };
+  }, [path, recursive, actions]);
+
+  return value;
+}
+
+export function useTextFile(path: string | null): string | null {
+  return useResource(path, readTextFile, false);
+}
+
+export function useFile(path: string | null): Blob | string | null {
+  return useResource(path, readFile, false);
+}
+
+export function useBlobFileUrl(path: string | null): string | null {
+  return useResource(path, path => {
+    let url: string | null = null;
+    return [
+      readBlobFile(path).then(blob => {
+        url = URL.createObjectURL(blob);
+        return url;
+      }),
+      () => url ? URL.revokeObjectURL(url) : null,
+    ];
+  }, false);
 }
 
 export function useDirListing(path: string | null) {
-  const [children, setChildren] = useState<string[] | null>(null);
-
-  useEffect(() => {
-    if (path === null) {
-      setChildren(null);
-      return;
-    }
-    const listener = async () => {
-      setChildren(await isDir(path) ? await ls(path) : null);
-    };
-    listener();
-    watchDir(path, listener, false, ["create", "delete"]);
-    return () => {
-      unwatch(listener);
-    };
-  }, [path]);
-
-  return children;
+  return useResource(path, ls, false);
 }
 
 // readJsonFile
 // writeJsonFile
 // useJsonFile
-//
-// delete(recursive = true)

@@ -36,7 +36,7 @@ export function FilePicker({ setPath }: { setPath: (path: string) => void }) {
   useEffect(() => {
     update();
     const listener = () => update();
-    fs.watchDir(cwd === "" ? "/" : cwd, listener, false, ["delete", "create"]);
+    fs.watch(cwd === "" ? "/" : cwd, listener, false, ["delete", "create"]);
     return () => {
       fs.unwatch(listener);
     };

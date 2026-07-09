@@ -64,7 +64,7 @@ export async function loadPackages() {
   if (!(await fs.isDir("/packages"))) return;
   const names = (await fs.ls("/packages")).map(filename => filename.replace(".zip", ""));
   await Promise.allSettled(names.map(name => loadPackage(name)));
-  fs.watchDir(
+  fs.watch(
     "/packages",
     async (path, action) => {
       const name = path.split("/").at(-1)!.replace(".zip", "");
