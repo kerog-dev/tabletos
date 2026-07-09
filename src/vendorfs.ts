@@ -1,6 +1,7 @@
 import { unzip } from "fflate";
 import vendorZip from "vendor:vendor.zip";
 import { sdk } from "./getsdk.ts";
+import { loadPackageBlob } from "./loader/packages.ts";
 
 await (window as any).$ready;
 const { fs } = sdk();
@@ -18,3 +19,9 @@ fs.mount(
     fsBlobs,
   ),
 );
+
+if (await fs.pathExists("/vendor/bundled-packages")) {
+  for (const filename of await fs.ls("/vendor/bundled-packages")) {
+    loadPackageBlob(filename.replace(".zip", ""), await fs.readBlobFile("/vendor/bundled-packages/" + filename));
+  }
+}
