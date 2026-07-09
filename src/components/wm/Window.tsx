@@ -10,7 +10,7 @@ import { ContextMenu } from "../ContextMenu.tsx";
 import ErrorBoundary from "../ErrorBoundary.tsx";
 import { dragger } from "./drag.ts";
 import { WindowContext } from "./WindowContext.tsx";
-import type { WindowDesc } from "./WindowManager.tsx";
+import { bringToTop, killWindow, setWindowTitle, toggleMinimized, useWindowDesc } from "./windowsStore.ts";
 import { useWindowTransparency } from "./wmdb.ts";
 
 function WindowContent(
@@ -53,24 +53,13 @@ function WindowContent(
 }
 
 export function Window(
-  {
-    desc,
-    minimized,
-    toggleMinimized,
-    kill: upstreamKill,
-    bringToTop,
-    getWindowAreaSize,
-    setTitle,
-  }: {
-    desc: WindowDesc;
-    kill: () => void;
-    bringToTop: () => void;
-    minimized: boolean;
-    toggleMinimized: () => void;
+  { id, getWindowAreaSize }: {
+    id: number;
     getWindowAreaSize: () => [number, number];
-    setTitle: (title: string | null) => void;
   },
 ) {
+  const desc = useWindowDesc(id)!;
+  const minimized = desc.minimized;
   const windowEl = useRef<HTMLDivElement | null>(null);
   const windowBarEl = useRef<HTMLDivElement | null>(null);
   const lastHeightRef = useRef<number | null>(null);
@@ -81,7 +70,7 @@ export function Window(
   const windowTransparency = useWindowTransparency();
   const [confirmer, setConfirmer] = useState(() => () => true);
   const kill = () => {
-    if (confirmer()) upstreamKill();
+    if (confirmer()) killWindow(id);
   };
 
   useEffect(() => {
@@ -100,7 +89,7 @@ export function Window(
       windowEl.current.style.inset = "unset";
       updateSize(() => [floatRect.width, floatRect.height]);
       updatePos(() => [floatRect.x, floatRect.y]);
-      bringToTop();
+      bringToTop(id);
     }
   }, [fullscreen]);
 
@@ -165,7 +154,7 @@ export function Window(
   useEffect(() => {
     if (!windowEl.current || !windowBarEl.current) return;
     const d = dragger(windowBarEl.current, () => !fullscreen);
-    d.onStart(() => bringToTop());
+    d.onStart(() => bringToTop(id));
     d.onMove(([cx, cy]) => updatePos(([ox, oy]) => [ox + cx, oy + cy]));
     return () => d.destroy();
   }, [fullscreen]);
@@ -186,7 +175,7 @@ export function Window(
       if (required) setConfirmer(() => required);
     },
     setTitle: (title: string | null) => {
-      setTitle(title);
+      setWindowTitle(id, title);
     },
   };
 
@@ -198,7 +187,7 @@ export function Window(
         backgroundColor: `#ffffff${!fullscreen ? hexOpacity : ""}`,
       }}
       ref={windowEl}
-      onClick={() => bringToTop()}
+      onClick={() => bringToTop(id)}
     >
       <ContextMenu
         open={ctxPos !== null}
@@ -212,7 +201,7 @@ export function Window(
         <br />
         <button onClick={() => startResize()}>Resize</button>
         <br />
-        <button onClick={() => toggleMinimized()}>Minimize</button>
+        <button onClick={() => toggleMinimized(id)}>Minimize</button>
         <br />
         <button onClick={() => kill()}>Close</button>
         <br />
@@ -237,7 +226,7 @@ export function Window(
         <div>
           {([
             [fullscreenIcon, () => setFullscreen(f => !f), "Fullscreen"],
-            ...(fullscreen ? [] : [[resizeIcon, startResize, "Resize"], [minimizeIcon, toggleMinimized, "Minimize"]]),
+            ...(fullscreen ? [] : [[resizeIcon, startResize, "Resize"], [minimizeIcon, () => toggleMinimized(id), "Minimize"]]),
             [closeIcon, kill, "Close"],
           ] as ([string, () => void, string][]))
             .map(([icon, cb, fallback], i) => (

@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
+import { create } from "zustand";
 import * as fs from "../lib/fs.ts";
 import type { Sdk } from "../sdk.ts";
-import { createListenerObject } from "../utils.ts";
 
 export interface ServiceInfo {
   name: string;
@@ -31,7 +30,7 @@ class ServiceManager {
 
   private services: Service[] = [];
   private startedServices: { started: StartedService; service: Service }[] = [];
-  private runChangeListeners = createListenerObject<string[] | undefined, [boolean, string]>();
+  private runningStore = create<{ running: Record<string, object | undefined> }>(() => ({ running: {} }));
 
   private constructor() {
     this.init().catch(reason => console.error(`Failed to start services: ${reason}`));
@@ -72,10 +71,10 @@ class ServiceManager {
     }
   }
 
-  private notifyListeners(running: boolean, targets: string[]) {
-    for (const target of targets) {
-      this.runChangeListeners.emit((s) => s === undefined ? true : s.includes(target), running, target);
-    }
+  private syncRunningStore() {
+    this.runningStore.setState({
+      running: Object.fromEntries(this.startedServices.map(s => [s.service.info.name, s.started.exposed])),
+    });
   }
 
   async start(target?: string | string[]) {
@@ -87,7 +86,7 @@ class ServiceManager {
         .filter(s => toStart.includes(s.info.name))
         .map(async service => this.startedServices.push({ service, started: await service.start((window as any).$) })),
     );
-    this.notifyListeners(true, targets);
+    this.syncRunningStore();
   }
 
   async stop(target?: string | string[]) {
@@ -102,7 +101,7 @@ class ServiceManager {
           this.startedServices.splice(this.startedServices.indexOf(entry), 1);
         }),
     );
-    this.notifyListeners(false, targets);
+    this.syncRunningStore();
   }
 
   async load(service: Service, start = true) {
@@ -123,16 +122,7 @@ class ServiceManager {
   }
 
   use<T extends object>(name: string): T | null {
-    const [exposed, setExposed] = useState<T | null>(() => this.get<T>(name));
-    useEffect(() => {
-      setExposed(this.get<T>(name));
-      const listener = () => {
-        setExposed(this.get<T>(name));
-      };
-      this.onRunningStateChanged([name], listener);
-      return () => this.removeRunningStateChangeListener(listener);
-    }, [name]);
-    return exposed;
+    return this.runningStore(s => (s.running[name] as T | undefined) ?? null);
   }
 
   isRunning(name: string): boolean {
@@ -140,39 +130,11 @@ class ServiceManager {
   }
 
   useRunning(name: string): boolean {
-    const [running, setRunning] = useState(() => this.isRunning(name));
-
-    useEffect(() => {
-      const listener = (running: boolean) => {
-        setRunning(running);
-      };
-      this.onRunningStateChanged([name], listener);
-      return () => this.removeRunningStateChangeListener(listener);
-    }, []);
-
-    return running;
+    return this.runningStore(s => name in s.running);
   }
 
   useRunningServices(): string[] {
-    const [running, setRunning] = useState(() => this.startedServices.map(x => x.service.info.name));
-
-    useEffect(() => {
-      const listener = () => {
-        setRunning(this.startedServices.map(x => x.service.info.name));
-      };
-      this.onRunningStateChanged(undefined, listener);
-      return () => this.removeRunningStateChangeListener(listener);
-    }, []);
-
-    return running;
-  }
-
-  onRunningStateChanged(targets: string[] | undefined, listener: (running: boolean, name: string) => void) {
-    this.runChangeListeners.add(targets, listener);
-  }
-
-  removeRunningStateChangeListener(listener: (running: boolean, name: string) => void) {
-    this.runChangeListeners.remove(listener);
+    return this.runningStore(s => Object.keys(s.running));
   }
 
   list(): ServiceInfo[] {

@@ -3,6 +3,7 @@ import { readTextFile, useBlobFileUrl } from "../../lib/fs.ts";
 import { type App, apps, useApps } from "../../loader/loader.ts";
 import "./Shortcuts.css";
 import { toast, Urgency } from "../../toast.tsx";
+import { spawnWindow } from "./windowsStore.ts";
 
 interface ShortcutShared {
   name: string;
@@ -39,7 +40,7 @@ function getIconSrc(s: ShortcutDesc): string | null {
   return app.iconUrl ?? null;
 }
 
-function Shortcut({ s, spawnWindow }: { s: ShortcutDesc; spawnWindow: (app: App) => void }) {
+function Shortcut({ s }: { s: ShortcutDesc }) {
   const noIconUrl = useBlobFileUrl("/vendor/icons/noicon.png");
   const src = getIconSrc(s) ?? noIconUrl;
 
@@ -87,7 +88,7 @@ function appsToShortcuts(apps: App[]): ShortcutDesc[] {
   return apps.map(app => ({ name: app.name, targetType: "app", app, iconFile: "/vendor/icons/noicon.png" }));
 }
 
-export function Shortcuts({ spawnWindow }: { spawnWindow: (app: App) => void }) {
+export function Shortcuts() {
   const apps = useApps();
   const shortcuts = useMemo<ShortcutDesc[]>(
     () => [
@@ -99,7 +100,7 @@ export function Shortcuts({ spawnWindow }: { spawnWindow: (app: App) => void }) 
 
   return (
     <div className="shortcuts">
-      {shortcuts.map((s, index) => <Shortcut key={index} s={s} spawnWindow={spawnWindow} />)}
+      {shortcuts.map((s, index) => <Shortcut key={index} s={s} />)}
     </div>
   );
 }

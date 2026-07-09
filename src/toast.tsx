@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect } from "react";
+import { create } from "zustand";
 import "./toast.css";
 
 export enum Urgency {
@@ -22,15 +23,21 @@ interface ToastInternal extends Toast {
   urgency: Urgency;
 }
 
-let addToastG: ((toast: Toast) => void) | null = null;
+let nextId = 0;
 
-function ToastComponent({ t, dismiss }: { t: ToastInternal; dismiss: () => void }) {
+const useToastStore = create<{ toasts: ToastInternal[] }>(() => ({ toasts: [] }));
+
+function dismiss(id: number) {
+  useToastStore.setState(s => ({ toasts: s.toasts.filter(t => t.id !== id) }));
+}
+
+function ToastComponent({ t }: { t: ToastInternal }) {
   const backgroundColor =
     ({ [Urgency.Info]: "blue", [Urgency.Warning]: "orange", [Urgency.Error]: "red", [Urgency.Critical]: "black" })[
       t.urgency
     ];
   return (
-    <div className="toast" style={{ backgroundColor }} onClick={dismiss}>
+    <div className="toast" style={{ backgroundColor }} onClick={() => dismiss(t.id)}>
       <span className="toast-title">
         {t.title}
       </span>
@@ -44,37 +51,24 @@ function ToastComponent({ t, dismiss }: { t: ToastInternal; dismiss: () => void 
 }
 
 export function Toasts() {
-  const [toasts, setToasts] = useState<ToastInternal[]>([]);
-  const nextId = useRef(0);
-
-  function addToast({ title, desc, urgency = Urgency.Info, duration = 5 }: Toast) {
-    setToasts(toasts => [...toasts, { title, desc, duration, at: Date.now(), id: ++nextId.current, urgency }]);
-  }
-
-  useEffect(() => {
-    addToastG = addToast;
-  }, []);
+  const toasts = useToastStore(s => s.toasts);
 
   useEffect(() => {
     const id = setInterval(() => {
-      setToasts(toasts => toasts.filter(t => Date.now() - t.at < t.duration * 1000));
+      useToastStore.setState(s => ({ toasts: s.toasts.filter(t => Date.now() - t.at < t.duration * 1000) }));
     }, 1_000);
     return () => clearInterval(id);
   }, []);
 
   return (
     <div className="toasts">
-      {toasts.map(t => (
-        <ToastComponent
-          key={t.id}
-          t={t}
-          dismiss={() => setToasts(toasts => toasts.filter(t2 => t2.id !== t.id))}
-        />
-      ))}
+      {toasts.map(t => <ToastComponent key={t.id} t={t} />)}
     </div>
   );
 }
 
-export function toast(toast: Toast) {
-  addToastG?.(toast);
+export function toast({ title, desc, urgency = Urgency.Info, duration = 5 }: Toast) {
+  useToastStore.setState(s => ({
+    toasts: [...s.toasts, { title, desc, duration, at: Date.now(), id: ++nextId, urgency }],
+  }));
 }

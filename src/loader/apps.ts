@@ -1,5 +1,5 @@
-import { lazy, useEffect, useState } from "react";
-import { createListenerSet } from "../utils.ts";
+import { lazy } from "react";
+import { create } from "zustand";
 
 interface AppComponentParams {
   args: any[];
@@ -68,8 +68,11 @@ export const apps: App[] = [...appModules, ...devPackageModules].map(([path, imp
   };
 });
 
-const appChangeListeners = createListenerSet<[]>();
-const appsChanged = () => appChangeListeners.emit();
+const useAppsStore = create<{ apps: App[] }>(() => ({ apps }));
+
+function appsChanged() {
+  useAppsStore.setState({ apps: [...apps] });
+}
 
 export async function loadAppFromScript(name: string, script: string, icon?: string) {
   if (apps.some(app => app.name === name)) throw "App with that name is already loaded!";
@@ -92,16 +95,6 @@ export function unloadApp(name: string) {
   appsChanged();
 }
 
-function onAppsChanged(listener: () => void) {
-  appChangeListeners.add(listener);
-}
-
 export function useApps() {
-  const [sapps, setSapps] = useState(apps);
-
-  useEffect(() => {
-    onAppsChanged(() => setSapps([...apps]));
-  }, []);
-
-  return sapps;
+  return useAppsStore(s => s.apps);
 }

@@ -1,5 +1,3 @@
-import { useEffect } from "react";
-
 export const sleep = (ms: number) => new Promise(res => setTimeout(res, ms));
 
 export async function decompress(input: Blob): Promise<Blob> {
@@ -66,44 +64,6 @@ export function createListenerSet<Args extends any[]>() {
           console.error(e);
         }
       }),
-    use: (l: (...args: Args) => void, callOnAdd = false, callArgs?: Args) =>
-      useEffect(() => {
-        listeners.push(l);
-        if (callOnAdd && callArgs) l(...callArgs);
-        return () => {
-          const i = listeners.indexOf(l);
-          if (i !== -1) listeners.splice(i, 1);
-        };
-      }, []),
-  };
-}
-
-export function createListenerObject<Specifier extends any, Args extends any[]>() {
-  const listeners: [Specifier, (...args: Args) => void][] = [];
-  return {
-    add: (s: Specifier, l: (...args: Args) => void) => listeners.push([s, l]),
-    remove: (l: (...args: Args) => void) => {
-      const i = listeners.findIndex(x => x[1] === l);
-      if (i !== -1) listeners.splice(i, 1);
-    },
-    emit: (matcher: (s: Specifier) => boolean, ...args: Args) => {
-      listeners.filter(([s]) => matcher(s)).forEach(([, l]) => {
-        try {
-          l(...args);
-        } catch (e) {
-          console.error(e);
-        }
-      });
-    },
-    use: (s: Specifier, l: (...args: Args) => void, callOnAdd = false, callArgs?: Args) =>
-      useEffect(() => {
-        listeners.push([s, l]);
-        if (callOnAdd && callArgs) l(...callArgs);
-        return () => {
-          const i = listeners.findIndex(x => x[1] === l);
-          if (i !== -1) listeners.splice(i, 1);
-        };
-      }, []),
   };
 }
 

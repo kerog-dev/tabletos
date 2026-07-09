@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { type App, useApps } from "../../loader/loader.ts";
+import { useApps } from "../../loader/loader.ts";
 import "./Taskbar.css";
 import closeIcon from "vfs:/vendor/icons/close.png?url";
 import fullscreenIcon from "vfs:/vendor/icons/fullscreen.png?url";
@@ -7,13 +7,11 @@ import startIcon from "vfs:/vendor/icons/start.png?url";
 import { useBlobFileUrl } from "../../lib/fs.ts";
 import { Toasts } from "../../toast.tsx";
 import { setTrayOpen, useTrayDescs } from "./tray.ts";
-import type { WindowDesc } from "./WindowManager.tsx";
+import { killAllWindows, killWindow, spawnWindow, toggleMinimized, useWindows, type WindowDesc } from "./windowsStore.ts";
 
 export function Launcher(
-  { open, spawnWindow, killAll, setLauncherOpen }: {
+  { open, setLauncherOpen }: {
     open: boolean;
-    spawnWindow: (app: App) => void;
-    killAll: () => void;
     setLauncherOpen: (open: boolean) => void;
   },
 ) {
@@ -47,7 +45,7 @@ export function Launcher(
         <button onClick={() => document.body.requestFullscreen()}>
           <img src={fullscreenIcon} />
         </button>
-        <button onClick={() => killAll()}>
+        <button onClick={() => killAllWindows()}>
           <img src={closeIcon} />
         </button>
       </div>
@@ -66,15 +64,8 @@ function TaskbarWindowCtx({ w, close, closeWindow }: { w: WindowDesc; close: () 
   );
 }
 
-export function Taskbar(
-  { spawnWindow, killAll, windows, toggleMinimized, kill }: {
-    spawnWindow: (app: App) => void;
-    killAll: () => void;
-    windows: WindowDesc[];
-    toggleMinimized: (id: number) => void;
-    kill: (id: number) => void;
-  },
-) {
+export function Taskbar() {
+  const windows = useWindows();
   const [launcherOpen, setLauncherOpen] = useState(false);
   const [contextMenuOpens, setContextMenuOpens] = useState(() => Object.fromEntries(windows.map(w => [w.id, false])));
   const trayDescs = useTrayDescs();
@@ -109,7 +100,7 @@ export function Taskbar(
                 <TaskbarWindowCtx
                   w={w}
                   close={() => setContextMenuOpens(c => ({ ...c, [w.id]: false }))}
-                  closeWindow={() => kill(w.id)}
+                  closeWindow={() => killWindow(w.id)}
                 />
               )}
             </div>
@@ -139,7 +130,7 @@ export function Taskbar(
         </div>
       </div>
       <Toasts />
-      <Launcher {...{ spawnWindow, open: launcherOpen, killAll, setLauncherOpen }} />
+      <Launcher {...{ open: launcherOpen, setLauncherOpen }} />
     </>
   );
 }
