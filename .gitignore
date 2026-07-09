@@ -1,4 +1,5 @@
 /dist/
 node_modules/
 /server/dist/
+/server/identities.json
 /src/private-packages/

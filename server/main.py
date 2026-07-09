@@ -4,6 +4,7 @@ import os
 import socket
 import hashlib
 import json
+import asyncio
 from contextlib import asynccontextmanager
 from pathlib import Path
 from starlette.applications import Starlette
@@ -29,6 +30,7 @@ HOP_BY_HOP_HEADERS = {
 }
 
 PACKAGES_DIR = Path(__file__).resolve().parents[1] / "dist" / "packages"
+IDENTITIES_FILE = Path(__file__).resolve().parent / "identities.json"
 PORT = 8086
 
 
@@ -46,12 +48,36 @@ def get_local_ip() -> str:
         return s.getsockname()[0]
 
 
+identities: dict[str, str] = {}
+identities_lock: asyncio.Lock
+
+
+def load_identities():
+    global identities
+    if IDENTITIES_FILE.exists():
+        identities = json.loads(IDENTITIES_FILE.read_text())
+    else:
+        identities = {}
+
+
+async def register_or_verify(name: str, public_key: str) -> bool:
+    async with identities_lock:
+        existing_key = identities.get(name)
+        if existing_key is None:
+            identities[name] = public_key
+            IDENTITIES_FILE.write_text(json.dumps(identities, indent=2))
+            return True
+        return existing_key == public_key
+
+
 client: httpx.AsyncClient
 
 
 @asynccontextmanager
 async def lifespan(app: Starlette):
-    global client
+    global client, identities_lock
+    identities_lock = asyncio.Lock()
+    load_identities()
     client = httpx.AsyncClient(
         timeout=httpx.Timeout(connect=10.0, read=60.0, write=30.0, pool=10.0),
         limits=httpx.Limits(
@@ -136,12 +162,31 @@ async def websocket_handler(ws: WebSocket):
     try:
         async for message in ws.iter_json():
             if not name:
-                if message["type"] == "set_name":
+                if message["type"] == "connect":
                     if message["name"] == "*all*":
                         continue
-                    name = message["name"]
+                    candidate_name = message["name"]
+                    public_key = message["public_key"]
+
+                    if not await register_or_verify(candidate_name, public_key):
+                        # name is already bound to a different key -- likely impersonation
+                        await ws.close(code=4001)
+                        return
+
+                    name = candidate_name
                     ws_clients[name] = ws
                 continue
+
+            if message["type"] == "get_pk":
+                await ws.send_json(
+                    {
+                        "type": "pk",
+                        "name": message["name"],
+                        "public_key": identities.get(message["name"]),
+                    }
+                )
+                continue
+
             if message["type"] != "message":
                 continue
             if isinstance(message["to"], list):

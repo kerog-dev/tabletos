@@ -1,12 +1,14 @@
-import { toast, Urgency } from "../toast.tsx";
+import { createListenerSet } from "../utils.ts";
 import deviceId from "./deviceid.ts";
+import { getPublicKey } from "./keys.ts";
 import { getServerAddr } from "./server.ts";
 
 let ws: WebSocket | null = null;
 let retries = 0;
-let gaveUp = false;
 
 const queue: string[] = [];
+const pks: Record<string, string> = {};
+const pkAddListener = createListenerSet<[]>();
 
 async function connect() {
   const addr = await getServerAddr();
@@ -16,23 +18,16 @@ async function connect() {
   newWs.addEventListener("open", () => {
     retries = 0;
     newWs.send(JSON.stringify({
-      type: "set_name",
+      type: "connect",
       name: "tabletos-" + deviceId,
+      public_key: getPublicKey(),
     }));
     while (queue.length) newWs.send(queue.shift()!);
   });
 
-  newWs.addEventListener("error", async () => {
+  newWs.addEventListener("close", async () => {
     retries++;
-    if (retries > 5) {
-      toast({ title: "WebSocket Error", desc: "Giving up after 5 reconnects.", urgency: Urgency.Error });
-      gaveUp = true;
-      queue.splice(0, queue.length);
-      return;
-    }
-    setTimeout(() => {
-      connect();
-    }, 500);
+    setTimeout(connect, retries > 5 ? 30_000 : 500);
     newWs.close();
   });
 
@@ -50,6 +45,11 @@ async function connect() {
         });
         break;
 
+      case "pk":
+        pks[data.name] = data.public_key;
+        pkAddListener.emit();
+        break;
+
       default:
         console.warn(`[WS] unknown transport message type: ${data.type}`);
         break;
@@ -62,7 +62,6 @@ async function connect() {
 connect();
 
 export function send(type: string, to: string | string[] | "*all*", data: any) {
-  if (gaveUp) return;
   const encoded = JSON.stringify({ type: "message", subtype: type, to, data });
   if (ws && ws.readyState === WebSocket.OPEN) ws.send(encoded);
   else queue.push(encoded);
@@ -82,4 +81,28 @@ export function offMessage(type: string, listener: MessageListener) {
   const i = listeners[type].indexOf(listener);
   if (i === -1) return;
   listeners[type].splice(i, 1);
+}
+
+export function getRemotePublicKey(target: string): Promise<string> {
+  return new Promise((res, rej) => {
+    if (target in pks) return res(pks[target]);
+    let done = false;
+    const listener = () => {
+      if (target in pks) {
+        done = true;
+        pkAddListener.remove(listener);
+        res(pks[target]);
+      }
+    };
+    pkAddListener.add(listener);
+    setTimeout(() => {
+      if (done) return;
+      pkAddListener.remove(listener);
+      rej(`Timed out getting remote public key for ${target}.`);
+    }, 10_000);
+    ws?.send(JSON.stringify({
+      type: "get_pk",
+      name: target,
+    }));
+  });
 }
