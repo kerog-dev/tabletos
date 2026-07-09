@@ -5,10 +5,21 @@ import { type Service, sv } from "./services.ts";
 
 const packageServiceNameMapping: Partial<Record<string, string>> = {};
 
+async function isServiceInDeviceAutostarts(name: string): Promise<boolean> {
+  let json: Record<string, boolean> | null = null;
+  try {
+    json = JSON.parse(await fs.readTextFile("/services.json"));
+  } catch {}
+  return json?.[name] ?? false;
+}
+
 async function loadPackageService(packageName: string, scriptBlob: Blob) {
   const url = URL.createObjectURL(scriptBlob);
   const module: { default: Service } = await import(/* @vite-ignore */ url);
-  await sv.load(module.default, module.default.info.autostart);
+  await sv.load(
+    module.default,
+    await isServiceInDeviceAutostarts(module.default.info.name) || module.default.info.autostart,
+  );
   packageServiceNameMapping[packageName] = module.default.info.name;
 }
 
