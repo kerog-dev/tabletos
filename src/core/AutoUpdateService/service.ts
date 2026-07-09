@@ -44,10 +44,10 @@ const service: Service = {
 
       async function update(name: string) {
         try {
-          await fs.unlink(`/packages/${name}.zip`);
           const response = await fetch(`http://server/packages/${name}.zip`);
           const zipBlob = await response.blob();
           if (!(await fs.isDir("/packages"))) await fs.mkdir("/packages");
+          await fs.unlink(`/packages/${name}.zip`);
           await fs.writeFile(`/packages/${name}.zip`, zipBlob);
           toast({ title: `Auto-updated ${name} succesfully!` });
         } catch (e) {

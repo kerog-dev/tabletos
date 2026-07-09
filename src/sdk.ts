@@ -1,3 +1,4 @@
+import { useWindow } from "./components/wm/WindowContext.tsx";
 import type { WindowDesc } from "./components/wm/WindowManager.tsx";
 import { createDatabase } from "./jsondb.ts";
 import deviceId from "./lib/deviceid.ts";
@@ -23,6 +24,7 @@ interface Sdk {
   deviceName: string;
   ws: typeof ws;
   jsonDB: typeof createDatabase;
+  useWindow: typeof useWindow;
 }
 
 const sdk: Sdk = {
@@ -43,6 +45,7 @@ const sdk: Sdk = {
   deviceName,
   ws,
   jsonDB: createDatabase,
+  useWindow,
 };
 
 (window as any).$ = sdk;

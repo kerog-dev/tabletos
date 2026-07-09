@@ -1,6 +1,6 @@
 import { Chess } from "chess.js";
 import { useEffect, useRef, useState } from "react";
-import { useWindow } from "../../components/wm/WindowContext";
+import { sdk } from "../../getsdk.ts";
 
 if (!customElements.get("g-chess-board")) {
   await import("gchessboard");
@@ -9,6 +9,8 @@ if (!customElements.get("g-chess-board")) {
 const GChessboard = "g-chess-board" as any;
 
 let game = new Chess();
+
+const { useWindow } = sdk();
 
 export default function ChessApp() {
   const boardRef = useRef<any>(null);
