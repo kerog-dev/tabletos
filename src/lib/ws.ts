@@ -1,4 +1,4 @@
-import { createListenerSet } from "../utils.ts";
+import { createListenerMap, createListenerSet } from "../utils.ts";
 import deviceId from "./deviceid.ts";
 import { getPublicKey } from "./keys.ts";
 import { getServerAddr } from "./server.ts";
@@ -9,6 +9,9 @@ let retries = 0;
 const queue: string[] = [];
 const pks: Record<string, string> = {};
 const pkAddListener = createListenerSet<[]>();
+
+export type MessageListener = (data: any, from: string) => void;
+const messageListeners = createListenerMap<[any, string]>();
 
 async function connect() {
   const addr = await getServerAddr();
@@ -36,13 +39,7 @@ async function connect() {
     switch (data.type) {
       case "message":
         if (typeof data.subtype !== "string") break;
-        listeners[data.subtype]?.forEach(listener => {
-          try {
-            listener(data.data, data.from);
-          } catch (e) {
-            console.error(`[WS] error in websocket listener for type ${data.subtype}:`, e);
-          }
-        });
+        messageListeners.emit(data.subtype, data.data, data.from);
         break;
 
       case "pk":
@@ -67,20 +64,12 @@ export function send(type: string, to: string | string[] | "*all*", data: any) {
   else queue.push(encoded);
 }
 
-export type MessageListener = (data: any, from: string) => void;
-
-const listeners: Partial<Record<string, MessageListener[]>> = {};
-
 export function onMessage(type: string, listener: MessageListener) {
-  listeners[type] ??= [];
-  listeners[type].push(listener);
+  messageListeners.add(type, listener);
 }
 
 export function offMessage(type: string, listener: MessageListener) {
-  listeners[type] ??= [];
-  const i = listeners[type].indexOf(listener);
-  if (i === -1) return;
-  listeners[type].splice(i, 1);
+  messageListeners.remove(type, listener);
 }
 
 export function getRemotePublicKey(target: string): Promise<string> {

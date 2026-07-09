@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import MathWorker from "./worker.ts?worker&inline";
+import { debounce } from "../../utils.ts";
 
 const worker = new MathWorker();
 
@@ -44,9 +45,10 @@ export default function ThreeDG() {
     };
   }, []);
 
+  const debouncedPost = useMemo(() => debounce((eq: string) => worker.postMessage([size, eq]), 500), []);
+
   useEffect(() => {
-    const id = setTimeout(() => worker.postMessage([size, equation]), 500);
-    return () => clearTimeout(id);
+    debouncedPost(equation);
   }, [equation]);
 
   return (

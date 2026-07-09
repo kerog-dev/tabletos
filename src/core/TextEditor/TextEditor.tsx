@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FilePicker } from "../../components/FilePicker.tsx";
 import "./TextEditor.css";
 import { sdk } from "../../getsdk.ts";
+import { debounce } from "../../utils.ts";
 
 const { fs } = sdk();
 
@@ -25,13 +26,11 @@ export default function TextEditor({ args }: { args: [] | [string] }) {
     };
   }, [path]);
 
+  const debouncedWrite = useMemo(() => debounce((p: string, t: string) => fs.writeFile(p, t), 500), []);
+
   useEffect(() => {
     if (!path || text === null) return;
-    const id = setTimeout(() => {
-      console.log("write!");
-      fs.writeFile(path, text);
-    }, 500);
-    return () => clearInterval(id);
+    debouncedWrite(path, text);
   }, [text]);
 
   if (path === null) return <FilePicker setPath={setPath} />;

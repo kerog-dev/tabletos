@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import "./Notes.css";
 import { sdk } from "../../getsdk.ts";
+import { debounce } from "../../utils.ts";
 import type { AISdk } from "../AIService/service.ts";
 
 const { fs, getAppDir, sv } = sdk();
@@ -22,17 +23,7 @@ function NoteEditor({ note, back }: { note: string; back: () => void }) {
       textarea.value = text;
     });
 
-    let saveTimeoutId: ReturnType<typeof setTimeout> | null = null;
-    const listener = () => {
-      if (saveTimeoutId) {
-        clearTimeout(saveTimeoutId);
-        saveTimeoutId = null;
-      }
-
-      saveTimeoutId = setTimeout(() => {
-        fs.writeFile(notePath, textarea.value);
-      }, 200);
-    };
+    const listener = debounce(() => fs.writeFile(notePath, textarea.value), 200);
 
     textarea.addEventListener("input", listener);
 

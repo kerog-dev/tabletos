@@ -1,19 +1,12 @@
 import { useEffect, useState } from "react";
 import * as fs from "./lib/fs.ts";
+import { debounce } from "./utils.ts";
 
 interface Database<T extends object = any> {
   object: T;
   get(path: string): any;
   set(path: string, value: any): void;
   use<T extends any = any>(path: string): T;
-}
-
-function debounce<F extends (...args: any[]) => void>(fn: F, ms: number): F {
-  let timer: ReturnType<typeof setTimeout> | null = null;
-  return ((...args: any[]) => {
-    if (timer) clearTimeout(timer);
-    timer = setTimeout(() => fn(...args), ms);
-  }) as F;
 }
 
 function getPath(obj: any, path: string): any {

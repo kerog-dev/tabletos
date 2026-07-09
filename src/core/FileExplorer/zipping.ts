@@ -10,6 +10,21 @@ export function joinFsPath(dir: string, sub: string): string {
   return `${base}/${cleanSub}`;
 }
 
+function makeChunkAccumulator(flush: (bytes: Uint8Array<ArrayBuffer>) => Promise<void>, threshold = 1024 * 1024 * 3) {
+  let built = new Uint8Array(0);
+  return async (chunk: Uint8Array, final: boolean) => {
+    const merged = new Uint8Array(built.length + chunk.length);
+    merged.set(built);
+    merged.set(chunk, built.length);
+    built = merged;
+    if (built.length >= threshold || final) {
+      const toWrite = built;
+      built = new Uint8Array(0);
+      if (toWrite.length) await flush(toWrite);
+    }
+  };
+}
+
 export async function extractZipInto(zipPath: string, targetDir: string) {
   const blob = await fs.readFile(zipPath);
   if (!(blob instanceof Blob)) throw `${zipPath} is not a binary file, can't be a zip.`;
@@ -38,22 +53,12 @@ export async function extractZipInto(zipPath: string, targetDir: string) {
       return;
     }
 
-    let built = new Uint8Array(0);
+    const accumulate = makeChunkAccumulator(bytes => fs.appendBlobFile(fullPath, bytes));
     let chain = ensureDir(fs.parent(fullPath)).then(() => fs.writeFile(fullPath, new Blob([])));
 
     file.ondata = (err, chunk, final) => {
       if (err) throw err;
-      chain = chain.then(async () => {
-        const merged = new Uint8Array(built.length + chunk.length);
-        merged.set(built);
-        merged.set(chunk, built.length);
-        built = merged;
-        if (built.length >= 1024 * 1024 * 3 || final) {
-          const toWrite = built;
-          built = new Uint8Array(0);
-          if (toWrite.length) await fs.appendBlobFile(fullPath, new Blob([toWrite]));
-        }
-      });
+      chain = chain.then(() => accumulate(chunk, final));
     };
     tasks.push(chain);
     file.start();
@@ -72,22 +77,9 @@ export async function extractZipInto(zipPath: string, targetDir: string) {
 
 export function zipDir(path: string, target: string): Promise<void> {
   return new Promise((res, rej) => {
-    let built = new Uint8Array(0);
     // Reset the target once, up front, instead of checking on every chunk.
     let chain: Promise<unknown> = fs.writeFile(target, new Blob([]));
-
-    async function handleChunk(chunk: Uint8Array, final: boolean) {
-      const merged = new Uint8Array(built.length + chunk.length);
-      merged.set(built);
-      merged.set(chunk, built.length);
-      built = merged;
-
-      if (built.length >= 1024 * 1024 * 3 || final) {
-        const toWrite = built;
-        built = new Uint8Array(0);
-        await fs.appendBlobFile(target, toWrite);
-      }
-    }
+    const accumulate = makeChunkAccumulator(bytes => fs.appendBlobFile(target, bytes));
 
     const zip = new Zip((err, chunk, final) => {
       if (err) {
@@ -95,8 +87,9 @@ export function zipDir(path: string, target: string): Promise<void> {
         return;
       }
       // Every chunk (and the final flush) goes through this one chain, so
-      // `built` is never touched by two overlapping calls at once.
-      chain = chain.then(() => handleChunk(chunk, final));
+      // `built` (inside accumulate) is never touched by two overlapping
+      // calls at once.
+      chain = chain.then(() => accumulate(chunk, final));
       if (final) chain.then(() => res(), rej);
     });
 

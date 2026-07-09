@@ -1,5 +1,13 @@
 export const sleep = (ms: number) => new Promise(res => setTimeout(res, ms));
 
+export function debounce<F extends (...args: any[]) => void>(fn: F, ms: number): F {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  return ((...args: any[]) => {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), ms);
+  }) as F;
+}
+
 export async function decompress(input: Blob): Promise<Blob> {
   const outStream = input.stream().pipeThrough(new DecompressionStream("gzip"));
   const blob = await new Response(outStream).blob();
@@ -64,6 +72,23 @@ export function createListenerSet<Args extends any[]>() {
           console.error(e);
         }
       }),
+  };
+}
+
+export function createListenerMap<Args extends any[]>() {
+  const sets = new Map<string, ReturnType<typeof createListenerSet<Args>>>();
+  function getOrCreate(key: string) {
+    let set = sets.get(key);
+    if (!set) {
+      set = createListenerSet<Args>();
+      sets.set(key, set);
+    }
+    return set;
+  }
+  return {
+    add: (key: string, l: (...args: Args) => void) => getOrCreate(key).add(l),
+    remove: (key: string, l: (...args: Args) => void) => sets.get(key)?.remove(l),
+    emit: (key: string, ...args: Args) => sets.get(key)?.emit(...args),
   };
 }
 
