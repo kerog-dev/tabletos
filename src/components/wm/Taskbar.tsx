@@ -1,54 +1,134 @@
-import { useEffect, useState } from "react";
-import { useApps } from "../../loader/loader.ts";
+import { useEffect, useMemo, useState } from "react";
+import { type App, apps, useApps } from "../../loader/loader.ts";
 import "./Taskbar.css";
 import closeIcon from "vfs:/vendor/icons/close.png?url";
 import fullscreenIcon from "vfs:/vendor/icons/fullscreen.png?url";
 import startIcon from "vfs:/vendor/icons/start.png?url";
-import { useBlobFileUrl } from "../../lib/fs.ts";
-import { Toasts } from "../../toast.tsx";
+import { readTextFile, useBlobFileUrl } from "../../lib/fs.ts";
+import { toast, Toasts, Urgency } from "../../toast.tsx";
 import { setTrayOpen, useTrayDescs } from "./tray.ts";
-import { killAllWindows, killWindow, spawnWindow, toggleMinimized, useWindows, type WindowDesc } from "./windowsStore.ts";
+import {
+  killAllWindows,
+  killWindow,
+  spawnWindow,
+  toggleMinimized,
+  useWindows,
+  type WindowDesc,
+} from "./windowsStore.ts";
 
-export function Launcher(
-  { open, setLauncherOpen }: {
-    open: boolean;
-    setLauncherOpen: (open: boolean) => void;
-  },
-) {
-  const apps = useApps();
+interface ShortcutShared {
+  name: string;
+  iconUrl?: string;
+}
+
+interface AppTarget {
+  targetType: "app";
+  app: App | string;
+}
+
+interface ScriptTarget {
+  targetType: "script";
+  path?: string;
+  script?: string;
+}
+
+type ShortcutDesc = ShortcutShared & (AppTarget | ScriptTarget);
+
+async function loadAdditionalShortcuts(): Promise<ShortcutDesc[]> {
+  try {
+    const shortcuts = JSON.parse(await readTextFile("/additional_shortcuts.json"));
+    return shortcuts;
+  } catch {
+    return [];
+  }
+}
+
+const additionalShortcuts = await loadAdditionalShortcuts();
+
+function getIconSrc(s: ShortcutDesc): string | null {
+  const noIconUrl = useBlobFileUrl("/vendor/icons/noicon.png");
+  const app: App | undefined = s.targetType !== "app"
+    ? undefined
+    : typeof s.app === "string"
+    ? apps.find(app => app.name === s.app)
+    : s.app;
+  return app?.iconUrl ?? s.iconUrl ?? noIconUrl;
+}
+
+function Shortcut({ s, setLauncherOpen }: { s: ShortcutDesc; setLauncherOpen: (open: boolean) => void }) {
+  const src = getIconSrc(s);
+
+  function open() {
+    switch (s.targetType) {
+      case "app":
+        const app: App | undefined = typeof s.app === "string" ? apps.find(app => app.name === s.app) : s.app;
+        if (app) spawnWindow(app);
+        else toast({ title: "Failed to open, app not found", urgency: Urgency.Error });
+        break;
+
+      case "script":
+        function runScript(script: string) {
+          try {
+            window.eval(script);
+          } catch (e) {
+            toast({ title: "Error running script", desc: "Error: " + e, urgency: Urgency.Error });
+          }
+        }
+
+        if (s.path) {
+          readTextFile(s.path).then(script => {
+            runScript(script);
+          });
+        } else if (s.script) runScript(s.script);
+        else toast({ title: "Script shortcut with no path or script property.", urgency: Urgency.Error });
+        break;
+    }
+    setLauncherOpen(false);
+  }
 
   return (
     <div
-      className="launcher"
-      style={{
-        display: open ? "unset" : "none",
-      }}
+      className="shortcut"
+      onClick={open}
     >
-      <div>
-        Apps:
-        <ul className="launcher-app-list" style={{ margin: 0 }}>
-          {apps.map(app => (
-            <li key={app.name}>
-              <button
-                onClick={() => {
-                  spawnWindow(app);
-                  setLauncherOpen(false);
-                }}
-              >
-                {app.name}
-              </button>
-            </li>
-          ))}
-        </ul>
+      <div className="shortcut-inside">
+        <img className="shortcut-icon" src={src ?? "about:blank"} />
+        <div className="shortcut-name">{s.name}</div>
       </div>
-      <div className="launcher-quick-actions">
-        <button onClick={() => document.body.requestFullscreen()}>
-          <img src={fullscreenIcon} />
-        </button>
-        <button onClick={() => killAllWindows()}>
-          <img src={closeIcon} />
-        </button>
-      </div>
+    </div>
+  );
+}
+
+function appsToShortcuts(apps: App[]): ShortcutDesc[] {
+  return apps.map(app => ({ name: app.name, targetType: "app", app, iconFile: "/vendor/icons/noicon.png" }));
+}
+
+function Launcher({ open, setOpen }: { open: boolean; setOpen: (open: boolean) => void }) {
+  const apps = useApps();
+  (window as any).__Launcher_close_all = killAllWindows;
+  const shortcuts = useMemo<ShortcutDesc[]>(
+    () => [
+      {
+        targetType: "script",
+        name: "Fullscreen",
+        script: "document.body.requestFullscreen()",
+        iconUrl: fullscreenIcon,
+      },
+      {
+        targetType: "script",
+        name: "Close all",
+        script: "__Launcher_close_all()",
+        iconUrl: closeIcon,
+      },
+      ...appsToShortcuts(apps),
+      ...additionalShortcuts,
+    ],
+    [apps],
+  );
+
+  return (
+    <div className="launcher" style={{ display: open ? undefined : "none" }}>
+      {shortcuts.map((s, index) => <Shortcut key={index} s={s} setLauncherOpen={setOpen} />)}
     </div>
   );
 }
@@ -123,14 +203,14 @@ export function Taskbar() {
                 style={{ display: t.open ? "unset" : "none", positionAnchor: `--tray-anchor-${t.id}` }}
                 onClick={() => setTrayOpen(t.id, false)}
               >
-                <t.show />
+                {t.open && <t.show />}
               </div>
             </div>
           ))}
         </div>
       </div>
       <Toasts />
-      <Launcher {...{ open: launcherOpen, setLauncherOpen }} />
+      <Launcher open={launcherOpen} setOpen={setLauncherOpen} />
     </>
   );
 }

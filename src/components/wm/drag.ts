@@ -7,7 +7,8 @@ export function dragger(element: HTMLElement, canDrag: () => boolean) {
   let lastTouch: Touch | null = null;
   let dragging = false;
 
-  const touchStartListener = () => {
+  const touchStartListener = (e: Event) => {
+    if (e.target !== element) return;
     if (!canDrag()) return;
     dragging = true;
     handlers.start.forEach(l => l());
@@ -30,6 +31,7 @@ export function dragger(element: HTMLElement, canDrag: () => boolean) {
   };
 
   const downListener = (e: MouseEvent) => {
+    if (e.target !== element) return;
     if (dragging || !canDrag()) return;
     e.preventDefault();
     dragging = true;

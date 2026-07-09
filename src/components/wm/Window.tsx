@@ -2,10 +2,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import closeIcon from "vfs:/vendor/icons/close.png?url";
 import fullscreenIcon from "vfs:/vendor/icons/fullscreen.png?url";
 import minimizeIcon from "vfs:/vendor/icons/minimize.png?url";
-import resizeIcon from "vfs:/vendor/icons/resize.png?url";
 import { type App } from "../../loader/loader.ts";
-import { toast } from "../../toast.tsx";
-import { sleep } from "../../utils.ts";
 import { ContextMenu } from "../ContextMenu.tsx";
 import ErrorBoundary from "../ErrorBoundary.tsx";
 import { dragger } from "./drag.ts";
@@ -107,20 +104,6 @@ export function Window(
     }
   }, [minimized]);
 
-  async function startResize() {
-    toast({ title: "Resizing window!", desc: "Press somewhere to expand the window to that point." });
-    await sleep(100);
-    window.addEventListener("mouseup", e => {
-      if (!windowEl.current) return;
-      e.preventDefault();
-      const [x, y] = [e.clientX, e.clientY];
-      const [wx, wy] = [windowEl.current.offsetLeft, windowEl.current.offsetTop];
-
-      windowEl.current.style.width = `${x - wx}px`;
-      windowEl.current.style.height = `${y - wy}px`;
-    }, { once: true });
-  }
-
   function getPos(): [number, number] {
     return [windowEl.current?.offsetLeft ?? 0, windowEl.current?.offsetTop ?? 0];
   }
@@ -141,9 +124,10 @@ export function Window(
   function updateSize(updater: (old: [number, number]) => [number, number]) {
     if (!windowEl.current) return;
     const [w, h] = updater(getSize());
-    const clamp = (dim: number) => Math.max(dim, 50);
-    windowEl.current.style.width = clamp(w) + "px";
-    windowEl.current.style.height = clamp(h) + "px";
+    const clamp = (dim: number, containerVal: number) => Math.max(Math.min(dim, containerVal), 50);
+    const containerSize = getWindowAreaSize();
+    windowEl.current.style.width = clamp(w, containerSize[0]) + "px";
+    windowEl.current.style.height = clamp(h, containerSize[1]) + "px";
   }
 
   useEffect(() => {
@@ -156,7 +140,15 @@ export function Window(
     const d = dragger(windowBarEl.current, () => !fullscreen);
     d.onStart(() => bringToTop(id));
     d.onMove(([cx, cy]) => updatePos(([ox, oy]) => [ox + cx, oy + cy]));
-    return () => d.destroy();
+
+    const r = dragger(windowEl.current, () => !fullscreen);
+    r.onStart(() => bringToTop(id));
+    r.onMove(([cx, cy]) => updateSize(([ow, oh]) => [ow + cx, oh + cy]));
+
+    return () => {
+      d.destroy();
+      r.destroy();
+    };
   }, [fullscreen]);
 
   const hexOpacity = (((100 - windowTransparency) / 100) * 255).toString(16).padStart(2, "0");
@@ -199,8 +191,6 @@ export function Window(
         <button style={{ position: "absolute", top: 0, right: 0 }} onClick={() => setCtxPos(null)}>X</button>
         <button onClick={() => setFullscreen(f => !f)}>Fullscreen</button>
         <br />
-        <button onClick={() => startResize()}>Resize</button>
-        <br />
         <button onClick={() => toggleMinimized(id)}>Minimize</button>
         <br />
         <button onClick={() => kill()}>Close</button>
@@ -226,7 +216,9 @@ export function Window(
         <div>
           {([
             [fullscreenIcon, () => setFullscreen(f => !f), "Fullscreen"],
-            ...(fullscreen ? [] : [[resizeIcon, startResize, "Resize"], [minimizeIcon, () => toggleMinimized(id), "Minimize"]]),
+            ...(fullscreen
+              ? []
+              : [[minimizeIcon, () => toggleMinimized(id), "Minimize"]]),
             [closeIcon, kill, "Close"],
           ] as ([string, () => void, string][]))
             .map(([icon, cb, fallback], i) => (

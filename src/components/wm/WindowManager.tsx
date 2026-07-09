@@ -4,7 +4,6 @@ import { Taskbar } from "./Taskbar.tsx";
 import { Window } from "./Window.tsx";
 import "./WindowManager.css";
 import * as fs from "../../lib/fs.ts";
-import { Shortcuts } from "./Shortcuts.tsx";
 import { spawnWindow, useWindows } from "./windowsStore.ts";
 
 export type { WindowDesc } from "./windowsStore.ts";
@@ -25,7 +24,6 @@ export default function WindowManager() {
       }}
     >
       <Taskbar />
-      <Shortcuts />
       <div className="window-area" ref={windowAreaRef}>
         {windows.map((w) => (
           <Window
