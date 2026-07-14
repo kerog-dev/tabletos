@@ -1,5 +1,6 @@
 #!/usr/bin/env -S pnpm tsx
 // TODO: watching
+// TODO: run package builds in batches of cpu cores
 import react from "@vitejs/plugin-react";
 import { zipSync } from "fflate";
 import { globSync } from "glob";

@@ -110,9 +110,9 @@ function makeReactive<T extends object>(
   return proxy;
 }
 
-export async function createDatabase<T extends object = Record<string, any>>(
+async function buildDatabase<T extends object>(
   path: string,
-  debounceMs = 200,
+  debounceMs: number,
 ): Promise<Database<T>> {
   let raw: T;
   try {
@@ -145,11 +145,15 @@ export async function createDatabase<T extends object = Record<string, any>>(
   }
 
   function notifyChange(changedPath: string): void {
-    debouncedSave();
     for (const [subscribedPath, callbacks] of listeners) {
       if (pathsOverlap(changedPath, subscribedPath)) {
         callbacks.forEach((cb) => cb());
       }
+    }
+    try {
+      debouncedSave();
+    } catch (err) {
+      console.error(`Failed to schedule save for "${path}":`, err);
     }
   }
 
@@ -180,4 +184,40 @@ export async function createDatabase<T extends object = Record<string, any>>(
     },
     use,
   };
+}
+
+const DB_CACHE_TTL_MS = 5 * 60 * 1000;
+
+interface CacheEntry {
+  promise: Promise<Database<any>>;
+  timer: ReturnType<typeof setTimeout> | null;
+}
+
+const dbCache = new Map<string, CacheEntry>();
+
+function scheduleEviction(path: string, entry: CacheEntry): ReturnType<typeof setTimeout> | null {
+  if (import.meta.env.DEV) return null;
+  return setTimeout(() => {
+    if (dbCache.get(path) === entry) {
+      dbCache.delete(path);
+    }
+  }, DB_CACHE_TTL_MS);
+}
+
+export function createDatabase<T extends object = Record<string, any>>(
+  path: string,
+  debounceMs = 200,
+): Promise<Database<T>> {
+  const existing = dbCache.get(path);
+  if (existing) {
+    if (existing.timer) clearTimeout(existing.timer);
+    existing.timer = scheduleEviction(path, existing);
+    return existing.promise as Promise<Database<T>>;
+  }
+
+  const entry = {} as CacheEntry;
+  entry.promise = buildDatabase<T>(path, debounceMs);
+  entry.timer = scheduleEviction(path, entry);
+  dbCache.set(path, entry);
+  return entry.promise;
 }
