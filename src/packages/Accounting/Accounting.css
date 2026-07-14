@@ -1,0 +1,70 @@
+.page-selector {
+  margin: 20px;
+}
+
+ul, li {
+  list-style: none;
+  margin-left: 5px;
+  padding-left: 5px;
+}
+
+.page-selector button {
+  margin: 10px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 2px solid black;
+  background-color: whitesmoke;
+}
+
+.item {}
+
+.item-data {}
+
+.item-form, .page-statistics, .page-footer {
+  border: 5px solid black;
+  border-radius: 8px;
+  width: max-content;
+  margin-inline: auto;
+  margin-block: 8px;
+  padding: 8px;
+}
+
+.items {
+  overflow-y: scroll;
+  height: 85cqh;
+}
+
+.page {
+  display: flex;
+  flex-flow: column nowrap;
+  height: 100%;
+}
+
+.info {
+  height: 60%;
+  display: flex;
+  flex-flow: column nowrap;
+}
+
+.info .title {
+  font-size: 200%;
+  font-weight: bolder;
+  height: max-content;
+  margin-block: 10px;
+  text-align: center;
+}
+
+.items-container {
+  flex: 1;
+  container-type: size;
+}
+
+.controls {
+  flex: 1;
+  display: flex;
+}
+
+.controls > * {
+  flex: 1;
+  margin: 10px;
+}

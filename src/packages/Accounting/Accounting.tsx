@@ -1,6 +1,7 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { sdk } from "../../getsdk.ts";
 import { formatTime, randomId } from "../../utils.ts";
+import "./Accounting.css";
 
 const CURRENT_PAGE_VERSION = 2;
 
@@ -53,7 +54,7 @@ function PageSelector({ setName }: { setName: (name: string) => void }) {
   }
 
   return (
-    <div>
+    <div className="page-selector">
       <button onClick={createPage}>Create page</button> <br />
       Pages:<br />
       <ul>
@@ -69,7 +70,7 @@ function PageSelector({ setName }: { setName: (name: string) => void }) {
 
 function ItemDataComponent({ m, i }: { m: Item; i: number }) {
   return (
-    <span>
+    <span className="item-data">
       (#{i + 1}, {formatTime(m.timestamp)}):{" "}
       <span style={{ color: m.expense ? "red" : "lime" }}>{m.expense ? "-" : "+"}{m.price}</span>: {m.type}
       {m.note && <>{" "}-- {m.note}</>}
@@ -94,10 +95,11 @@ function ItemComponent({ m, i, page }: { m: Item; i: number; page: Page }) {
   }
 
   return (
-    <div>
+    <div className="item">
       <ItemDataComponent m={m} i={i} />
       {!editing && (
         <>
+          {" "}
           <button onClick={() => setEditing(true)}>Edit</button>
           {" "}
         </>
@@ -148,6 +150,10 @@ function ItemCreateForm(
     const note = noteRef.current?.value;
     const price = Number.parseFloat(priceRef.current?.value ?? "");
     if (!type || Number.isNaN(price)) return;
+    if (typeSelectRef.current) typeSelectRef.current.value = "";
+    if (isIncomeRef.current) isIncomeRef.current.checked = false;
+    if (noteRef.current) noteRef.current.value = "";
+    if (priceRef.current) priceRef.current.value = "";
     const item: Item = {
       id: initialItem?.id ?? randomId(64),
       type,
@@ -161,7 +167,7 @@ function ItemCreateForm(
   }
 
   return (
-    <div>
+    <div className="item-form">
       <select ref={typeSelectRef} defaultValue={initialItem?.type ?? ""}>
         <option value="">Select an item type.</option>
         {types.map((t, i) => <option key={`${i}-${t}`} value={t}>{t}</option>)}
@@ -191,7 +197,7 @@ function PageStatistics({ page }: { page: Page }) {
   );
 
   return (
-    <p>
+    <p className="page-statistics">
       Total:{" "}
       <span style={{ color: total === 0 ? "gray" : total > 0 ? "lime" : "red" }}>
         {total > 0 && "+"}
@@ -206,6 +212,7 @@ function PageComponent({ name, back }: { name: string; back: () => void }) {
   const page = db.use<Page | undefined>(`pages.${name}`);
   const [ignoreOld, setIgnoreOld] = useState(false);
   const typesDialogRef = useRef<HTMLDialogElement | null>(null);
+  const itemsRef = useRef<HTMLUListElement | null>(null);
 
   if (!page) {
     return (
@@ -265,25 +272,45 @@ function PageComponent({ name, back }: { name: string; back: () => void }) {
     }
   }
 
+  useEffect(() => {
+    setTimeout(() => {
+      if (!itemsRef.current) return;
+      itemsRef.current.scrollTop = itemsRef.current.scrollHeight;
+    }, 50);
+  }, [page.items]);
+
   return (
-    <div>
-      <h1>{page.name}</h1>
-      <button onClick={back}>Back</button>
-      <br />
-      Items:
-      <ul>
-        {page.items.map((m, i) => (
-          <li key={m.id}>
-            <ItemComponent m={m} i={i} page={page} />
-          </li>
-        ))}
-      </ul>
-      <ItemCreateForm
-        onCreate={item => db.object.pages[page.name].items.push(item)}
-        types={page.types}
-        btnName={"Add"}
-      />
-      <PageStatistics page={page} />
+    <div className="page">
+      <div className="info">
+        <p className="title">{page.name}</p>
+        <button onClick={back}>Back</button>
+        <div className="items-container">
+          Items:
+          <ul className="items" ref={itemsRef}>
+            {page.items.map((m, i) => (
+              <li key={m.id}>
+                <ItemComponent m={m} i={i} page={page} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+      <div className="controls">
+        <ItemCreateForm
+          onCreate={item => db.object.pages[page.name].items.push(item)}
+          types={page.types}
+          btnName={"Add"}
+        />
+        <PageStatistics page={page} />
+        <div className="page-footer">
+          <button onClick={() => typesDialogRef.current?.showModal()}>Open types</button>
+          <br />
+          <button onClick={deletePage}>Delete page</button>
+          <p>
+            Created at {formatTime(page.timestamp)}
+          </p>
+        </div>
+      </div>
       <dialog ref={typesDialogRef}>
         <button style={{ float: "right" }} onClick={() => typesDialogRef.current?.close()}>X</button>
         <button onClick={createType}>Create type</button>
@@ -301,12 +328,6 @@ function PageComponent({ name, back }: { name: string; back: () => void }) {
           ))}
         </ul>
       </dialog>
-      <button onClick={() => typesDialogRef.current?.showModal()}>Open types</button>
-      <br />
-      <button onClick={deletePage}>Delete page</button>
-      <p>
-        Created at {formatTime(page.timestamp)}
-      </p>
     </div>
   );
 }
