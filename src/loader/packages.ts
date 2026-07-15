@@ -1,5 +1,6 @@
 import { unzip } from "fflate";
 import * as fs from "../lib/fs.ts";
+import { toast, Urgency } from "../toast.tsx";
 import { apps, loadAppFromScript, unloadApp } from "./apps.ts";
 import { type Service, sv } from "./services.ts";
 
@@ -19,6 +20,12 @@ async function loadPackageService(packageName: string, scriptBlob: Blob) {
   await sv.load(
     module.default,
     await isServiceInDeviceAutostarts(module.default.info.name) || module.default.info.autostart,
+  ).catch(reason =>
+    toast({
+      title: "Service failed to start",
+      desc: `The service ${module.default.info.name} failed to start: ${reason}`,
+      urgency: Urgency.Error,
+    })
   );
   packageServiceNameMapping[packageName] = module.default.info.name;
 }

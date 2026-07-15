@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import * as fs from "../lib/fs.ts";
 import type { Sdk } from "../sdk.ts";
+import { toast, Urgency } from "../toast.tsx";
 
 export interface ServiceInfo {
   name: string;
@@ -85,10 +86,19 @@ class ServiceManager {
     const targets = typeof target === "string" ? [target] : (target ?? this.services.map(s => s.info.name));
     const toStart = targets.filter(n => !this.startedServices.some(s => s.service.info.name === n));
     await (window as any).$ready;
-    await Promise.allSettled(
+    const results = await Promise.allSettled(
       this.services
         .filter(s => toStart.includes(s.info.name))
         .map(async service => this.startedServices.push({ service, started: await service.start((window as any).$) })),
+    );
+    results.forEach((r, i) =>
+      r.status === "rejected"
+        ? toast({
+          title: "Service failed to start",
+          desc: `The service ${this.services[i].info.name} failed to start: ${r.reason}`,
+          urgency: Urgency.Error,
+        })
+        : null
     );
     this.syncRunningStore();
   }
