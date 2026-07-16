@@ -27,7 +27,7 @@ interface DB {
   pages: Record<string, Page>;
 }
 
-const { jsonDB, getAppDir, fs } = sdk();
+const { jsonDB, getAppDir, fs, useDialog } = sdk();
 const appDir = await getAppDir("Accounting");
 const db = await jsonDB<DB>(`${appDir}/db.json`);
 
@@ -35,12 +35,13 @@ db.object.pages ??= {};
 
 function PageSelector({ setName }: { setName: (name: string) => void }) {
   const pages = db.use<Record<string, Page>>("pages");
+  const dialog = useDialog();
 
-  function createPage() {
-    const name = prompt("Enter a name for your page.");
+  async function createPage() {
+    const name = await dialog?.prompt("Enter a name for your page.");
     if (!name) return;
     if (name.includes(".")) {
-      alert("Page name must not include dots");
+      await dialog?.alert("Page name must not include dots");
       return;
     }
     const page: Page = {
@@ -213,6 +214,7 @@ function PageComponent({ name, back }: { name: string; back: () => void }) {
   const [ignoreOld, setIgnoreOld] = useState(false);
   const typesDialogRef = useRef<HTMLDialogElement | null>(null);
   const itemsRef = useRef<HTMLUListElement | null>(null);
+  const dialog = useDialog();
 
   if (!page) {
     return (
@@ -249,15 +251,15 @@ function PageComponent({ name, back }: { name: string; back: () => void }) {
     );
   }
 
-  function createType() {
-    const name = prompt("Enter type name.");
+  async function createType() {
+    const name = await dialog?.prompt("Enter type name.");
     if (!name) return;
     if (db.object.pages[page!.name].types.includes(name)) return;
     db.object.pages[page!.name].types.push(name);
   }
 
-  function editType(i: number) {
-    const newName = prompt("Enter new name.", db.object.pages[page!.name].types[i]);
+  async function editType(i: number) {
+    const newName = await dialog?.prompt("Enter new name.", db.object.pages[page!.name].types[i]);
     if (!newName) return;
     db.object.pages[page!.name].types[i] = newName;
   }
@@ -266,8 +268,8 @@ function PageComponent({ name, back }: { name: string; back: () => void }) {
     db.object.pages[page!.name].types.splice(i, 1);
   }
 
-  function deletePage() {
-    if (confirm("Are you sure you want to delete this page?")) {
+  async function deletePage() {
+    if (await dialog?.confirm("Are you sure you want to delete this page?")) {
       delete db.object.pages[page!.name];
     }
   }

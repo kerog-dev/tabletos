@@ -3,7 +3,7 @@ import "./FileExplorer.css";
 import { sdk } from "../../getsdk.ts";
 import { FileExplorerNode } from "./FileExplorerNode.tsx";
 
-const { fs } = sdk();
+const { fs, useDialog } = sdk();
 
 export interface FileDesc {
   isDir: boolean;
@@ -14,6 +14,7 @@ export interface FileDesc {
 export default function FileExplorer({ args }: { args: [] | [string] }) {
   const [cwd, setCwd] = useState((args[0] === "/" ? "" : args[0]) ?? "");
   const [children, setChildren] = useState<FileDesc[]>([]);
+  const dialog = useDialog();
 
   const uploadRef = useRef<HTMLInputElement | null>(null);
   const getUrlRef = useRef<HTMLInputElement | null>(null);
@@ -21,9 +22,9 @@ export default function FileExplorer({ args }: { args: [] | [string] }) {
   async function upload() {
     const file = uploadRef.current?.files?.[0];
     if (!file) return;
-    const name = prompt("File name?");
+    const name = await dialog?.prompt("File name?");
     if (!name) return;
-    const isTextStr = prompt("Is this a text file? (yes or no)")?.toLowerCase();
+    const isTextStr = (await dialog?.prompt("Is this a text file? (yes or no)"))?.toLowerCase();
     if (!isTextStr || (isTextStr !== "yes" && isTextStr !== "no")) throw "Must enter yes or no.";
     await fs.writeFile(cwd + "/" + name, isTextStr === "yes" ? await file.text() : file);
   }
@@ -36,7 +37,7 @@ export default function FileExplorer({ args }: { args: [] | [string] }) {
   }
 
   async function getUrl() {
-    const filename = prompt("File name?");
+    const filename = await dialog?.prompt("File name?");
     if (!filename || !getUrlRef.current) return;
     const res = await fetch(getUrlRef.current.value);
     const blob = await res.blob();
@@ -44,7 +45,7 @@ export default function FileExplorer({ args }: { args: [] | [string] }) {
   }
 
   async function newFolder() {
-    const name = prompt("Folder name?");
+    const name = await dialog?.prompt("Folder name?");
     if (!name) return;
     await fs.mkdir(`${cwd}/${name}`);
   }

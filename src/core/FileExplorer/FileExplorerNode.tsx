@@ -7,38 +7,39 @@ import { sdk } from "../../getsdk.ts";
 import type { FileDesc } from "./FileExplorer.tsx";
 import { extractZipInto, joinFsPath, zipDir } from "./zipping.ts";
 
-const { fs, toast, Urgency, spawnWindow } = sdk();
+const { fs, toast, Urgency, spawnWindow, useDialog } = sdk();
 
 export function FileExplorerNode({ c, setCwd }: { c: FileDesc; setCwd: (cwd: string) => void }) {
   const [ctxMenuOpen, setCtxMenuOpen] = useState(false);
   const ctxParentRef = useRef<HTMLElement | null>(null);
+  const dialog = useDialog();
 
-  function unlinkNode() {
-    if (confirm("Are you sure you want to delete " + c.path + "?")) {
+  async function unlinkNode() {
+    if (await dialog?.confirm("Are you sure you want to delete " + c.path + "?")) {
       fs.unlink(c.path).then(() => toast({ title: "Deleted", desc: `Deleted ${c.path}` })).catch(() =>
         toast({ title: "Failed to delete", desc: `Failed to delete ${c.path}`, urgency: Urgency.Error })
       );
     }
   }
 
-  function deleteNode() {
+  async function deleteNode() {
     if (
-      confirm("Are you sure you want to delete " + c.path + "?")
-      && confirm("This will delete RECURSIVELY!!, deleting the folder and all its children.")
+      await dialog?.confirm("Are you sure you want to delete " + c.path + "?")
+      && await dialog?.confirm("This will delete RECURSIVELY!!, deleting the folder and all its children.")
     ) {
       fs.unlink(c.path, { recursive: true }).then(() => toast({ title: "Deleted", desc: `Deleted ${c.path}` }))
         .catch(() => toast({ title: "Failed to delete", desc: `Failed to delete ${c.path}`, urgency: Urgency.Error }));
     }
   }
 
-  function moveNode() {
-    const target = prompt("Enter new path", c.path);
+  async function moveNode() {
+    const target = await dialog?.prompt("Enter new path", c.path);
     if (!target) return;
     fs.move(c.path, target);
   }
 
-  function renameNode() {
-    const newName = prompt("Enter new name", c.name);
+  async function renameNode() {
+    const newName = await dialog?.prompt("Enter new name", c.name);
     if (!newName) return;
     const parent = fs.parent(c.path);
     fs.move(c.path, (parent === "/" ? "" : parent) + "/" + newName);
@@ -71,7 +72,7 @@ export function FileExplorerNode({ c, setCwd }: { c: FileDesc; setCwd: (cwd: str
 
   async function unzipInto() {
     const defaultDir = fs.parent(c.path);
-    const targetDir = prompt("Unzip into which directory?", defaultDir);
+    const targetDir = await dialog?.prompt("Unzip into which directory?", defaultDir);
     if (!targetDir) return;
     try {
       if (!(await fs.isDir(targetDir))) throw `${targetDir} is not a directory.`;
@@ -86,7 +87,7 @@ export function FileExplorerNode({ c, setCwd }: { c: FileDesc; setCwd: (cwd: str
     const defaultName = c.name.replace(/\.zip$/i, "");
     const parentDir = fs.parent(c.path);
     const suggestedPath = joinFsPath(parentDir, defaultName);
-    const targetDir = prompt("Extract into new folder at path:", suggestedPath);
+    const targetDir = await dialog?.prompt("Extract into new folder at path:", suggestedPath);
     if (!targetDir) return;
     try {
       if (await fs.pathExists(targetDir)) throw `${targetDir} already exists.`;
@@ -99,7 +100,7 @@ export function FileExplorerNode({ c, setCwd }: { c: FileDesc; setCwd: (cwd: str
   }
 
   async function zipNode() {
-    const target = prompt("Enter target path", c.path + ".zip");
+    const target = await dialog?.prompt("Enter target path", c.path + ".zip");
     if (!target) return;
     try {
       await zipDir(c.path, target);

@@ -6,8 +6,8 @@ export const WindowContext = createContext<
     resize: ({ w, h, absolute }: { w: number; h: number; absolute?: boolean }) => void;
     pos(): [number, number];
     size(): [number, number];
-    kill(): void;
-    setConfirmationRequired(required?: () => boolean): void;
+    kill(): Promise<void>;
+    setConfirmationRequired(required?: () => Promise<boolean> | boolean): void;
     setTitle(title: string | null): void;
   } | null
 >(null);

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { sdk } from "../getsdk.ts";
 
-const { fs } = sdk();
+const { fs, useDialog } = sdk();
 
 interface FileDesc {
   isDir: boolean;
@@ -12,6 +12,7 @@ interface FileDesc {
 export function FilePicker({ setPath }: { setPath: (path: string) => void }) {
   const [cwd, setCwd] = useState("");
   const [children, setChildren] = useState<FileDesc[]>([]);
+  const dialog = useDialog();
 
   async function update() {
     const children = await fs.ls(cwd === "" ? "/" : cwd);
@@ -27,7 +28,7 @@ export function FilePicker({ setPath }: { setPath: (path: string) => void }) {
   }
 
   async function createAndSelectEmptyTextFile() {
-    const name = prompt("File name?");
+    const name = await dialog?.prompt("File name?");
     if (!name) return;
     await fs.writeFile(`${cwd}/${name}`, "");
     setPath(`${cwd}/${name}`);

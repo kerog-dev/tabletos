@@ -10,12 +10,13 @@ const GChessboard = "g-chess-board" as any;
 
 let game = new Chess();
 
-const { useWindow } = sdk();
+const { useWindow, useDialog } = sdk();
 
 export default function ChessApp() {
   const boardRef = useRef<any>(null);
   const [status, setStatus] = useState("White to move");
   const appWindow = useWindow();
+  const dialog = useDialog();
 
   function syncStatus() {
     const side = game.turn() === "w" ? "White" : "Black";
@@ -85,8 +86,8 @@ export default function ChessApp() {
         {status}
         <br />
         <button
-          onClick={() => {
-            if (confirm("Are you sure?")) {
+          onClick={async () => {
+            if (await dialog?.confirm("Are you sure?")) {
               game = new Chess();
               appWindow?.kill();
             }

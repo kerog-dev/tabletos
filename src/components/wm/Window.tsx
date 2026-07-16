@@ -65,9 +65,9 @@ export function Window(
   const isMountedRef = useRef<boolean>(false);
   const [ctxPos, setCtxPos] = useState<[number, number] | null>(null);
   const windowTransparency = useWindowTransparency();
-  const [confirmer, setConfirmer] = useState(() => () => true);
-  const kill = () => {
-    if (confirmer()) killWindow(id);
+  const [confirmer, setConfirmer] = useState<() => Promise<boolean> | boolean>(() => () => true);
+  const kill = async () => {
+    if (await confirmer()) killWindow(id);
   };
 
   useEffect(() => {
@@ -163,7 +163,7 @@ export function Window(
     pos: getPos,
     size: getSize,
     kill,
-    setConfirmationRequired: (required?: () => boolean) => {
+    setConfirmationRequired: (required?: () => Promise<boolean> | boolean) => {
       if (required) setConfirmer(() => required);
     },
     setTitle: (title: string | null) => {

@@ -4,7 +4,7 @@ import "./Chat.css";
 import { sdk } from "../../getsdk.ts";
 import { formatTime } from "../../utils.ts";
 
-const { sv } = sdk();
+const { sv, useDialog } = sdk();
 
 const serviceName = "Chat Service";
 
@@ -43,9 +43,10 @@ function ChatAppReady({ exposed }: { exposed: Controller }) {
   const [selected, setSelected] = useState<string | null>(null);
   const chat = exposed.useChat(selected);
   const composeInputRef = useRef<HTMLInputElement | null>(null);
+  const dialog = useDialog();
 
-  function startChat() {
-    const id = prompt("Target user device id");
+  async function startChat() {
+    const id = await dialog?.prompt("Target user device id");
     if (!id) return;
     exposed.startChat(id);
   }

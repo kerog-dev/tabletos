@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { sdk } from "../../getsdk.ts";
 
-const { fs, getAppDir } = sdk();
+const { fs, getAppDir, useDialog } = sdk();
 
 const appDir = await getAppDir("Music");
 const playlistsDir = `${appDir}/playlists`;
@@ -10,9 +10,10 @@ if (!(await fs.isDir(playlistsDir))) await fs.mkdir(playlistsDir);
 
 function PlaylistSelector({ setPlaylist }: { setPlaylist: (playlist: string | null) => void }) {
   const list = fs.useDirListing(playlistsDir);
+  const dialog = useDialog();
 
   async function createPlaylist() {
-    const name = prompt("Name of playlist?");
+    const name = await dialog?.prompt("Name of playlist?");
     if (!name) return;
     await fs.mkdir(`${playlistsDir}/${name}`);
   }
