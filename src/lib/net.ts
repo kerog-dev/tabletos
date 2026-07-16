@@ -5,7 +5,7 @@ function shouldProxy(target: string) {
   return true;
 }
 
-const serverUriRegex = /^http(s?):\/\/server\/(.*)$/g;
+const serverUriRegex = /^http(s?):\/\/server\/(.*)$/;
 
 async function proxyFetch(input: string, init: RequestInit = {}): Promise<Response> {
   console.log(`Proxying ${input}`);
@@ -37,10 +37,9 @@ async function proxyFetch(input: string, init: RequestInit = {}): Promise<Respon
 const afetch: typeof fetch = async function afetch(input: RequestInfo | URL, init?: RequestInit) {
   const server = await getServerAddr();
   const uri = String(input);
-  const serverMatch = [...uri.matchAll(serverUriRegex)];
-  if (server && serverMatch[0]) {
-    const target = serverMatch[0][2];
-    return await fetch(server + "/" + target, init);
+  const match = serverUriRegex.exec(uri);
+  if (server && match) {
+    return await fetch(server + "/" + match[2], init);
   }
   if (!shouldProxy(uri) || (!server && !proxyRequired())) {
     return await fetch(input, init);
