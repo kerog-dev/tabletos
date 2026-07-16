@@ -1,4 +1,4 @@
-import "./earlyinit.ts";
+import { unlisten } from "./earlyinit.ts";
 import "./sdk.ts";
 import "./vendorfs.ts";
 import { StrictMode } from "react";
@@ -23,6 +23,16 @@ window.addEventListener("error", (e) => {
     alert(String(e.error));
   }
 });
+
+window.addEventListener("unhandledrejection", (e) => {
+  try {
+    toast({ title: "Unhandled rejection", desc: String(e.reason), urgency: Urgency.Error });
+  } catch {
+    alert(String(e.reason));
+  }
+});
+
+unlisten();
 
 loadPackages();
 
