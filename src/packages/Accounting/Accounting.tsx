@@ -259,7 +259,7 @@ function PageComponent({ name, back }: { name: string; back: () => void }) {
   }
 
   async function editType(i: number) {
-    const newName = await dialog?.prompt("Enter new name.", db.object.pages[page!.name].types[i]);
+    const newName = await dialog?.prompt("Enter new name.", undefined, db.object.pages[page!.name].types[i]);
     if (!newName) return;
     db.object.pages[page!.name].types[i] = newName;
   }

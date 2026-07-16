@@ -33,13 +33,13 @@ export function FileExplorerNode({ c, setCwd }: { c: FileDesc; setCwd: (cwd: str
   }
 
   async function moveNode() {
-    const target = await dialog?.prompt("Enter new path", c.path);
+    const target = await dialog?.prompt("Enter new path", undefined, c.path);
     if (!target) return;
     fs.move(c.path, target);
   }
 
   async function renameNode() {
-    const newName = await dialog?.prompt("Enter new name", c.name);
+    const newName = await dialog?.prompt("Enter new name", undefined, c.name);
     if (!newName) return;
     const parent = fs.parent(c.path);
     fs.move(c.path, (parent === "/" ? "" : parent) + "/" + newName);
@@ -72,7 +72,7 @@ export function FileExplorerNode({ c, setCwd }: { c: FileDesc; setCwd: (cwd: str
 
   async function unzipInto() {
     const defaultDir = fs.parent(c.path);
-    const targetDir = await dialog?.prompt("Unzip into which directory?", defaultDir);
+    const targetDir = await dialog?.prompt("Unzip into which directory?", undefined, defaultDir);
     if (!targetDir) return;
     try {
       if (!(await fs.isDir(targetDir))) throw `${targetDir} is not a directory.`;
@@ -87,7 +87,7 @@ export function FileExplorerNode({ c, setCwd }: { c: FileDesc; setCwd: (cwd: str
     const defaultName = c.name.replace(/\.zip$/i, "");
     const parentDir = fs.parent(c.path);
     const suggestedPath = joinFsPath(parentDir, defaultName);
-    const targetDir = await dialog?.prompt("Extract into new folder at path:", suggestedPath);
+    const targetDir = await dialog?.prompt("Extract into new folder at path:", undefined, suggestedPath);
     if (!targetDir) return;
     try {
       if (await fs.pathExists(targetDir)) throw `${targetDir} already exists.`;
@@ -100,7 +100,7 @@ export function FileExplorerNode({ c, setCwd }: { c: FileDesc; setCwd: (cwd: str
   }
 
   async function zipNode() {
-    const target = await dialog?.prompt("Enter target path", c.path + ".zip");
+    const target = await dialog?.prompt("Enter target path", undefined, c.path + ".zip");
     if (!target) return;
     try {
       await zipDir(c.path, target);

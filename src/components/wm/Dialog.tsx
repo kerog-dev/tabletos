@@ -1,9 +1,10 @@
 import { createContext, type ReactNode, useContext, useEffect, useRef } from "react";
 import { create } from "zustand";
+import "./Dialog.css";
 
 type DialogEntry =
   | { type: "alert"; content: string; title?: string; resolve: () => void }
-  | { type: "prompt"; content: string; title?: string; resolve: (v: string | null) => void }
+  | { type: "prompt"; content: string; title?: string; resolve: (v: string | null) => void; defaultValue?: string }
   | { type: "confirm"; content: string; title?: string; resolve: (v: boolean) => void };
 
 const dialogStore = create<{ entries: DialogEntry[] }>(() => ({
@@ -13,7 +14,7 @@ const dialogStore = create<{ entries: DialogEntry[] }>(() => ({
 const DialogContext = createContext<
   {
     alert(content: string, title?: string): Promise<void>;
-    prompt(content: string, title?: string): Promise<string | null>;
+    prompt(content: string, title?: string, defaultValue?: string): Promise<string | null>;
     confirm(content: string, title?: string): Promise<boolean>;
   } | null
 >(null);
@@ -36,13 +37,13 @@ function DialogContent({ entry }: { entry: DialogEntry }) {
 
   return (
     <div>
-      <button onClick={() => dismiss(defaultDismissValue)}>X</button>
-      {entry.title && <span>{entry.title}</span>}
-      <p>{entry.content}</p>
+      <button className="close-btn" onClick={() => dismiss(defaultDismissValue)}>X</button>
+      {entry.title && <span className="title">{entry.title}</span>}
+      <p className="content">{entry.content}</p>
       {entry.type === "alert" && <button onClick={() => dismiss()}>OK</button>}
       {entry.type === "prompt" && (
         <>
-          <input ref={inputRef} />
+          <input ref={inputRef} defaultValue={entry.defaultValue} />
           <button onClick={() => dismiss(null)}>Cancel</button>
           <button onClick={() => dismiss(inputRef.current?.value ?? null)}>OK</button>
         </>
@@ -90,12 +91,12 @@ export function DialogProvider({ children }: { children: ReactNode }) {
           }));
           return promise;
         },
-        prompt(content, title) {
+        prompt(content, title, defaultValue) {
           let resolve: any;
           const promise = new Promise<any>(res => resolve = res);
           dialogStore.setState(old => ({
             ...old,
-            entries: [...old.entries, { type: "prompt", content, title, resolve }],
+            entries: [...old.entries, { type: "prompt", content, title, resolve, defaultValue }],
           }));
           return promise;
         },

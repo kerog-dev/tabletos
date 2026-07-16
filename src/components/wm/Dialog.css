@@ -1,0 +1,17 @@
+dialog {
+  width: max-content;
+  height: max-content;
+  border: 2px solid grey;
+  border-radius: 5px;
+  padding: 20px;
+}
+
+.close-btn {
+  float: right;
+}
+
+.title {
+  font-size: 200%;
+}
+
+.content {}
