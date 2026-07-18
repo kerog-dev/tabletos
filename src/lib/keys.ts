@@ -31,6 +31,7 @@ function getSharedSecret(targetPublicKey: string) {
 
 export async function getSharedSecretWith(target: string): Promise<Uint8Array> {
   const targetPublicKey = await ws.getRemotePublicKey(target);
+  if (targetPublicKey === null) throw "Cannot get shared secret: no public key known by server";
   return getSharedSecret(targetPublicKey);
 }
 
