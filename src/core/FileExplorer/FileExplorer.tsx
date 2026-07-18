@@ -22,7 +22,7 @@ export default function FileExplorer({ args }: { args: [] | [string] }) {
   async function upload() {
     const file = uploadRef.current?.files?.[0];
     if (!file) return;
-    const name = await dialog?.prompt("File name?");
+    const name = await dialog?.prompt("File name?", undefined, file.name);
     if (!name) return;
     const isTextStr = (await dialog?.prompt("Is this a text file? (yes or no)"))?.toLowerCase();
     if (!isTextStr || (isTextStr !== "yes" && isTextStr !== "no")) throw "Must enter yes or no.";
