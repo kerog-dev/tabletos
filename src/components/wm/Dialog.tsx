@@ -1,4 +1,4 @@
-import { createContext, type ReactNode, useContext, useEffect, useRef } from "react";
+import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from "react";
 import { create } from "zustand";
 import "./Dialog.css";
 
@@ -62,6 +62,11 @@ export function Dialog() {
   const dialogRef = useRef<HTMLDialogElement | null>(null);
   const entries = dialogStore(s => s.entries);
   const current = entries[0] ?? null;
+  const [key, setKey] = useState(1);
+
+  useEffect(() => {
+    setKey(k => k + 1);
+  }, [entries]);
 
   useEffect(() => {
     if (current === null) {
@@ -73,7 +78,7 @@ export function Dialog() {
 
   return (
     <dialog ref={dialogRef}>
-      {current && <DialogContent entry={current} />}
+      {current && <DialogContent key={key} entry={current} />}
     </dialog>
   );
 }

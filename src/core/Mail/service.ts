@@ -44,6 +44,7 @@ export interface Controller {
   sendMail(mail: MailRequest): void;
   useMailInfos(box: "inbox" | "outbox"): MailInfo[];
   useMail(id: string | null): Mail | null;
+  useMailDeliveryInfo(): DBOutboxMail[];
   deleteMail(id: string): void;
 }
 
@@ -117,6 +118,9 @@ const service: Service = {
               from: mail.from,
             })
         );
+      },
+      useMailDeliveryInfo() {
+        return db.use<DBOutboxMail[]>("outbox");
       },
       useMail(id) {
         const inbox = db.use<Mail[]>("inbox");

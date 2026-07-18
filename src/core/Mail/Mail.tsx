@@ -2,9 +2,31 @@ import { useRef, useState } from "react";
 import { sdk } from "../../getsdk.ts";
 import type { Controller, MailPart } from "./service.ts";
 import "./Mail.css";
+import { setTray } from "../../components/wm/tray.ts";
 import { formatTime } from "../../utils.ts";
+import mailIconUrl from "./icon.png?url";
 
 const { sv, toast } = sdk();
+
+setTray({
+  id: "mail",
+  name: "Mail",
+  iconUrl: mailIconUrl,
+  ui() {
+    function Ready({ exposed }: { exposed: Controller }) {
+      const info = exposed.useMailDeliveryInfo();
+
+      return (
+        <div>
+          Mail not fully delivered: {info.filter(m => m.delivery.length < m.mail.to.length).length}
+        </div>
+      );
+    }
+
+    const exposed = sv.use<Controller>("Mail Service");
+    return exposed ? <Ready exposed={exposed} /> : <>Loading...</>;
+  },
+});
 
 function MailPart({ part }: { part: MailPart }) {
   switch (part.type) {

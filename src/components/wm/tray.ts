@@ -4,7 +4,7 @@ export interface TrayDesc {
   id: string;
   name: string;
   iconUrl?: string;
-  show(): React.ReactNode;
+  ui(): React.ReactNode;
   open: boolean;
 }
 

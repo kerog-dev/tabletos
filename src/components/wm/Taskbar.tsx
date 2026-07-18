@@ -203,7 +203,7 @@ export function Taskbar() {
                 style={{ display: t.open ? "unset" : "none", positionAnchor: `--tray-anchor-${t.id}` }}
                 onClick={() => setTrayOpen(t.id, false)}
               >
-                {t.open && <t.show />}
+                {t.open && <t.ui />}
               </div>
             </div>
           ))}

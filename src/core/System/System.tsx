@@ -13,7 +13,7 @@ const { sv } = sdk();
 setTray({
   id: "system",
   name: "System",
-  show() {
+  ui() {
     const runningServices = sv.useRunningServices();
     return (
       <p>
