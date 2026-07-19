@@ -1,6 +1,5 @@
-import insane from "insane";
-import * as marked from "marked";
 import { useRef, useState } from "react";
+import { MarkdownComponent } from "../../components/MarkdownComponent.tsx";
 import { sdk } from "../../getsdk.ts";
 import type { ChatInterface } from "../AIService/ai.ts";
 import type { AISdk } from "../AIService/service.ts";
@@ -54,7 +53,7 @@ function Chat({ i }: { i: ChatInterface }) {
         c.parts.map((p, i) => (
           <div key={`${j}-${i}`}>
             {c.role}: {"text" in p
-              ? <span dangerouslySetInnerHTML={{ __html: insane(marked.parse(p.text) as string) }} />
+              ? <MarkdownComponent src={p.text} />
               : "fileData" in p
               ? p.fileData.mimeType.startsWith("image/") ? <img src={p.fileData.fileUri} /> : "Not an image"
               : "Inline Data"}

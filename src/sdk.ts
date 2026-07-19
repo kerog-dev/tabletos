@@ -1,3 +1,4 @@
+import { MarkdownComponent } from "./components/MarkdownComponent.tsx";
 import { useDialog } from "./components/wm/Dialog.tsx";
 import { useWindow } from "./components/wm/WindowContext.tsx";
 import type { WindowDesc } from "./components/wm/WindowManager.tsx";
@@ -29,6 +30,7 @@ interface Sdk {
   useWindow: typeof useWindow;
   useDialog: typeof useDialog;
   eventlog: typeof eventlog;
+  MarkdownComponent: typeof MarkdownComponent;
 }
 
 const sdk: Sdk = {
@@ -52,6 +54,7 @@ const sdk: Sdk = {
   useWindow,
   useDialog,
   eventlog,
+  MarkdownComponent,
 };
 
 (window as any).$ = sdk;
