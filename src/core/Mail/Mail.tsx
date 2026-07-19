@@ -53,7 +53,7 @@ function Mail(
   if (!mail) return <div>Error: Mail not found</div>;
 
   return (
-    <div>
+    <>
       <button onClick={() => setMailSelected(null)}>X</button>
       <button
         onClick={() => {
@@ -78,13 +78,11 @@ function Mail(
       <p>
         {mail.content.map(p => <MailPart part={p} />)}
       </p>
-    </div>
+    </>
   );
 }
 
-function MailAppReady({ exposed }: { exposed: Controller }) {
-  const [boxSelected, setBoxSelected] = useState<"inbox" | "outbox">("inbox");
-  const [mailSelected, setMailSelected] = useState<string | null>(null);
+function Compose({ exposed }: { exposed: Controller }) {
   const [composing, setComposing] = useState(false);
   const composeToRef = useRef<HTMLInputElement | null>(null);
   const composeSubjectRef = useRef<HTMLInputElement | null>(null);
@@ -104,6 +102,26 @@ function MailAppReady({ exposed }: { exposed: Controller }) {
     });
     toast({ title: "Queued mail" });
   }
+
+  return (
+    <>
+      <button className="compose-btn" onClick={() => setComposing(true)}>Compose</button>
+      <div className="compose" style={{ display: composing ? "unset" : "none" }}>
+        <button className="compose-close-btn" onClick={() => setComposing(false)}>X</button>
+        To: <input type="text" ref={composeToRef} />
+        <br />
+        Subject: <input type="text" ref={composeSubjectRef} />
+        <br />
+        <textarea ref={composeTextRef} />
+        <button className="compose-send-btn" onClick={() => composeSend()}>Send</button>
+      </div>
+    </>
+  );
+}
+
+function MailAppReady({ exposed }: { exposed: Controller }) {
+  const [boxSelected, setBoxSelected] = useState<"inbox" | "outbox">("inbox");
+  const [mailSelected, setMailSelected] = useState<string | null>(null);
 
   return (
     <div className="app">
@@ -131,19 +149,10 @@ function MailAppReady({ exposed }: { exposed: Controller }) {
           ))}
         </div>
       </div>
-      <button className="compose-btn" onClick={() => setComposing(true)}>Compose</button>
-      <div className="compose" style={{ display: composing ? "unset" : "none" }}>
-        <button className="compose-close-btn" onClick={() => setComposing(false)}>X</button>
-        To: <input type="text" ref={composeToRef} />
-        <br />
-        Subject: <input type="text" ref={composeSubjectRef} />
-        <br />
-        <textarea ref={composeTextRef} />
-        <button className="compose-send-btn" onClick={() => composeSend()}>Send</button>
-      </div>
       <div className="mail" style={{ display: mailSelected ? "unset" : "none" }}>
         {mailSelected && <Mail id={mailSelected} exposed={exposed} setMailSelected={setMailSelected} />}
       </div>
+      <Compose exposed={exposed} />
     </div>
   );
 }

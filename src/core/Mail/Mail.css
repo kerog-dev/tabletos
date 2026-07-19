@@ -24,6 +24,7 @@
 
 .mail-list-container {
   flex: 1;
+  overflow-y: scroll;
   display: flex;
   flex-flow: column nowrap;
 }
@@ -96,4 +97,7 @@
   font-weight: bold;
 }
 
-.mail {}
+.mail {
+  width: 100%;
+  flex: 1;
+}
