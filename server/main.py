@@ -153,6 +153,41 @@ async def proxy(request: Request):
     return response
 
 
+async def proxy_get(request: Request):
+    target_url = request.query_params.get("url")
+    if not target_url:
+        return PlainTextResponse("Missing url param", status_code=400)
+
+    headers = {}
+    # forward Range header if present
+    if range_header := request.headers.get("range"):
+        headers["range"] = range_header
+
+    try:
+        upstream = await client.send(
+            client.build_request("GET", target_url, headers=headers),
+            stream=True,
+        )
+    except httpx.HTTPError as exc:
+        return PlainTextResponse(f"Upstream request failed: {exc}", status_code=502)
+
+    response_headers = []
+    for k, v in upstream.headers.raw:
+        if k.decode("latin-1").lower() not in HOP_BY_HOP_HEADERS:
+            response_headers.append((k, v))
+
+    async def body_iter():
+        try:
+            async for chunk in upstream.aiter_raw():
+                yield chunk
+        finally:
+            await upstream.aclose()
+
+    response = StreamingResponse(body_iter(), status_code=upstream.status_code)
+    response.raw_headers = response_headers
+    return response
+
+
 ws_clients: dict[str, WebSocket] = {}
 
 
@@ -219,6 +254,7 @@ app = Starlette(
         Mount("/packages", StaticFiles(directory=PACKAGES_DIR)),
         Route("/package-hashes/{name}", package_hash),
         Route("/proxy", proxy, methods=["POST"]),
+        Route("/proxy-get", proxy_get, methods=["GET"]),
         WebSocketRoute("/ws", websocket_handler),
     ],
     middleware=[
