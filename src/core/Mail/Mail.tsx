@@ -144,7 +144,8 @@ function MailAppReady({ exposed }: { exposed: Controller }) {
         <div className="mail-list">
           {exposed.useMailInfos(boxSelected).reverse().map(x => (
             <div onDoubleClick={() => setMailSelected(x.id)}>
-              {formatTime(x.sentAt)}: {x.subject} (To: {x.to.join(", ")})
+              {formatTime(x.sentAt)}: {x.subject}{" "}
+              {boxSelected === "inbox" ? <>(from {x.from})</> : <>(to {x.to.join(", ")})</>}
             </div>
           ))}
         </div>
