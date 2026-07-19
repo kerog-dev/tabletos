@@ -212,7 +212,10 @@ export function Window(
         }}
         onClick={() => setCtxPos(null)}
       >
-        <div>{desc.title ? `${desc.title} - ${desc.app.name}` : desc.app.name}</div>
+        <div>
+          {desc.app.iconUrl && <img src={desc.app.iconUrl} />}
+          <span>{desc.title ? `${desc.title} - ${desc.app.name}` : desc.app.name}</span>
+        </div>
         <div>
           {([
             [fullscreenIcon, () => setFullscreen(f => !f), "Fullscreen"],
