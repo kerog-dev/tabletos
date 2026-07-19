@@ -1,12 +1,13 @@
 import { sha256 } from "js-sha256";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "../../components/Router.tsx";
+import { EventUrgency } from "../../eventlog.ts";
 import { sdk } from "../../getsdk.ts";
 import { fetch } from "../../lib/net.ts";
 import { unloadApp } from "../../loader/loader.ts";
 import { toast, Urgency } from "../../toast.tsx";
 
-const { fs } = sdk();
+const { fs, eventlog } = sdk();
 
 async function hashBlob(blob: Blob): Promise<string> {
   return sha256(await blob.arrayBuffer());
@@ -55,6 +56,7 @@ export function AppManagerPage() {
     if (!(await fs.isDir("/packages"))) await fs.mkdir("/packages");
     await fs.writeFile(`/packages/${name}.zip`, zipBlob);
     toast({ title: "Installed successfully!" });
+    eventlog.add("App Manager", `Installed package: ${name}`, EventUrgency.Info);
   }
 
   async function uninstall(name?: string, quiet = false) {
@@ -64,6 +66,7 @@ export function AppManagerPage() {
       await fs.unlink(`/packages/${name}.zip`);
       unloadApp(name);
       if (!quiet) toast({ title: "Uninstalled successfully!" });
+      eventlog.add("App Manager", `Uninstalled package: ${name}`, EventUrgency.Info);
     } catch (e) {
       toast({ title: "Failed to uninstall", desc: "Error: " + e });
     }
@@ -80,6 +83,7 @@ export function AppManagerPage() {
       await uninstall(name, true);
       await remoteInstall(name);
       toast({ title: `Updated ${name} succesfully!` });
+      eventlog.add("App Manager", `Updated package: ${name}`, EventUrgency.Info);
     } catch (e) {
       toast({ title: "Failed to update", desc: `Error: ${e}`, urgency: Urgency.Error });
     }

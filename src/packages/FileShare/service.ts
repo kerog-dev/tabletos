@@ -1,3 +1,4 @@
+import { EventUrgency } from "../../eventlog.ts";
 import type { Service } from "../../loader/loader.ts";
 
 interface RpcObject {
@@ -61,12 +62,17 @@ const service: Service = {
     name: "File Sharing Service",
     autostart: false, // maybe change?
   },
-  async start({ fs, getAppDir, conn }) {
+  async start({ fs, getAppDir, conn, eventlog }) {
     const appDir = await getAppDir(`FileShare`);
     const transfers: Transfer[] = [];
 
     const object: RpcObject = {
       async startTransfer(from, file, size, contentType) {
+        eventlog.add(
+          "File Share",
+          `Receiving transfer started: ${size} bytes, ${contentType}, from: ${from}, file name: ${file}`,
+          EventUrgency.Info,
+        );
         transfers.push({
           from,
           file,
@@ -91,6 +97,13 @@ const service: Service = {
           new Blob([transfer.bytes], { type: transfer.contentType }),
         );
         const fileCRC = calcChecksum(transfer.bytes);
+        eventlog.add(
+          "File Share",
+          `Receiving transfer finished: ${file} from ${from} with CRC ${crc}, matches: ${
+            crc === fileCRC ? "yes" : "no"
+          }`,
+          EventUrgency.Info,
+        );
         if (crc !== fileCRC) return false;
         return true;
       },
@@ -106,6 +119,11 @@ const service: Service = {
           const buffer = new Uint8Array(await blob.arrayBuffer());
           const size = buffer.length;
           await proxy.startTransfer(conn.name, filename, size, blob.type);
+          eventlog.add(
+            "File Share",
+            `Sending transfer started: ${size} bytes, ${blob.type}, to: ${targetClient}, file name: ${filename}`,
+            EventUrgency.Info,
+          );
 
           const chunks = Math.ceil(size / CHUNK_SIZE);
           let bytesSent = 0;
@@ -135,6 +153,11 @@ const service: Service = {
             conn.name,
             filename,
             calcChecksum(buffer),
+          );
+          eventlog.add(
+            "File Share",
+            `Receiving transfer finished: ${filename} to ${targetClient}, ok: ${finishedOk ? "yes" : "no"}`,
+            EventUrgency.Info,
           );
           if (!finishedOk) throw new Error("Did not finish ok");
         } catch (err) {

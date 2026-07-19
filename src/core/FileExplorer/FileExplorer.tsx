@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import "./FileExplorer.css";
+import { EventUrgency } from "../../eventlog.ts";
 import { sdk } from "../../getsdk.ts";
 import { FileExplorerNode } from "./FileExplorerNode.tsx";
 
-const { fs, useDialog } = sdk();
+const { fs, useDialog, eventlog } = sdk();
 
 export interface FileDesc {
   isDir: boolean;
@@ -27,6 +28,12 @@ export default function FileExplorer({ args }: { args: [] | [string] }) {
     const isTextStr = (await dialog?.prompt("Is this a text file? (yes or no)"))?.toLowerCase();
     if (!isTextStr || (isTextStr !== "yes" && isTextStr !== "no")) throw "Must enter yes or no.";
     await fs.writeFile(cwd + "/" + name, isTextStr === "yes" ? await file.text() : file);
+    eventlog.add(
+      "File Explorer",
+      `Imported file: ${name}`,
+      EventUrgency.Info,
+      `Imported to ${cwd}/${name}, text file: ${isTextStr}`,
+    );
   }
 
   async function update() {
@@ -42,12 +49,19 @@ export default function FileExplorer({ args }: { args: [] | [string] }) {
     const res = await fetch(getUrlRef.current.value);
     const blob = await res.blob();
     await fs.writeFile(`${cwd}/${filename}`, blob);
+    eventlog.add(
+      "File Explorer",
+      `Fetched URL to filesystem: ${filename}`,
+      EventUrgency.Info,
+      `${blob.size} bytes, ${getUrlRef.current.value} => ${cwd}/${filename}`,
+    );
   }
 
   async function newFolder() {
     const name = await dialog?.prompt("Folder name?");
     if (!name) return;
     await fs.mkdir(`${cwd}/${name}`);
+    eventlog.add("File Explorer", `Created new directory: ${cwd}/${name}`, EventUrgency.Info);
   }
 
   useEffect(() => {

@@ -1,3 +1,4 @@
+import { EventUrgency } from "../../eventlog.ts";
 import type { Service } from "../../loader/loader.ts";
 import { randomId } from "../../utils.ts";
 
@@ -98,6 +99,12 @@ const service: Service = {
           delivery: [],
         };
         db.object.outbox.push(mail);
+        sdk.eventlog.add(
+          "Mail",
+          "Queued mail",
+          EventUrgency.Info,
+          `Queued mail for sending with subject: ${mail.mail.subject}`,
+        );
         doDelivery(mail);
       },
       useMailInfos(box) {
@@ -130,6 +137,12 @@ const service: Service = {
       deleteMail(id) {
         db.object.inbox = db.object.inbox.filter(m => m.id !== id);
         db.object.outbox = db.object.outbox.filter(m => m.mail.id !== id);
+        sdk.eventlog.add(
+          "Mail",
+          "Deleted mail",
+          EventUrgency.Info,
+          `Deleted mail with id ${id}`,
+        );
       },
     };
 
@@ -141,6 +154,7 @@ const service: Service = {
           sdk.conn.call<void>(`${to}::mail::sendMail`, [mail.mail], true).then(() => {
             mail.delivery.push(to);
             sdk.toast({ title: `Delivered ${mail.mail.subject} to ${to}` });
+            sdk.eventlog.add("Mail", `Delivered mail ${mail.mail.subject} to ${to}`, EventUrgency.Info);
           })
             .catch(() => {});
         }

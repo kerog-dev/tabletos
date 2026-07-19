@@ -1,3 +1,4 @@
+import { EventUrgency } from "../../eventlog.ts";
 import type { Service } from "../../loader/loader.ts";
 import { hashFile } from "../../utils.ts";
 
@@ -6,7 +7,7 @@ const service: Service = {
     name: "Auto-update Service",
     autostart: true,
   },
-  start({ fs, afetch: fetch, toast, Urgency }) {
+  start({ fs, afetch: fetch, toast, Urgency, eventlog }) {
     async function update(name: string) {
       try {
         const response = await fetch(`http://server/packages/${name}.zip`);
@@ -15,8 +16,10 @@ const service: Service = {
         await fs.unlink(`/packages/${name}.zip`);
         await fs.writeFile(`/packages/${name}.zip`, zipBlob);
         toast({ title: `Auto-updated ${name} succesfully!` });
+        eventlog.add("Auto Update", `Auto updated package: ${name}`, EventUrgency.Info);
       } catch (e) {
         toast({ title: `Failed to auto-update ${name}`, desc: `Error: ${e}`, urgency: Urgency.Error });
+        eventlog.add("Auto Update", `Failed to auto update package: ${name}`, EventUrgency.Error);
       }
     }
 

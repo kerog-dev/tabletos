@@ -2,9 +2,10 @@ import { useRef } from "react";
 import "./System.css";
 import { useRouter } from "../../components/Router.tsx";
 import { setWindowTransparency } from "../../components/wm/wmdb.ts";
+import { EventUrgency } from "../../eventlog.ts";
 import { sdk } from "../../getsdk.ts";
 
-const { fs } = sdk();
+const { fs, eventlog } = sdk();
 
 export function AppearanceSettingsPage() {
   const router = useRouter();
@@ -24,6 +25,7 @@ export function AppearanceSettingsPage() {
             onClick={() => {
               if (!wallpaperInputRef.current || wallpaperInputRef.current.files?.length !== 1) return;
               fs.writeFile("/wallpaper.img", wallpaperInputRef.current.files[0]);
+              eventlog.add("System Settings", "Wallpaper changed", EventUrgency.Info);
             }}
           >
             Set wallpaper
@@ -37,6 +39,7 @@ export function AppearanceSettingsPage() {
               const res = await fetch(url);
               const blob = await res.blob();
               fs.writeFile("/wallpaper.img", blob);
+              eventlog.add("System Settings", "Wallpaper changed", EventUrgency.Info);
             }}
           >
             Set wallpaper
@@ -55,6 +58,7 @@ export function AppearanceSettingsPage() {
                 Math.min(100, Math.round(windowTransparencyInputRef.current.value as unknown as number)),
               );
               setWindowTransparency(value);
+              eventlog.add("System Settings", `Window transparency set: ${value}`, EventUrgency.Info);
             }}
           >
             Set

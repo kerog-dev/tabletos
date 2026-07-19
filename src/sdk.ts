@@ -1,6 +1,7 @@
 import { useDialog } from "./components/wm/Dialog.tsx";
 import { useWindow } from "./components/wm/WindowContext.tsx";
 import type { WindowDesc } from "./components/wm/WindowManager.tsx";
+import { eventlog } from "./eventlog.ts";
 import { createDatabase } from "./jsondb.ts";
 import deviceId from "./lib/deviceid.ts";
 import deviceName from "./lib/devicename.ts";
@@ -27,6 +28,7 @@ interface Sdk {
   jsonDB: typeof createDatabase;
   useWindow: typeof useWindow;
   useDialog: typeof useDialog;
+  eventlog: typeof eventlog;
 }
 
 const sdk: Sdk = {
@@ -49,6 +51,7 @@ const sdk: Sdk = {
   jsonDB: createDatabase,
   useWindow,
   useDialog,
+  eventlog,
 };
 
 (window as any).$ = sdk;

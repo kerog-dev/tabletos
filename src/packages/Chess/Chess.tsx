@@ -1,5 +1,6 @@
 import { Chess } from "chess.js";
 import { useEffect, useRef, useState } from "react";
+import { EventUrgency } from "../../eventlog.ts";
 import { sdk } from "../../getsdk.ts";
 
 if (!customElements.get("g-chess-board")) {
@@ -10,7 +11,7 @@ const GChessboard = "g-chess-board" as any;
 
 let game = new Chess();
 
-const { useWindow, useDialog } = sdk();
+const { useWindow, useDialog, eventlog } = sdk();
 
 export default function ChessApp() {
   const boardRef = useRef<any>(null);
@@ -39,6 +40,8 @@ export default function ChessApp() {
     const onMoveEnd = (e: CustomEvent) => {
       const move = game.move({ from: e.detail.from, to: e.detail.to, promotion: "q" });
       if (move === null) e.preventDefault();
+      // TODO: game ids
+      else eventlog.add("Chess", `Move: ${move.from}${move.to}${move.promotion ?? ""}`, EventUrgency.Info);
     };
 
     const onMoveFinished = () => {

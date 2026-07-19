@@ -1,4 +1,5 @@
 import { Chess } from "chess.js";
+import { EventUrgency } from "../../eventlog.ts";
 import type { Service } from "../../loader/loader.ts";
 import { randomId } from "../../utils.ts";
 
@@ -71,6 +72,11 @@ const service: Service = {
           moves: [],
         };
         db.object.games[info.gameId] = info;
+        sdk.eventlog.add(
+          "Online Chess",
+          `Game started as host by ${info.opponentName}, id: ${info.gameId}`,
+          EventUrgency.Info,
+        );
         return info;
       },
       getGameInfo(gameId) {
@@ -85,9 +91,20 @@ const service: Service = {
         sdk.conn.call<void>(`${info.opponentClientId}::onlinechess::updateListener`, [info]).then(() => {
           console.log(`[Chess Server Service]: successfully notified opponent of successful move!`);
         });
+        sdk.eventlog.add(
+          "Online Chess",
+          `Opponent made mode in ${gameId}: ${move}`,
+          EventUrgency.Info,
+        );
       },
       updateListener(info) {
         db.object.games[info.gameId] = info;
+        const lastMove = info.moves.at(-1)!;
+        sdk.eventlog.add(
+          "Online Chess",
+          `Game updated by host: ${info.gameId}, last move: ${lastMove.from}${lastMove.to}${lastMove.promotion}`,
+          EventUrgency.Info,
+        );
       },
     };
 
@@ -124,6 +141,11 @@ const service: Service = {
           opponentName: myName,
         }]);
         db.object.games[info.gameId] = info;
+        sdk.eventlog.add(
+          "Online Chess",
+          `Starting game with ${info.hostName}: ${info.gameId}`,
+          EventUrgency.Info,
+        );
       },
       async doMove(gameId, moveIn) {
         const parsedMove = JSON.parse(moveIn);
@@ -141,6 +163,11 @@ const service: Service = {
         } else {
           await sdk.conn.call<void>(`${info.hostClientId}::onlinechess::makeMove`, [gameId, move]);
         }
+        sdk.eventlog.add(
+          "Online Chess",
+          `Sent move to host in game ${info.gameId}: ${move.from}${move.to}${move.promotion}`,
+          EventUrgency.Info,
+        );
       },
     };
 

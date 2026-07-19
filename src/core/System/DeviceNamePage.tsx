@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useRouter } from "../../components/Router.tsx";
+import { EventUrgency } from "../../eventlog.ts";
 import { sdk } from "../../getsdk.ts";
 
-const { fs } = sdk();
+const { fs, eventlog } = sdk();
 
 export function DeviceNamePage() {
   const router = useRouter();
@@ -16,7 +17,14 @@ export function DeviceNamePage() {
       Current name: {currentName ?? "unset"}
       <br />
       <input type="text" value={name} onChange={e => setName(e.target.value)} />
-      <button onClick={() => fs.writeFile("/devicename.txt", name)}>Set</button>
+      <button
+        onClick={() => {
+          fs.writeFile("/devicename.txt", name);
+          eventlog.add("System Settings", `Device name set: ${name}`, EventUrgency.Info);
+        }}
+      >
+        Set
+      </button>
     </div>
   );
 }

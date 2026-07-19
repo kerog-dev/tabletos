@@ -3,11 +3,12 @@ import { ContextMenu } from "../../components/ContextMenu.tsx";
 import "./Node.css";
 import fileIcon from "vfs:/vendor/icons/file.png?url";
 import folderIcon from "vfs:/vendor/icons/folder.png?url";
+import { EventUrgency } from "../../eventlog.ts";
 import { sdk } from "../../getsdk.ts";
 import type { FileDesc } from "./FileExplorer.tsx";
 import { extractZipInto, joinFsPath, zipDir } from "./zipping.ts";
 
-const { fs, toast, Urgency, spawnWindow, useDialog } = sdk();
+const { fs, toast, Urgency, spawnWindow, useDialog, eventlog } = sdk();
 
 export function FileExplorerNode({ c, setCwd }: { c: FileDesc; setCwd: (cwd: string) => void }) {
   const [ctxMenuOpen, setCtxMenuOpen] = useState(false);
@@ -16,9 +17,10 @@ export function FileExplorerNode({ c, setCwd }: { c: FileDesc; setCwd: (cwd: str
 
   async function unlinkNode() {
     if (await dialog?.confirm("Are you sure you want to delete " + c.path + "?")) {
-      fs.unlink(c.path).then(() => toast({ title: "Deleted", desc: `Deleted ${c.path}` })).catch(() =>
-        toast({ title: "Failed to delete", desc: `Failed to delete ${c.path}`, urgency: Urgency.Error })
-      );
+      fs.unlink(c.path).then(() => {
+        toast({ title: "Deleted", desc: `Deleted ${c.path}` });
+        eventlog.add("File Explorer", `Unlinked ${c.path}`, EventUrgency.Info);
+      }).catch(() => toast({ title: "Failed to delete", desc: `Failed to delete ${c.path}`, urgency: Urgency.Error }));
     }
   }
 
@@ -27,7 +29,10 @@ export function FileExplorerNode({ c, setCwd }: { c: FileDesc; setCwd: (cwd: str
       await dialog?.confirm("Are you sure you want to delete " + c.path + "?")
       && await dialog?.confirm("This will delete RECURSIVELY!!, deleting the folder and all its children.")
     ) {
-      fs.unlink(c.path, { recursive: true }).then(() => toast({ title: "Deleted", desc: `Deleted ${c.path}` }))
+      fs.unlink(c.path, { recursive: true }).then(() => {
+        toast({ title: "Deleted", desc: `Deleted ${c.path}` });
+        eventlog.add("File Explorer", `Recursively deleted ${c.path}`, EventUrgency.Info);
+      })
         .catch(() => toast({ title: "Failed to delete", desc: `Failed to delete ${c.path}`, urgency: Urgency.Error }));
     }
   }
@@ -36,6 +41,7 @@ export function FileExplorerNode({ c, setCwd }: { c: FileDesc; setCwd: (cwd: str
     const target = await dialog?.prompt("Enter new path", undefined, c.path);
     if (!target) return;
     fs.move(c.path, target);
+    eventlog.add("File Explorer", `Moved ${c.path} to ${target}`, EventUrgency.Info);
   }
 
   async function renameNode() {
@@ -43,6 +49,7 @@ export function FileExplorerNode({ c, setCwd }: { c: FileDesc; setCwd: (cwd: str
     if (!newName) return;
     const parent = fs.parent(c.path);
     fs.move(c.path, (parent === "/" ? "" : parent) + "/" + newName);
+    eventlog.add("File Explorer", `Renamed ${c.path} to ${newName}`, EventUrgency.Info);
   }
 
   async function downloadNode() {
@@ -56,6 +63,7 @@ export function FileExplorerNode({ c, setCwd }: { c: FileDesc; setCwd: (cwd: str
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 5000);
+    eventlog.add("File Explorer", `Downloaded ${c.path}`, EventUrgency.Info);
   }
 
   function openNode() {
@@ -63,6 +71,7 @@ export function FileExplorerNode({ c, setCwd }: { c: FileDesc; setCwd: (cwd: str
       app: "FileViewer",
       args: [c.path],
     });
+    eventlog.add("File Explorer", `Opened ${c.path}`, EventUrgency.Info);
   }
 
   function onDoubleClick() {
@@ -78,6 +87,7 @@ export function FileExplorerNode({ c, setCwd }: { c: FileDesc; setCwd: (cwd: str
       if (!(await fs.isDir(targetDir))) throw `${targetDir} is not a directory.`;
       await extractZipInto(c.path, targetDir);
       toast({ title: "Unzipped", desc: `Extracted ${c.name} into ${targetDir}` });
+      eventlog.add("File Explorer", `Unzipped ${c.path} into ${targetDir}`, EventUrgency.Info);
     } catch (e) {
       toast({ title: "Failed to unzip", desc: String(e), urgency: Urgency.Error });
     }
@@ -94,6 +104,7 @@ export function FileExplorerNode({ c, setCwd }: { c: FileDesc; setCwd: (cwd: str
       await fs.mkdirp(targetDir);
       await extractZipInto(c.path, targetDir);
       toast({ title: "Unzipped", desc: `Extracted ${c.name} to ${targetDir}` });
+      eventlog.add("File Explorer", `Unzipped ${c.path} into ${targetDir}`, EventUrgency.Info);
     } catch (e) {
       toast({ title: "Failed to unzip", desc: String(e), urgency: Urgency.Error });
     }
@@ -105,6 +116,7 @@ export function FileExplorerNode({ c, setCwd }: { c: FileDesc; setCwd: (cwd: str
     try {
       await zipDir(c.path, target);
       toast({ title: "Zipped" });
+      eventlog.add("File Explorer", `Zipped ${c.path} into ${target}`, EventUrgency.Info);
     } catch (e) {
       toast({ title: "Failed to zip", desc: String(e), urgency: Urgency.Error });
     }
