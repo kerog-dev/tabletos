@@ -4,7 +4,7 @@ import { sdk } from "../../getsdk.ts";
 
 const { fs } = sdk();
 
-export default function DeviceNamePage() {
+export function DeviceNamePage() {
   const router = useRouter();
   const currentName = fs.useTextFile("/devicename.txt");
   const [name, setName] = useState(currentName ?? "");

@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { eventlog, EventUrgency } from "../../eventlog.ts";
 import type { App } from "../../loader/loader.ts";
 
 export interface WindowDesc {
@@ -37,14 +38,33 @@ export function spawnWindow(
     minimized,
     args,
   };
+  eventlog.add(
+    "Apps",
+    `App opened: ${app.name}`,
+    EventUrgency.Info,
+    `App ${app.name} opened with args ${JSON.stringify(args)}`,
+  );
   useWindowsStore.setState(s => ({ windows: [...s.windows, newWindow] }));
 }
 
 export function killWindow(id: number) {
+  const desc = useWindowsStore.getState().windows.find(w => w.id === id);
+  eventlog.add(
+    "Apps",
+    `Window killed: #${id}`,
+    EventUrgency.Info,
+    "App window killed\n" + `Title: ${desc?.title ?? "<untitled>"}\n` + `App name: ${desc?.app.name ?? "<error>"}\n`,
+  );
   useWindowsStore.setState(s => ({ windows: s.windows.filter(w => w.id !== id) }));
 }
 
 export function killAllWindows() {
+  eventlog.add(
+    "Apps",
+    `Killed all windows`,
+    EventUrgency.Info,
+    `Killed ${useWindowsStore.getState().windows.length} windows`,
+  );
   useWindowsStore.setState({ windows: [] });
 }
 

@@ -1,4 +1,5 @@
 import { unlisten } from "./earlyinit.ts";
+import { eventlog, EventUrgency } from "./eventlog.ts";
 import "./sdk.ts";
 import "./vendorfs.ts";
 import { StrictMode } from "react";
@@ -18,6 +19,7 @@ Object.assign(window as any, {
 
 window.addEventListener("error", (e) => {
   try {
+    eventlog.add("Errors", "Uncaught error", EventUrgency.Error, "Error: " + String(e.error));
     toast({ title: "Error", desc: String(e.error), urgency: Urgency.Error });
   } catch {
     alert(String(e.error));
@@ -26,6 +28,7 @@ window.addEventListener("error", (e) => {
 
 window.addEventListener("unhandledrejection", (e) => {
   try {
+    eventlog.add("Errors", "Unhandled rejection", EventUrgency.Error, "Reason: " + String(e.reason));
     toast({ title: "Unhandled rejection", desc: String(e.reason), urgency: Urgency.Error });
   } catch {
     alert(String(e.reason));

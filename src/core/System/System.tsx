@@ -3,7 +3,8 @@ import { Router, RouterProvider, useRouter } from "../../components/Router.tsx";
 import { setTray } from "../../components/wm/tray.ts";
 import { AppearanceSettingsPage } from "./AppearanceSettingsPage.tsx";
 import { AppManagerPage } from "./AppManagerPage.tsx";
-import DeviceNamePage from "./DeviceNamePage.tsx";
+import { DeviceNamePage } from "./DeviceNamePage.tsx";
+import { EventViewerPage } from "./EventViewerPage.tsx";
 import { ServiceManagerPage } from "./ServiceManagerPage.tsx";
 import "./System.css";
 import { sdk } from "../../getsdk.ts";
@@ -30,6 +31,7 @@ const pages: Record<string, JSX.Element> = {
   "Service Manager": <ServiceManagerPage />,
   "App Manager": <AppManagerPage />,
   "Device Name": <DeviceNamePage />,
+  "Event Viewer": <EventViewerPage />,
 };
 
 function HomePage() {
