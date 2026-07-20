@@ -1,6 +1,5 @@
 import type { JSX } from "react";
 import { Router, RouterProvider, useRouter } from "../../components/Router.tsx";
-import { setTray } from "../../components/wm/tray.ts";
 import { AppearanceSettingsPage } from "./AppearanceSettingsPage.tsx";
 import { AppManagerPage } from "./AppManagerPage.tsx";
 import { DeviceNamePage } from "./DeviceNamePage.tsx";
@@ -8,12 +7,14 @@ import { EventViewerPage } from "./EventViewerPage.tsx";
 import { ServiceManagerPage } from "./ServiceManagerPage.tsx";
 import "./System.css";
 import { sdk } from "../../getsdk.ts";
+import appIconUrl from "./icon.png?url";
 
-const { sv } = sdk();
+const { sv, tray } = sdk();
 
-setTray({
+tray.set({
   id: "system",
   name: "System",
+  iconUrl: appIconUrl,
   ui() {
     const runningServices = sv.useRunningServices();
     return (

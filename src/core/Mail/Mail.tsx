@@ -2,13 +2,12 @@ import { useRef, useState } from "react";
 import { sdk } from "../../getsdk.ts";
 import type { Controller, MailPart } from "./service.ts";
 import "./Mail.css";
-import { setTray } from "../../components/wm/tray.ts";
 import { formatTime } from "../../utils.ts";
 import mailIconUrl from "./icon.png?url";
 
-const { sv, toast } = sdk();
+const { sv, toast, tray } = sdk();
 
-setTray({
+tray.set({
   id: "mail",
   name: "Mail",
   iconUrl: mailIconUrl,
