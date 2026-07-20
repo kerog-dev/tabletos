@@ -37,9 +37,11 @@
   height: 100%;
 }
 
-.tray {}
-
-.tray-entry {}
+.tray {
+  display: flex;
+  flex-flow: row nowrap;
+  gap: 5px;
+}
 
 .tray-entry-image {
   width: 50px;

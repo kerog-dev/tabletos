@@ -7,14 +7,7 @@ import startIcon from "vfs:/vendor/icons/start.png?url";
 import { readTextFile, useBlobFileUrl } from "../../lib/fs.ts";
 import { toast, Toasts, Urgency } from "../../toast.tsx";
 import { setTrayOpen, useTrayDescs } from "./tray.ts";
-import {
-  killAllWindows,
-  killWindow,
-  spawnWindow,
-  toggleMinimized,
-  useWindows,
-  type WindowDesc,
-} from "./windowsStore.ts";
+import { bringToTop, killAllWindows, killWindow, spawnWindow, useWindows, type WindowDesc } from "./windowsStore.ts";
 
 interface ShortcutShared {
   name: string;
@@ -175,7 +168,7 @@ export function Taskbar() {
                 setContextMenuOpens(contextMenuOpens => ({ ...contextMenuOpens, [w.id]: true }));
               }}
             >
-              <button className="taskbar-window-btn" onClick={() => toggleMinimized(w.id)}>{w.app.name}</button>
+              <button className="taskbar-window-btn" onClick={() => bringToTop(w.id)}>{w.app.name}</button>
               {contextMenuOpens[w.id] && (
                 <TaskbarWindowCtx
                   w={w}
