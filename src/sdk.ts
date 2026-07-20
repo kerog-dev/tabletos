@@ -1,5 +1,6 @@
 import { MarkdownComponent } from "./components/MarkdownComponent.tsx";
 import { useDialog } from "./components/wm/Dialog.tsx";
+import { deleteTray, setTray } from "./components/wm/tray.ts";
 import { useWindow } from "./components/wm/WindowContext.tsx";
 import type { WindowDesc } from "./components/wm/WindowManager.tsx";
 import { eventlog } from "./eventlog.ts";
@@ -31,6 +32,10 @@ interface Sdk {
   useDialog: typeof useDialog;
   eventlog: typeof eventlog;
   MarkdownComponent: typeof MarkdownComponent;
+  tray: {
+    set: typeof setTray;
+    delete: typeof deleteTray;
+  };
 }
 
 const sdk: Sdk = {
@@ -55,6 +60,10 @@ const sdk: Sdk = {
   useDialog,
   eventlog,
   MarkdownComponent,
+  tray: {
+    set: setTray,
+    delete: deleteTray,
+  },
 };
 
 (window as any).$ = sdk;
