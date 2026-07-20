@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { EventUrgency } from "../../eventlog.ts";
 import type { Service } from "../../loader/loader.ts";
 
@@ -14,6 +15,13 @@ interface Transfer {
   contentType: string;
 }
 
+interface TransferProgressInfo {
+  isSender: boolean;
+  otherClient: string;
+  name: string;
+  progress: number;
+}
+
 export interface Control {
   sendFile(
     { blob, targetClient, filename, onError, onProgress, onFinished }: {
@@ -25,6 +33,7 @@ export interface Control {
       onFinished: () => void;
     },
   ): Promise<void>;
+  useTransferProgresses(): TransferProgressInfo[];
 }
 
 const CHUNK_SIZE = 256 * 1024;
@@ -65,6 +74,14 @@ const service: Service = {
   async start({ fs, getAppDir, conn, eventlog }) {
     const appDir = await getAppDir(`FileShare`);
     const transfers: Transfer[] = [];
+    const progressUpdateListeners: (() => void)[] = [];
+    const transferProgresses: TransferProgressInfo[] = [];
+    const progressesUpdated = () =>
+      progressUpdateListeners.forEach(l => {
+        try {
+          l();
+        } catch {}
+      });
 
     const object: RpcObject = {
       async startTransfer(from, file, size, contentType) {
@@ -80,6 +97,8 @@ const service: Service = {
           contentType,
         });
         if (!(await fs.isDir(`${appDir}/${from}`))) await fs.mkdir(`${appDir}/${from}`);
+        transferProgresses.push({ name: file, isSender: false, otherClient: from, progress: 0 });
+        progressesUpdated();
       },
       addChunk(from, file, chunkI, chunk) {
         const transfer = transfers.find(t => t.from === from && t.file === file);
@@ -87,6 +106,11 @@ const service: Service = {
 
         const bytes = Uint8Array.from(chunk, c => c.charCodeAt(0));
         transfer.bytes.set(bytes, chunkI * CHUNK_SIZE);
+        const progress = transferProgresses.find(p => p.name === file && p.otherClient === from && !p.isSender);
+        if (progress) {
+          progress.progress += bytes.length / transfer.bytes.length;
+          progressesUpdated();
+        }
       },
       async finishTransfer(from, file, crc) {
         const transfer = transfers.find(t => t.from === from && t.file === file);
@@ -104,6 +128,13 @@ const service: Service = {
           }`,
           EventUrgency.Info,
         );
+        const progressIndex = transferProgresses.findIndex(p =>
+          p.name === file && p.otherClient === from && !p.isSender
+        );
+        if (progressIndex !== -1) {
+          transferProgresses.splice(progressIndex, 1);
+          progressesUpdated();
+        }
         if (crc !== fileCRC) return false;
         return true;
       },
@@ -124,6 +155,8 @@ const service: Service = {
             `Sending transfer started: ${size} bytes, ${blob.type}, to: ${targetClient}, file name: ${filename}`,
             EventUrgency.Info,
           );
+          transferProgresses.push({ name: filename, otherClient: targetClient, isSender: true, progress: 0 });
+          progressesUpdated();
 
           const chunks = Math.ceil(size / CHUNK_SIZE);
           let bytesSent = 0;
@@ -135,6 +168,11 @@ const service: Service = {
             await proxy.addChunk(conn.name, filename, chunkI, chunkStr);
             bytesSent += end - start;
             onProgress(Math.round((bytesSent / size) * 100));
+            const progress = transferProgresses.find(p =>
+              p.name === filename && p.otherClient === targetClient && p.isSender
+            );
+            if (progress) progress.progress = bytesSent / size;
+            progressesUpdated();
           }
 
           let next = 0;
@@ -149,6 +187,11 @@ const service: Service = {
             await Promise.race(inFlight.values());
           }
 
+          const progressIndex = transferProgresses.findIndex(p =>
+            p.name === filename && p.otherClient === targetClient && p.isSender
+          );
+          if (progressIndex !== -1) transferProgresses.splice(progressIndex, 1);
+          progressesUpdated();
           const finishedOk = await proxy.finishTransfer(
             conn.name,
             filename,
@@ -165,6 +208,23 @@ const service: Service = {
         } finally {
           onFinished();
         }
+      },
+      useTransferProgresses() {
+        const [progresses, setProgress] = useState([...transferProgresses]);
+
+        useEffect(() => {
+          const listener = () => setProgress([...transferProgresses]);
+
+          progressUpdateListeners.push(listener);
+
+          return () => {
+            const i = progressUpdateListeners.findIndex(l => l === listener);
+            if (i === -1) return;
+            progressUpdateListeners.splice(i, 1);
+          };
+        }, []);
+
+        return progresses;
       },
     };
 

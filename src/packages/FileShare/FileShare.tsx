@@ -1,10 +1,37 @@
 import { useState } from "react";
 import { sdk } from "../../getsdk.ts";
+import appIconUrl from "./icon.png?url";
 import { type Control } from "./service.ts";
 
-const { sv, conn: { name: connName }, fs } = sdk();
+const { sv, conn: { name: connName }, fs, tray } = sdk();
 
 const serviceName = "File Sharing Service";
+
+tray.set({
+  id: "fileshare",
+  name: "File Share",
+  iconUrl: appIconUrl,
+  ui() {
+    function Ready({ service }: { service: Control }) {
+      const progresses = service.useTransferProgresses();
+
+      return (
+        <ul>
+          {progresses.map(p => (
+            <li key={`${p.name}---${p.progress}---${p.isSender}`}>
+              {p.name} {p.isSender ? "to" : "from"} {p.otherClient}
+              <progress max="1" value={p.progress}></progress>
+            </li>
+          ))}
+        </ul>
+      );
+    }
+
+    const service = sv.use<Control>(serviceName);
+    if (service) return <Ready service={service} />;
+    else return <p>Service is not started?</p>;
+  },
+});
 
 export default function FileShare() {
   const [sourceMode, setSourceMode] = useState<"local" | "virtual">("local");
