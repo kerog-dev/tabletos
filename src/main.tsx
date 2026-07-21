@@ -1,7 +1,6 @@
 import { unlisten } from "./earlyinit.ts";
 import { eventlog, EventUrgency } from "./eventlog.ts";
 import "./sdk.ts";
-import "./vendorfs.ts";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";

@@ -13,6 +13,7 @@ import conn from "./lib/rpc.ts";
 import * as ws from "./lib/ws.ts";
 import { sv, useApps } from "./loader/loader.ts";
 import { toast, Urgency } from "./toast.tsx";
+import { mountVendorFs } from "./vendorfs.ts";
 
 interface Sdk {
   toast: typeof toast;
@@ -66,6 +67,7 @@ const sdk: Sdk = {
   },
 };
 
+await mountVendorFs(sdk.fs);
 (window as any).$ = sdk;
 (window as any).$resolve();
 
