@@ -1,5 +1,5 @@
 .window-container {
-  border: 8px solid blue;
+  border: solid blue;
   border-radius: 8px;
   position: absolute;
   display: flex;

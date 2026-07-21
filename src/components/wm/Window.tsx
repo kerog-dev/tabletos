@@ -177,6 +177,8 @@ export function Window(
       style={{
         zIndex: fullscreen ? "10000" : desc.z,
         backgroundColor: `#ffffff${!fullscreen ? hexOpacity : ""}`,
+        backdropFilter: !fullscreen ? "blur(4px)" : undefined,
+        borderWidth: fullscreen ? "2px" : "8px",
       }}
       ref={windowEl}
       onClick={() => bringToTop(id)}
