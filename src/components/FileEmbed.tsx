@@ -64,7 +64,7 @@ function renderFile(type: SupportedType, blobUrl: string, path: string) {
   };
   switch (type) {
     case "image":
-      return <img {...style} src={blobUrl} alt="" />;
+      return <img style={{ ...style.style, backgroundColor: "white" }} src={blobUrl} alt="" />;
 
     case "video":
       return <video {...style} src={blobUrl} controls />;
