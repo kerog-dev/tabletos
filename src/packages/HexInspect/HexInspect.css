@@ -1,0 +1,8 @@
+.app {
+  display: flex;
+  flex-flow: row nowrap;
+}
+
+.app > * {
+  width: 50%;
+}
