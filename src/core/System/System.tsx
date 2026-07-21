@@ -1,13 +1,13 @@
 import type { JSX } from "react";
 import { Router, RouterProvider, useRouter } from "../../components/Router.tsx";
+import { sdk } from "../../getsdk.ts";
 import { AppearanceSettingsPage } from "./AppearanceSettingsPage.tsx";
 import { AppManagerPage } from "./AppManagerPage.tsx";
 import { DeviceNamePage } from "./DeviceNamePage.tsx";
 import { EventViewerPage } from "./EventViewerPage.tsx";
-import { ServiceManagerPage } from "./ServiceManagerPage.tsx";
-import "./System.css";
-import { sdk } from "../../getsdk.ts";
 import appIconUrl from "./icon.png?url";
+import { ServiceManagerPage } from "./ServiceManagerPage.tsx";
+import styles from "./System.module.css";
 
 const { sv, tray } = sdk();
 
@@ -39,7 +39,7 @@ function HomePage() {
   const router = useRouter();
 
   return (
-    <div>
+    <div className={styles.app}>
       Welcome to the system settings app.
       <ul>
         {Object.keys(pages).filter(p => p !== "Home").map(p => (

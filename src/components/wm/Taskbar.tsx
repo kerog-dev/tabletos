@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { type App, apps, useApps } from "../../loader/loader.ts";
-import "./Taskbar.css";
 import closeIcon from "vfs:/vendor/icons/close.png?url";
 import fullscreenIcon from "vfs:/vendor/icons/fullscreen.png?url";
 import startIcon from "vfs:/vendor/icons/start.png?url";
 import { readTextFile, useBlobFileUrl } from "../../lib/fs.ts";
+import { type App, apps, useApps } from "../../loader/loader.ts";
 import { toast, Toasts, Urgency } from "../../toast.tsx";
+import styles from "./Taskbar.module.css";
 import { setTrayOpen, useTrayDescs } from "./tray.ts";
 import { bringToTop, killAllWindows, killWindow, spawnWindow, useWindows, type WindowDesc } from "./windowsStore.ts";
 
@@ -81,12 +81,12 @@ function Shortcut({ s, setLauncherOpen }: { s: ShortcutDesc; setLauncherOpen: (o
 
   return (
     <div
-      className="shortcut"
+      className={styles.shortcut}
       onClick={open}
     >
-      <div className="shortcut-inside">
-        <img className="shortcut-icon" src={src ?? "about:blank"} />
-        <div className="shortcut-name">{s.name}</div>
+      <div className={styles["shortcut-inside"]}>
+        <img className={styles["shortcut-icon"]} src={src ?? "about:blank"} />
+        <div className={styles["shortcut-name"]}>{s.name}</div>
       </div>
     </div>
   );
@@ -120,7 +120,7 @@ function Launcher({ open, setOpen }: { open: boolean; setOpen: (open: boolean) =
   );
 
   return (
-    <div className="launcher" style={{ display: open ? undefined : "none" }}>
+    <div className={styles.launcher} style={{ display: open ? undefined : "none" }}>
       {shortcuts.map((s, index) => <Shortcut key={index} s={s} setLauncherOpen={setOpen} />)}
     </div>
   );
@@ -128,7 +128,7 @@ function Launcher({ open, setOpen }: { open: boolean; setOpen: (open: boolean) =
 
 function TaskbarWindowCtx({ w, close, closeWindow }: { w: WindowDesc; close: () => void; closeWindow: () => void }) {
   return (
-    <div className="taskbar-window-ctx" onClick={close}>
+    <div className={styles["taskbar-window-ctx"]} onClick={close}>
       {w.app.name}
       <br />
       <button onClick={closeWindow}>Close</button>
@@ -151,24 +151,24 @@ export function Taskbar() {
 
   return (
     <>
-      <div className="taskbar">
+      <div className={styles.taskbar}>
         <button
-          className="start-button"
+          className={styles["start-button"]}
           onClick={() => setLauncherOpen(open => !open)}
         >
           <img style={{ width: "100%", height: "100%", imageRendering: "pixelated" }} src={startIcon} />
         </button>
-        <div className="window-list">
+        <div className={styles["window-list"]}>
           {windows.map(w => (
             <div
               key={w.id}
-              className="taskbar-window"
+              className={styles["taskbar-window"]}
               onContextMenu={e => {
                 e.preventDefault();
                 setContextMenuOpens(contextMenuOpens => ({ ...contextMenuOpens, [w.id]: true }));
               }}
             >
-              <button className="taskbar-window-btn" onClick={() => bringToTop(w.id)}>{w.app.name}</button>
+              <button className={styles["taskbar-window-btn"]} onClick={() => bringToTop(w.id)}>{w.app.name}</button>
               {contextMenuOpens[w.id] && (
                 <TaskbarWindowCtx
                   w={w}
@@ -179,11 +179,11 @@ export function Taskbar() {
             </div>
           ))}
         </div>
-        <div className="tray">
+        <div className={styles.tray}>
           {Object.values(trayDescs).map(t => (
-            <div key={t.id} className="tray-entry">
+            <div key={t.id} className={styles["tray-entry"]}>
               <img
-                className="tray-entry-image"
+                className={styles["tray-entry-image"]}
                 width={30}
                 height={30}
                 src={t.iconUrl ?? noIconUrl ?? ""}
@@ -192,7 +192,7 @@ export function Taskbar() {
                 style={{ anchorName: `--tray-anchor-${t.id}` }}
               />
               <div
-                className="tray-entry-popup"
+                className={styles["tray-entry-popup"]}
                 style={{ display: t.open ? "unset" : "none", positionAnchor: `--tray-anchor-${t.id}` }}
                 onClick={() => setTrayOpen(t.id, false)}
               >

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import "./FileExplorer.css";
 import { EventUrgency } from "../../eventlog.ts";
 import { sdk } from "../../getsdk.ts";
+import styles from "./FileExplorer.module.css";
 import { FileExplorerNode } from "./FileExplorerNode.tsx";
 
 const { fs, useDialog, eventlog } = sdk();
@@ -93,7 +93,7 @@ export default function FileExplorer({ args }: { args: [] | [string] }) {
       <button onClick={() => getUrl()}>Get url</button>
       <br />
       <button onClick={() => newFolder()}>New folder</button>
-      <div className="listing-items">
+      <div className={styles["listing-items"]}>
         {children.map(c => <FileExplorerNode key={c.path} c={c} setCwd={setCwd} />)}
       </div>
     </div>

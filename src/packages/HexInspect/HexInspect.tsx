@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
-import "./HexInspect.css";
 import { FilePicker } from "../../components/FilePicker";
 import { sdk } from "../../getsdk";
+import styles from "./HexInspect.module.css";
 
 const { fs } = sdk();
 
@@ -17,7 +17,7 @@ export default function HexInspect() {
   }
 
   return (
-    <div className="app">
+    <div className={styles.app}>
       <div style={{ whiteSpace: "pre-wrap" }}>
         {decoded.map(v => {
           return <span>{v[0]}{" "}</span>;

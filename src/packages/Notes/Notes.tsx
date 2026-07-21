@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import "./Notes.css";
 import { sdk } from "../../getsdk.ts";
 import { debounce } from "../../utils.ts";
 import type { AISdk } from "../AIService/service.ts";
+import styles from "./Notes.module.css";
 
 const { fs, getAppDir, sv, useDialog } = sdk();
 
@@ -59,7 +59,7 @@ function NoteEditor({ note, back }: { note: string; back: () => void }) {
   }
 
   return (
-    <div className="note-editor">
+    <div className={styles["note-editor"]}>
       <button onClick={() => back()}>Back</button>
       <button onClick={() => aiRewrite()}>Rewrite using AI</button>
       <textarea ref={textareaRef} />
@@ -78,7 +78,7 @@ function NoteList({ setOpenNote }: { setOpenNote: (name: string) => void }) {
   }
 
   return (
-    <div className="note-list">
+    <div className={styles["note-list"]}>
       Create note: <input type="text" ref={newNoteNameRef} placeholder="name" />{" "}
       <button onClick={createNote}>Create</button>
       <br />

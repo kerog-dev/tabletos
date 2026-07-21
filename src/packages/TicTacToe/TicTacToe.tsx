@@ -1,6 +1,6 @@
 import { useState } from "react";
-import "./TicTacToe.css";
 import { sdk } from "../../getsdk.ts";
+import styles from "./TicTacToe.module.css";
 
 const { toast } = sdk();
 
@@ -52,8 +52,8 @@ export default function TicTacToe() {
   };
 
   return (
-    <div className="app">
-      <div className="board">
+    <div className={styles.app}>
+      <div className={styles.board}>
         {board.map((tile, i) => <button key={i} onClick={() => handleClick(i)}>{tile}</button>)}
       </div>
       <div>

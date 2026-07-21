@@ -1,10 +1,10 @@
 import { useEffect, useRef } from "react";
+import * as fs from "../../lib/fs.ts";
 import { apps } from "../../loader/loader.ts";
+import { Dialog, DialogProvider } from "./Dialog.tsx";
 import { Taskbar } from "./Taskbar.tsx";
 import { Window } from "./Window.tsx";
-import "./WindowManager.css";
-import * as fs from "../../lib/fs.ts";
-import { Dialog, DialogProvider } from "./Dialog.tsx";
+import styles from "./WindowManager.module.css";
 import { spawnWindow, useWindows } from "./windowsStore.ts";
 
 export type { WindowDesc } from "./windowsStore.ts";
@@ -21,7 +21,7 @@ export default function WindowManager() {
 
   return (
     <div
-      className="window-manager"
+      className={styles["window-manager"]}
       style={{
         backgroundImage: wallpaperUrl ? `url(${wallpaperUrl})` : undefined,
       }}
@@ -29,7 +29,7 @@ export default function WindowManager() {
       <Taskbar />
       <Dialog />
       <DialogProvider>
-        <div className="window-area" ref={windowAreaRef}>
+        <div className={styles["window-area"]} ref={windowAreaRef}>
           {windows.map((w) => (
             <Window
               key={w.id}

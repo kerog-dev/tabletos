@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import "./PixelArtEditor.css";
 import { sdk } from "../../getsdk.ts";
+import styles from "./PixelArtEditor.module.css";
 
 type PixelData = {
   r: number;
@@ -79,7 +79,7 @@ function Toolbar(
   }
 
   return (
-    <div className="toolbar">
+    <div className={styles.toolbar}>
       <input type="color" value={color} onChange={e => setColor(e.target.value)} />
       {[Tool.Pencil, Tool.Erase].map(t => (
         <button key={t} onClick={() => setTool(t)}>{Tool[t]}{tool === t && <span>{" "}(selected)</span>}</button>
@@ -155,7 +155,7 @@ export default function PixelArtEditor() {
   }, [drawing]);
 
   return (
-    <div className="app">
+    <div className={styles.app}>
       <Toolbar tool={tool} setTool={setTool} color={color} setColor={setColor} drawing={drawing} />
       <canvas ref={canvasRef} width={drawing.width} height={drawing.height} />
     </div>

@@ -1,8 +1,8 @@
 import { useRef, useState } from "react";
-import type { Controller, DBMessage, MessagePart } from "./service.ts";
-import "./Chat.css";
 import { sdk } from "../../getsdk.ts";
 import { formatTime } from "../../utils.ts";
+import styles from "./Chat.module.css";
+import type { Controller, DBMessage, MessagePart } from "./service.ts";
 
 const { sv, useDialog } = sdk();
 
@@ -11,27 +11,27 @@ const serviceName = "Chat Service";
 function MessagePart({ p }: { p: MessagePart }) {
   switch (p.type) {
     case "text":
-      return <p className="message-part">{p.content}</p>;
+      return <p className={styles["message-part"]}>{p.content}</p>;
 
     case "code":
-      return <code className="message-part">{p.content}</code>;
+      return <code className={styles["message-part"]}>{p.content}</code>;
 
     case "runnable":
-      return <p className="message-part">Runnable. (not executable right now for security)</p>;
+      return <p className={styles["message-part"]}>Runnable. (not executable right now for security)</p>;
 
     case "link":
-      return <a href={p.url} className="message-part">{p.name}</a>;
+      return <a href={p.url} className={styles["message-part"]}>{p.name}</a>;
 
     case "inline-text":
-      return <span className="message-part">{p.content}</span>;
+      return <span className={styles["message-part"]}>{p.content}</span>;
   }
 }
 
 function Message({ m }: { m: DBMessage }) {
   return (
-    <div className={"message " + (m.me ? "from-me" : "from-other")}>
-      <div className="message-ts">{formatTime(m.ts)}</div>
-      <div className="message-content">
+    <div className={`${styles["message"]} ` + (m.me ? styles["from-me"] : styles["from-other"])}>
+      <div className={styles["message-ts"]}>{formatTime(m.ts)}</div>
+      <div className={styles["message-content"]}>
         {m.parts.map(p => <MessagePart p={p} />)}
       </div>
     </div>
@@ -58,10 +58,10 @@ function ChatAppReady({ exposed }: { exposed: Controller }) {
   }
 
   return (
-    <div className="app">
-      <div className="navbar">
+    <div className={styles["app"]}>
+      <div className={styles["navbar"]}>
         <button onClick={() => startChat()}>Start new chat</button>
-        <ul className="chat-list">
+        <ul className={styles["chat-list"]}>
           {chats.map(c => (
             <li key={c.id}>
               <button onClick={() => setSelected(c.id)}>{c.id}</button>
@@ -69,17 +69,17 @@ function ChatAppReady({ exposed }: { exposed: Controller }) {
           ))}
         </ul>
       </div>
-      <div className="chat-area">
+      <div className={styles["chat-area"]}>
         {chat
           && (
             <>
-              <div className="chat-topbar">
+              <div className={styles["chat-topbar"]}>
                 started at {formatTime(chat.startedAt)}
               </div>
-              <div className="chat-messages">{chat.messages.map(m => <Message key={m.ts} m={m} />)}</div>
-              <div className="chat-send">
-                <input type="text" ref={composeInputRef} className="chat-compose" />
-                <button onClick={() => sendMessage()} className="chat-send-btn">Send</button>
+              <div className={styles["chat-messages"]}>{chat.messages.map(m => <Message key={m.ts} m={m} />)}</div>
+              <div className={styles["chat-send"]}>
+                <input type="text" ref={composeInputRef} className={styles["chat-compose"]} />
+                <button onClick={() => sendMessage()} className={styles["chat-send-btn"]}>Send</button>
               </div>
             </>
           )}

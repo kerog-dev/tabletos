@@ -6,6 +6,7 @@ import { type App } from "../../loader/loader.ts";
 import { ContextMenu } from "../ContextMenu.tsx";
 import ErrorBoundary from "../ErrorBoundary.tsx";
 import { dragger } from "./drag.ts";
+import styles from "./Window.module.css";
 import { WindowContext } from "./WindowContext.tsx";
 import { bringToTop, killWindow, setWindowTitle, toggleMinimized, useWindowDesc } from "./windowsStore.ts";
 import { useWindowTransparency } from "./wmdb.ts";
@@ -173,7 +174,7 @@ export function Window(
 
   return (
     <div
-      className="window-container"
+      className={styles["window-container"]}
       style={{
         zIndex: fullscreen ? "10000" : desc.z,
         backgroundColor: `#ffffff${!fullscreen ? hexOpacity : ""}`,

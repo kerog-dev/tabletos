@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { sdk } from "../../getsdk.ts";
 import { formatTime, randomId } from "../../utils.ts";
-import "./Accounting.css";
+import styles from "./Accounting.module.css";
 
 const CURRENT_PAGE_VERSION = 2;
 
@@ -55,7 +55,7 @@ function PageSelector({ setName }: { setName: (name: string) => void }) {
   }
 
   return (
-    <div className="page-selector">
+    <div className={styles["page-selector"]}>
       <button onClick={createPage}>Create page</button> <br />
       Pages:<br />
       <ul>
@@ -71,7 +71,7 @@ function PageSelector({ setName }: { setName: (name: string) => void }) {
 
 function ItemDataComponent({ m, i }: { m: Item; i: number }) {
   return (
-    <span className="item-data">
+    <span className={styles["item-data"]}>
       (#{i + 1}, {formatTime(m.timestamp)}):{" "}
       <span style={{ color: m.expense ? "red" : "lime" }}>{m.expense ? "-" : "+"}{m.price}</span>: {m.type}
       {m.note && <>{" "}-- {m.note}</>}
@@ -96,7 +96,7 @@ function ItemComponent({ m, i, page }: { m: Item; i: number; page: Page }) {
   }
 
   return (
-    <div className="item">
+    <div className={styles.item}>
       <ItemDataComponent m={m} i={i} />
       {!editing && (
         <>
@@ -168,7 +168,7 @@ function ItemCreateForm(
   }
 
   return (
-    <div className="item-form">
+    <div className={styles["item-form"]}>
       <select ref={typeSelectRef} defaultValue={initialItem?.type ?? ""}>
         <option value="">Select an item type.</option>
         {types.map((t, i) => <option key={`${i}-${t}`} value={t}>{t}</option>)}
@@ -198,7 +198,7 @@ function PageStatistics({ page }: { page: Page }) {
   );
 
   return (
-    <p className="page-statistics">
+    <p className={styles["page-statistics"]}>
       Total:{" "}
       <span style={{ color: total === 0 ? "gray" : total > 0 ? "lime" : "red" }}>
         {total > 0 && "+"}
@@ -282,13 +282,13 @@ function PageComponent({ name, back }: { name: string; back: () => void }) {
   }, [page.items]);
 
   return (
-    <div className="page">
-      <div className="info">
-        <p className="title">{page.name}</p>
+    <div className={styles.page}>
+      <div className={styles.info}>
+        <p className={styles.title}>{page.name}</p>
         <button onClick={back}>Back</button>
-        <div className="items-container">
+        <div className={styles["items-container"]}>
           Items:
-          <ul className="items" ref={itemsRef}>
+          <ul className={styles.items} ref={itemsRef}>
             {page.items.map((m, i) => (
               <li key={m.id}>
                 <ItemComponent m={m} i={i} page={page} />
@@ -297,14 +297,14 @@ function PageComponent({ name, back }: { name: string; back: () => void }) {
           </ul>
         </div>
       </div>
-      <div className="controls">
+      <div className={styles.controls}>
         <ItemCreateForm
           onCreate={item => db.object.pages[page.name].items.push(item)}
           types={page.types}
           btnName={"Add"}
         />
         <PageStatistics page={page} />
-        <div className="page-footer">
+        <div className={styles["page-footer"]}>
           <button onClick={() => typesDialogRef.current?.showModal()}>Open types</button>
           <br />
           <button onClick={deletePage}>Delete page</button>

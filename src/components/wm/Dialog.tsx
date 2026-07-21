@@ -1,6 +1,6 @@
 import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from "react";
 import { create } from "zustand";
-import "./Dialog.css";
+import styles from "./Dialog.module.css";
 
 type DialogEntry =
   | { type: "alert"; content: string; title?: string; resolve: () => void }
@@ -37,9 +37,9 @@ function DialogContent({ entry }: { entry: DialogEntry }) {
 
   return (
     <div>
-      <button className="close-btn" onClick={() => dismiss(defaultDismissValue)}>X</button>
-      {entry.title && <span className="title">{entry.title}</span>}
-      <p className="content">{entry.content}</p>
+      <button className={styles["close-btn"]} onClick={() => dismiss(defaultDismissValue)}>X</button>
+      {entry.title && <span className={styles.title}>{entry.title}</span>}
+      <p className={styles.content}>{entry.content}</p>
       {entry.type === "alert" && <button onClick={() => dismiss()}>OK</button>}
       {entry.type === "prompt" && (
         <>
@@ -77,7 +77,7 @@ export function Dialog() {
   }, [current === null]);
 
   return (
-    <dialog ref={dialogRef}>
+    <dialog className={styles.dialog} ref={dialogRef}>
       {current && <DialogContent key={key} entry={current} />}
     </dialog>
   );

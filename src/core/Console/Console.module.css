@@ -5,14 +5,10 @@
   flex-direction: column;
 }
 
-.console > *, textarea {
+.console > *, .console textarea {
   margin: 0;
   padding: 0;
   border: 0;
-}
-
-textarea {
-  resize: none;
 }
 
 .controls {

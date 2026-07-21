@@ -1,5 +1,5 @@
 import { type ReactNode, type RefObject, useEffect, useState } from "react";
-import "./ContextMenu.css";
+import styles from "./ContextMenu.module.css";
 
 export function ContextMenu(
   { children, parent, position, open, setOpen }: {
@@ -36,7 +36,7 @@ export function ContextMenu(
 
   return (
     <div
-      className="context-menu"
+      className={styles["context-menu"]}
       style={{ top: y + "px", left: x + "px", display: open ? undefined : "none" }}
       onClick={() => setOpen?.(false)}
     >

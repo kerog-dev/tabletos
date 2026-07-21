@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { FilePicker } from "../../components/FilePicker.tsx";
-import "./TextEditor.css";
 import { sdk } from "../../getsdk.ts";
 import { debounce } from "../../utils.ts";
+import styles from "./TextEditor.module.css";
 
 const { fs } = sdk();
 
@@ -37,8 +37,8 @@ export default function TextEditor({ args }: { args: [] | [string] }) {
   if (text === null) return <p>Loading...</p>;
 
   return (
-    <div className="text-editor">
-      <div className="editor-toolbar">
+    <div className={styles["text-editor"]}>
+      <div className={styles["editor-toolbar"]}>
         <div>
           {path}
         </div>
@@ -46,7 +46,7 @@ export default function TextEditor({ args }: { args: [] | [string] }) {
           <button onClick={() => setPath(null)}>Back</button>
         </div>
       </div>
-      <textarea className="editor-textarea" value={text} onChange={(e) => setText(e.target.value)} />
+      <textarea className={styles["editor-textarea"]} value={text} onChange={(e) => setText(e.target.value)} />
     </div>
   );
 }

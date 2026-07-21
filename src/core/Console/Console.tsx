@@ -1,5 +1,5 @@
 import { Fragment, type JSX, useEffect, useRef, useState } from "react";
-import "./Console.css";
+import styles from "./Console.module.css";
 
 function PromiseTracker({ promise }: { promise: Promise<any> }) {
   const [status, setStatus] = useState(`ongoing`);
@@ -44,8 +44,8 @@ export default function Console() {
   };
 
   return (
-    <div className="console">
-      <div className="output" ref={outputRef}>
+    <div className={styles.console}>
+      <div className={styles.output} ref={outputRef}>
         {outputs.map((o, i) => (
           <Fragment key={i}>
             {o}
@@ -53,16 +53,16 @@ export default function Console() {
           </Fragment>
         ))}
       </div>
-      <div className="controls">
+      <div className={styles.controls}>
         <textarea
-          className="input"
+          className={styles.input}
           ref={inputRef}
           onKeyDown={e => {
             if (e.code === "Enter" && e.ctrlKey) clicked();
           }}
         />
         <button
-          className="run"
+          className={styles.run}
           onClick={clicked}
         >
           Run

@@ -1,12 +1,3 @@
-.window-container {
-  border: solid blue;
-  border-radius: 8px;
-  position: absolute;
-  display: flex;
-  flex-direction: column;
-  overflow: scroll;
-}
-
 .window-manager {
   margin: 0;
   padding: 0;

@@ -1,7 +1,7 @@
 import { parser } from "mathjs";
 import { useRef, useState } from "react";
-import "./Calculator.css";
 import { sdk } from "../../getsdk.ts";
+import styles from "./Calculator.module.css";
 
 const { toast, Urgency } = sdk();
 
@@ -56,17 +56,17 @@ export default function Calculator() {
   }
 
   return (
-    <div className="calculator">
+    <div className={styles.calculator}>
       <input
-        className="input"
+        className={styles.input}
         value={input}
         onChange={(e) => setInput(e.target.value)}
         onKeyDown={onKeyDown}
         placeholder="e.g. 18 months to year"
       />
       <br />
-      <button className="run" onClick={evaluate}>Run</button>
-      <div className="output">{output}</div>
+      <button className={styles.run} onClick={evaluate}>Run</button>
+      <div className={styles.output}>{output}</div>
     </div>
   );
 }

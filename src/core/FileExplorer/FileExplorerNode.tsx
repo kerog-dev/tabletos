@@ -1,11 +1,11 @@
 import { useRef, useState } from "react";
-import { ContextMenu } from "../../components/ContextMenu.tsx";
-import "./Node.css";
 import fileIcon from "vfs:/vendor/icons/file.png?url";
 import folderIcon from "vfs:/vendor/icons/folder.png?url";
+import { ContextMenu } from "../../components/ContextMenu.tsx";
 import { EventUrgency } from "../../eventlog.ts";
 import { sdk } from "../../getsdk.ts";
 import type { FileDesc } from "./FileExplorer.tsx";
+import styles from "./Node.module.css";
 import { extractZipInto, joinFsPath, zipDir } from "./zipping.ts";
 
 const { fs, toast, Urgency, spawnWindow, useDialog, eventlog } = sdk();
@@ -124,7 +124,7 @@ export function FileExplorerNode({ c, setCwd }: { c: FileDesc; setCwd: (cwd: str
 
   return (
     <div
-      className="listing-item"
+      className={styles["listing-item"]}
       onContextMenu={(e) => {
         e.preventDefault();
         setCtxMenuOpen(true);
@@ -132,8 +132,8 @@ export function FileExplorerNode({ c, setCwd }: { c: FileDesc; setCwd: (cwd: str
       onDoubleClick={onDoubleClick}
       title={c.path}
     >
-      <img className="item-icon" src={c.isDir ? folderIcon : fileIcon} />
-      <span className="item-caption" ref={ctxParentRef}>{c.name}</span>
+      <img className={styles["item-icon"]} src={c.isDir ? folderIcon : fileIcon} />
+      <span className={styles["item-caption"]} ref={ctxParentRef}>{c.name}</span>
       <ContextMenu parent={ctxParentRef} open={ctxMenuOpen}>
         <ul>
           <li>
