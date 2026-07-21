@@ -1,5 +1,4 @@
 import { useRef } from "react";
-import "./System.css";
 import { useRouter } from "../../components/Router.tsx";
 import { setWindowTransparency } from "../../components/wm/wmdb.ts";
 import { EventUrgency } from "../../eventlog.ts";
