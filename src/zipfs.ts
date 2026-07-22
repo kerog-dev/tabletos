@@ -1,7 +1,7 @@
 import { Unzip, UnzipPassThrough, Zip, ZipPassThrough } from "fflate";
-import { sdk } from "../../getsdk.ts";
+import { sdk } from "./getsdk.ts";
 
-const { fs } = sdk();
+// TODO: make proper, rm joinFsPath, return chunk streams instead of taking paths
 
 export function joinFsPath(dir: string, sub: string): string {
   const cleanSub = sub.replace(/^\/+/, "").replace(/\/+$/, "");
@@ -25,7 +25,10 @@ function makeChunkAccumulator(flush: (bytes: Uint8Array<ArrayBuffer>) => Promise
   };
 }
 
-export async function extractZipInto(zipPath: string, targetDir: string) {
+export async function extractInto(zipPath: string, targetDir: string) {
+  await (window as any).$ready;
+  const { fs } = sdk();
+
   const blob = await fs.readFile(zipPath);
   if (!(blob instanceof Blob)) throw `${zipPath} is not a binary file, can't be a zip.`;
 
@@ -75,55 +78,55 @@ export async function extractZipInto(zipPath: string, targetDir: string) {
   await Promise.all(tasks);
 }
 
-export function zipDir(path: string, target: string): Promise<void> {
-  return new Promise((res, rej) => {
-    // Reset the target once, up front, instead of checking on every chunk.
+export async function zipDir(path: string, target: string): Promise<void> {
+  await (window as any).$ready;
+  return await new Promise<void>((res, rej) => {
+    const { fs } = sdk();
     let chain: Promise<unknown> = fs.writeFile(target, new Blob([]));
     const accumulate = makeChunkAccumulator(bytes => fs.appendBlobFile(target, bytes));
 
-    const zip = new Zip((err, chunk, final) => {
+    const zip = new Zip((err, chunk_1, final) => {
       if (err) {
         rej(err);
         return;
       }
-      // Every chunk (and the final flush) goes through this one chain, so
-      // `built` (inside accumulate) is never touched by two overlapping
-      // calls at once.
-      chain = chain.then(() => accumulate(chunk, final));
+      chain = chain.then(() => accumulate(chunk_1, final));
       if (final) chain.then(() => res(), rej);
     });
 
-    async function addBlobToZip(name: string, blob: Blob) {
+    async function addBlobToZip(name: string, full: string) {
+      const content = await fs.readFile(full);
+      const blob = typeof content === "string" ? new Blob([(new TextEncoder()).encode(content)]) : content;
       const entry = new ZipPassThrough(name);
       zip.add(entry);
       entry.push(new Uint8Array(await blob.arrayBuffer()), true);
     }
 
-    function addFolderToZip(name: string) {
-      const entry = new ZipPassThrough(name);
-      zip.add(entry);
-      entry.push(new Uint8Array(0), true);
+    function addFolderToZip(name_1: string) {
+      const entry_1 = new ZipPassThrough(name_1);
+      zip.add(entry_1);
+      entry_1.push(new Uint8Array(0), true);
     }
 
     (async () => {
       const toCrawl = [path];
-      const found: string[] = [];
+      const found: { rel: string; full: string }[] = [];
       while (toCrawl.length > 0) {
         const p = toCrawl.shift()!;
-        for (const name of await fs.ls(p)) {
-          const full = `${p}/${name}`;
-          const rel = full.slice(path.length + 1);
+        for (const name_2 of await fs.ls(p)) {
+          const full = joinFsPath(p, name_2);
+          const rel = full.slice(path === "/" ? 1 : path.length + 1);
           const dir = await fs.isDir(full);
-          found.push(dir ? rel + "/" : rel);
+          found.push({ rel: dir ? rel + "/" : rel, full });
           if (dir) toCrawl.push(full);
         }
       }
       // Shallowest first, so a folder entry always precedes its contents.
-      found.sort((a, b) => a.length - b.length);
+      found.sort((a, b) => a.rel.length - b.rel.length);
 
-      for (const rel of found) {
-        if (rel.endsWith("/")) addFolderToZip(rel);
-        else await addBlobToZip(rel, await fs.readBlobFile(`${path}/${rel}`));
+      for (const { rel: rel_1, full: full_1 } of found) {
+        if (rel_1.endsWith("/")) addFolderToZip(rel_1);
+        else await addBlobToZip(rel_1, full_1);
       }
       zip.end();
     })().catch(rej);

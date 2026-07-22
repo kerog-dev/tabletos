@@ -6,9 +6,8 @@ import { EventUrgency } from "../../eventlog.ts";
 import { sdk } from "../../getsdk.ts";
 import type { FileDesc } from "./FileExplorer.tsx";
 import styles from "./Node.module.css";
-import { extractZipInto, joinFsPath, zipDir } from "./zipping.ts";
 
-const { fs, toast, Urgency, spawnWindow, useDialog, eventlog } = sdk();
+const { fs, toast, Urgency, spawnWindow, useDialog, eventlog, zip } = sdk();
 
 export function FileExplorerNode({ c, setCwd }: { c: FileDesc; setCwd: (cwd: string) => void }) {
   const [ctxMenuOpen, setCtxMenuOpen] = useState(false);
@@ -85,7 +84,7 @@ export function FileExplorerNode({ c, setCwd }: { c: FileDesc; setCwd: (cwd: str
     if (!targetDir) return;
     try {
       if (!(await fs.isDir(targetDir))) throw `${targetDir} is not a directory.`;
-      await extractZipInto(c.path, targetDir);
+      await zip.extractInto(c.path, targetDir);
       toast({ title: "Unzipped", desc: `Extracted ${c.name} into ${targetDir}` });
       eventlog.add("File Explorer", `Unzipped ${c.path} into ${targetDir}`, EventUrgency.Info);
     } catch (e) {
@@ -96,13 +95,13 @@ export function FileExplorerNode({ c, setCwd }: { c: FileDesc; setCwd: (cwd: str
   async function unzipAs() {
     const defaultName = c.name.replace(/\.zip$/i, "");
     const parentDir = fs.parent(c.path);
-    const suggestedPath = joinFsPath(parentDir, defaultName);
+    const suggestedPath = zip.joinFsPath(parentDir, defaultName);
     const targetDir = await dialog?.prompt("Extract into new folder at path:", undefined, suggestedPath);
     if (!targetDir) return;
     try {
       if (await fs.pathExists(targetDir)) throw `${targetDir} already exists.`;
       await fs.mkdirp(targetDir);
-      await extractZipInto(c.path, targetDir);
+      await zip.extractInto(c.path, targetDir);
       toast({ title: "Unzipped", desc: `Extracted ${c.name} to ${targetDir}` });
       eventlog.add("File Explorer", `Unzipped ${c.path} into ${targetDir}`, EventUrgency.Info);
     } catch (e) {
@@ -114,7 +113,7 @@ export function FileExplorerNode({ c, setCwd }: { c: FileDesc; setCwd: (cwd: str
     const target = await dialog?.prompt("Enter target path", undefined, c.path + ".zip");
     if (!target) return;
     try {
-      await zipDir(c.path, target);
+      await zip.zipDir(c.path, target);
       toast({ title: "Zipped" });
       eventlog.add("File Explorer", `Zipped ${c.path} into ${target}`, EventUrgency.Info);
     } catch (e) {

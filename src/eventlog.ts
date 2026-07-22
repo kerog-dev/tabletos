@@ -105,6 +105,7 @@ class EventLog {
   }
 
   private debouncedSave() {
+    // TODO: fix multiple at once
     if (this.saveDebounceId) clearTimeout(this.saveDebounceId);
     this.saveDebounceId = setTimeout(() => this.saveEvents(), 2000);
   }

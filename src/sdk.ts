@@ -14,6 +14,7 @@ import * as ws from "./lib/ws.ts";
 import { sv, useApps } from "./loader/loader.ts";
 import { toast, Urgency } from "./toast.tsx";
 import { mountVendorFs } from "./vendorfs.ts";
+import * as zipfs from "./zipfs.ts";
 
 interface Sdk {
   toast: typeof toast;
@@ -37,6 +38,7 @@ interface Sdk {
     set: typeof setTray;
     delete: typeof deleteTray;
   };
+  zip: typeof zipfs;
 }
 
 const sdk: Sdk = {
@@ -65,6 +67,7 @@ const sdk: Sdk = {
     set: setTray,
     delete: deleteTray,
   },
+  zip: zipfs,
 };
 
 await mountVendorFs(sdk.fs);
