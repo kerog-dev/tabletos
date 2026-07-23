@@ -4,14 +4,21 @@
   margin: 50px;
   padding: 20px;
   user-select: none;
-  display: flex;
-  flex-wrap: wrap;
-  align-content: flex-start;
-  gap: 12px;
   background-color: #aeaeffc8;
   border-radius: 12px;
   z-index: 10000;
   box-shadow: #a2a2a288 -15px 8px;
+}
+
+.shortcuts {
+  position: fixed;
+  inset: 0;
+  margin: 50px;
+  padding: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 12px;
 }
 
 .shortcut {
@@ -40,4 +47,20 @@
 
 .shortcut-name {
   font-size: 14px;
+}
+
+.workspaceSwitcher {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  margin: 20px;
+}
+
+.workspaceSwitcher button {
+  background-color: black;
+  color: white;
+  margin: 5px;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 8px;
 }

@@ -23,7 +23,12 @@ interface ScriptTarget {
   script?: string;
 }
 
-type ShortcutDesc = ShortcutShared & (AppTarget | ScriptTarget);
+interface FunctionTarget {
+  targetType: "function";
+  fn: () => void;
+}
+
+type ShortcutDesc = ShortcutShared & (AppTarget | ScriptTarget | FunctionTarget);
 
 async function loadAdditionalShortcuts(): Promise<ShortcutDesc[]> {
   try {
@@ -46,14 +51,20 @@ function getIconSrc(s: ShortcutDesc): string | null {
   return app?.iconUrl ?? s.iconUrl ?? noIconUrl;
 }
 
-function Shortcut({ s, setLauncherOpen }: { s: ShortcutDesc; setLauncherOpen: (open: boolean) => void }) {
+function Shortcut(
+  { s, setLauncherOpen, focusedWorkspace }: {
+    s: ShortcutDesc;
+    setLauncherOpen: (open: boolean) => void;
+    focusedWorkspace: string;
+  },
+) {
   const src = getIconSrc(s);
 
   function open() {
     switch (s.targetType) {
       case "app":
         const app: App | undefined = typeof s.app === "string" ? apps.find(app => app.name === s.app) : s.app;
-        if (app) spawnWindow(app);
+        if (app) spawnWindow(app, false, null, null, [], focusedWorkspace);
         else toast({ title: "Failed to open, app not found", urgency: Urgency.Error });
         break;
 
@@ -73,6 +84,17 @@ function Shortcut({ s, setLauncherOpen }: { s: ShortcutDesc; setLauncherOpen: (o
         } else if (s.script) runScript(s.script);
         else toast({ title: "Script shortcut with no path or script property.", urgency: Urgency.Error });
         break;
+
+      case "function":
+        try {
+          s.fn();
+        } catch (e) {
+          toast({ title: "Error executing shortcut function", desc: String(e), urgency: Urgency.Error });
+        }
+        break;
+
+      default:
+        s satisfies never;
     }
     setLauncherOpen(false);
   }
@@ -94,9 +116,15 @@ function appsToShortcuts(apps: App[]): ShortcutDesc[] {
   return apps.map(app => ({ name: app.name, targetType: "app", app, iconFile: "/vendor/icons/noicon.png" }));
 }
 
-export function Launcher({ open, setOpen }: { open: boolean; setOpen: (open: boolean) => void }) {
+export function Launcher(
+  { open, setOpen, focusedWorkspace, setFocusedWorkspace }: {
+    open: boolean;
+    setOpen: (open: boolean) => void;
+    focusedWorkspace: string;
+    setFocusedWorkspace: (workspace: string) => void;
+  },
+) {
   const apps = useApps();
-  (window as any).__Launcher_close_all = killAllWindows;
   const shortcuts = useMemo<ShortcutDesc[]>(
     () => [
       {
@@ -106,9 +134,9 @@ export function Launcher({ open, setOpen }: { open: boolean; setOpen: (open: boo
         iconUrl: fullscreenIcon,
       },
       {
-        targetType: "script",
+        targetType: "function",
         name: "Close all",
-        script: "__Launcher_close_all()",
+        fn: () => killAllWindows(),
         iconUrl: closeIcon,
       },
       ...appsToShortcuts(apps),
@@ -119,7 +147,22 @@ export function Launcher({ open, setOpen }: { open: boolean; setOpen: (open: boo
 
   return (
     <div className={styles.launcher} style={{ display: open ? undefined : "none" }}>
-      {shortcuts.map((s, index) => <Shortcut key={index} s={s} setLauncherOpen={setOpen} />)}
+      <div className={styles.shortcuts}>
+        {shortcuts.map((s, index) => (
+          <Shortcut key={index} s={s} setLauncherOpen={setOpen} focusedWorkspace={focusedWorkspace} />
+        ))}
+      </div>
+      <div className={styles.workspaceSwitcher}>
+        {["1", "2", "3", "4", "5"].map(wp => (
+          <button
+            key={wp}
+            onClick={() => setFocusedWorkspace(wp)}
+            style={{ color: focusedWorkspace === wp ? "cyan" : undefined }}
+          >
+            {wp}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

@@ -11,6 +11,7 @@ export interface WindowDesc {
   minimized: boolean;
   args: any[];
   title?: string;
+  workspace: string;
 }
 
 const useWindowsStore = create<{ windows: WindowDesc[] }>(() => ({ windows: [] }));
@@ -27,6 +28,7 @@ export function spawnWindow(
   initialPos: [number, number] | null = null,
   initialSize: [number, number] | null = null,
   args: any[] = [],
+  focusedWorkspace = "1",
 ) {
   const posPcnt = Math.max(0, Math.min(0.95, curId / 15)) + 0.025;
   const newWindow: WindowDesc = {
@@ -37,6 +39,7 @@ export function spawnWindow(
     z: ++curZ,
     minimized,
     args,
+    workspace: focusedWorkspace,
   };
   eventlog.add(
     "Apps",

@@ -51,8 +51,9 @@ function WindowContent(
 }
 
 export function Window(
-  { id, getWindowAreaSize }: {
+  { id, focusedWorkspace, getWindowAreaSize }: {
     id: number;
+    focusedWorkspace: string;
     getWindowAreaSize: () => [number, number];
   },
 ) {
@@ -180,6 +181,7 @@ export function Window(
         backgroundColor: `#ffffff${!fullscreen ? hexOpacity : ""}`,
         backdropFilter: !fullscreen ? "blur(4px)" : undefined,
         borderWidth: fullscreen ? "2px" : "8px",
+        display: focusedWorkspace === desc.workspace ? undefined : "none",
       }}
       ref={windowEl}
       onClick={() => bringToTop(id)}

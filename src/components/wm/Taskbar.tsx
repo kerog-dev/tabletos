@@ -18,7 +18,12 @@ function TaskbarWindowCtx({ w, close, closeWindow }: { w: WindowDesc; close: () 
   );
 }
 
-export function Taskbar() {
+export function Taskbar(
+  { focusedWorkspace, setFocusedWorkspace }: {
+    focusedWorkspace: string;
+    setFocusedWorkspace: (workspace: string) => void;
+  },
+) {
   const windows = useWindows();
   const [launcherOpen, setLauncherOpen] = useState(false);
   const [contextMenuOpens, setContextMenuOpens] = useState(() => Object.fromEntries(windows.map(w => [w.id, false])));
@@ -40,7 +45,7 @@ export function Taskbar() {
           <img style={{ width: "100%", height: "100%", imageRendering: "pixelated" }} src={startIcon} />
         </button>
         <div className={styles["window-list"]}>
-          {windows.map(w => (
+          {windows.filter(w => focusedWorkspace === w.workspace).map(w => (
             <div
               key={w.id}
               className={styles["taskbar-window"]}
@@ -84,7 +89,12 @@ export function Taskbar() {
         </div>
       </div>
       <Toasts />
-      <Launcher open={launcherOpen} setOpen={setLauncherOpen} />
+      <Launcher
+        open={launcherOpen}
+        setOpen={setLauncherOpen}
+        focusedWorkspace={focusedWorkspace}
+        setFocusedWorkspace={setFocusedWorkspace}
+      />
     </>
   );
 }
