@@ -50,14 +50,20 @@ export async function extractInto(zipPath: string, targetDir: string) {
       throw `Refusing to extract unsafe entry path: ${entryPath}`;
     }
     const fullPath = joinFsPath(targetDir, entryPath);
+    const TEXT_EXTENSIONS = ["txt", "json", "md", "js", "ts", "tsx", "css", "html"];
+    const isText = TEXT_EXTENSIONS.includes(file.name.split(".").at(-1)!);
 
     if (entryPath.endsWith("/")) {
       tasks.push(ensureDir(fullPath));
       return;
     }
 
-    const accumulate = makeChunkAccumulator(bytes => fs.appendBlobFile(fullPath, bytes));
-    let chain = ensureDir(fs.parent(fullPath)).then(() => fs.writeFile(fullPath, new Blob([])));
+    const accumulate = makeChunkAccumulator(bytes =>
+      isText
+        ? fs.readTextFile(fullPath).then(original => fs.writeFile(fullPath, original + new TextDecoder().decode(bytes)))
+        : fs.appendBlobFile(fullPath, bytes)
+    );
+    let chain = ensureDir(fs.parent(fullPath)).then(() => fs.writeFile(fullPath, isText ? "" : new Blob([])));
 
     file.ondata = (err, chunk, final) => {
       if (err) throw err;
