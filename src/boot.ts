@@ -27,37 +27,42 @@ export async function boot() {
     $ready: new Promise(res => (window as any).$resolve = res),
   });
 
-  // TODO: show boot progress
-  // TODO: verify no toplevel side effects and do toplevel import
-  const { eventlog, EventUrgency } = await import("./eventlog.ts");
-  await import("./sdk.ts");
-  const { loadPackages } = await import("./loader/loader.ts");
-  const { toast, Urgency } = await import("./toast.tsx");
+  try {
+    // TODO: show boot progress
+    // TODO: verify no toplevel side effects and do toplevel import
+    const { eventlog, EventUrgency } = await import("./eventlog.ts");
+    await import("./sdk.ts");
+    const { loadPackages } = await import("./loader/loader.ts");
+    const { toast, Urgency } = await import("./toast.tsx");
 
-  Object.assign(window as any, {
-    __React: React,
-    __ReactJsxRuntime: JSXRuntime,
-  });
+    Object.assign(window as any, {
+      __React: React,
+      __ReactJsxRuntime: JSXRuntime,
+    });
 
-  window.addEventListener("error", (e) => {
-    try {
-      eventlog.add("Errors", "Uncaught error", EventUrgency.Error, "Error: " + String(e.error));
-      toast({ title: "Error", desc: String(e.error), urgency: Urgency.Error });
-    } catch {
-      alert(String(e.error));
-    }
-  });
+    window.addEventListener("error", (e) => {
+      try {
+        eventlog.add("Errors", "Uncaught error", EventUrgency.Error, "Error: " + String(e.error));
+        toast({ title: "Error", desc: String(e.error), urgency: Urgency.Error });
+      } catch {
+        alert(String(e.error));
+      }
+    });
 
-  window.addEventListener("unhandledrejection", (e) => {
-    try {
-      eventlog.add("Errors", "Unhandled rejection", EventUrgency.Error, "Reason: " + String(e.reason));
-      toast({ title: "Unhandled rejection", desc: String(e.reason), urgency: Urgency.Error });
-    } catch {
-      alert(String(e.reason));
-    }
-  });
+    window.addEventListener("unhandledrejection", (e) => {
+      try {
+        eventlog.add("Errors", "Unhandled rejection", EventUrgency.Error, "Reason: " + String(e.reason));
+        toast({ title: "Unhandled rejection", desc: String(e.reason), urgency: Urgency.Error });
+      } catch {
+        alert(String(e.reason));
+      }
+    });
+
+    loadPackages();
+  } catch (e) {
+    unlistenEarlyErrorListeners();
+    throw e;
+  }
 
   unlistenEarlyErrorListeners();
-
-  loadPackages();
 }
