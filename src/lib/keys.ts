@@ -1,7 +1,6 @@
 import { ed25519, x25519 } from "@noble/curves/ed25519.js";
 import { bytesToHex, hexToBytes } from "@noble/curves/utils.js";
 import { createDatabase } from "../jsondb.ts";
-import * as ws from "./ws.ts";
 
 interface DB {
   secretKey: string;
@@ -30,6 +29,7 @@ function getSharedSecret(targetPublicKey: string) {
 }
 
 export async function getSharedSecretWith(target: string): Promise<Uint8Array> {
+  const ws = await import("./ws.ts");
   const targetPublicKey = await ws.getRemotePublicKey(target);
   if (targetPublicKey === null) throw "Cannot get shared secret: no public key known by server";
   return getSharedSecret(targetPublicKey);

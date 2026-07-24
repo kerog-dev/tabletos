@@ -13,7 +13,6 @@ import conn from "./lib/rpc.ts";
 import * as ws from "./lib/ws.ts";
 import { sv, useApps } from "./loader/loader.ts";
 import { toast, Urgency } from "./toast.tsx";
-import { mountVendorFs } from "./vendorfs.ts";
 import * as zipfs from "./zipfs.ts";
 
 interface Sdk {
@@ -70,7 +69,6 @@ const sdk: Sdk = {
   zip: zipfs,
 };
 
-await mountVendorFs(sdk.fs);
 (window as any).$ = sdk;
 (window as any).$resolve();
 

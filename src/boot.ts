@@ -32,6 +32,8 @@ export async function boot() {
     // TODO: verify no toplevel side effects and do toplevel import
     const { eventlog, EventUrgency } = await import("./eventlog.ts");
     await import("./sdk.ts");
+    const { mountVendorFs } = await import("./vendorfs.ts");
+    await mountVendorFs();
     const { loadPackages } = await import("./loader/loader.ts");
     const { toast, Urgency } = await import("./toast.tsx");
 

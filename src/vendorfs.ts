@@ -5,7 +5,10 @@ import { type Sdk } from "./sdk.ts";
 
 const TEXT_EXTENSIONS = [".md", ".txt", ".json", ".js", ".ts", ".css", ".html"];
 
-export async function mountVendorFs(fs: Sdk["fs"]) {
+export async function mountVendorFs() {
+  await (window as any).$ready;
+  const { fs }: Sdk = (window as any).$;
+
   const bytes = Uint8Array.from(atob(vendorZip), c => c.charCodeAt(0));
   const files: Record<string, Uint8Array<ArrayBuffer>> = await new Promise((res, rej) =>
     unzip(bytes, (err, f) => err ? rej(err) : res(f))
